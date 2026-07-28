@@ -1,0 +1,29 @@
+@page
+@using LearningLms.Host.Pages.MyCourses
+@model MyCoursesModel
+@{
+    ViewData["Title"] = "My Courses";
+}
+
+<h1 style="margin-bottom: 1rem;">My Enrolled Courses</h1>
+
+@if (Model.Enrollments.Count == 0)
+{
+    <div class="card empty-state">
+        <h2>No enrollments yet</h2>
+        <p>Browse the catalog to find courses you'd like to enroll in.</p>
+        <a asp-page="/Courses/Index" class="btn btn-primary">Browse Courses</a>
+    </div>
+}
+else
+{
+    @foreach (var enrollment in Model.Enrollments)
+    {
+        <div class="card">
+            <h3><a asp-page="/Courses/Detail" asp-route-id="@enrollment.CourseId" style="text-decoration: none; color: inherit;">@enrollment.CourseTitle</a></h3>
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                <span class="badge badge-enrolled">Enrolled @enrollment.EnrolledAt.ToString("MMM dd, yyyy")</span>
+            </div>
+        </div>
+    }
+}

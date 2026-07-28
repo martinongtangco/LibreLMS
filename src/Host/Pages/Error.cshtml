@@ -1,0 +1,17 @@
+@page "/error"
+@using LearningLms.Host.Pages
+@model ErrorModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="card empty-state">
+    <h1>Something went wrong</h1>
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <p>@Model.ErrorMessage</p>
+    }
+    <p style="margin-top: 1rem;">
+        <a asp-page="/Courses/Index" class="btn btn-primary">Back to Catalog</a>
+    </p>
+</div>

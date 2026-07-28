@@ -1,0 +1,63 @@
+services:
+  # This IS the AI coding agent's sandbox: it binds only the repo root, runs as a
+  # non-root user (see .devcontainer/Dockerfile), and reaches only the sibling
+  # services declared below. See docs/adr/0002-agent-sandboxing-devcontainer.md.
+  devcontainer:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - .:/workspace:cached
+      # Pi Agent CLI's own config/sessions/auth (~/.pi/agent) — not repo content,
+      # but needs to survive `docker compose down`/container recreation just like
+      # the MSSQL/Valkey data below.
+      - pi-agent-home:/home/vscode/.pi
+    working_dir: /workspace
+    command: sleep infinity
+    depends_on:
+      mssql:
+        condition: service_healthy
+      valkey:
+        condition: service_started
+    environment:
+      ConnectionStrings__Sql: "Server=mssql,1433;Database=LearningLms;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      ConnectionStrings__Redis: "valkey:6379"
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+    ports:
+      - "1433:1433"
+    volumes:
+      # Named volume, not a bind mount — bind-mounting MSSQL's data dir is a known
+      # failure mode on Docker Desktop/WSL2 (see docs/adr/0003).
+      - mssql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Redis-protocol-compatible, BSD-3 licensed — see docs/adr/0003 for why this is
+  # Valkey rather than Redis itself.
+  valkey:
+    image: valkey/valkey:8
+    ports:
+      # Host port 6380, not 6379 — this machine already runs an unrelated Redis
+      # container on 6379 for another project. Inside the compose network, other
+      # services still reach this one at valkey:6379 regardless of the host mapping.
+      - "6380:6379"
+    volumes:
+      - valkey-data:/data
+
+  # `api` (the Host project) is intentionally not defined yet. Per constitution
+  # Principle VII, no service is stood up ahead of the vertical slice that needs
+  # it — this gets added once Slice 1 (Course Catalog + Enrollment) exists.
+
+volumes:
+  mssql-data:
+  valkey-data:
+  pi-agent-home:

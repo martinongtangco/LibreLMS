@@ -1,0 +1,44 @@
+# Git
+.git/
+.gitignore
+
+# Build outputs
+**/bin/
+**/obj/
+artifacts/
+
+# Dependencies
+node_modules/
+packages/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Docker
+docker-compose.override.local.yml
+*.dockerignore
+
+# Test results
+coverage*/
+TestResults/
+
+# Local overrides
+.devcontainer/*.local.json

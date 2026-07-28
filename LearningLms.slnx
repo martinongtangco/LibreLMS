@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Host/Host.csproj" />
+    <Project Path="src/SharedKernel/SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/Catalog.Contracts/Catalog.Contracts.csproj" />
+    <Project Path="src/Modules/Catalog/Catalog.csproj" />
+    <Project Path="src/Modules/Enrollment.Contracts/Enrollment.Contracts.csproj" />
+    <Project Path="src/Modules/Enrollment/Enrollment.csproj" />
+    <Project Path="src/Modules/Scorm.Contracts/Scorm.Contracts.csproj" />
+    <Project Path="src/Modules/Scorm/Scorm.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ArchitectureTests/ArchitectureTests.csproj" />
+    <Project Path="tests/Catalog.Tests/Catalog.Tests.csproj" />
+    <Project Path="tests/Enrollment.Tests/Enrollment.Tests.csproj" />
+    <Project Path="tests/Scorm.Tests/Scorm.Tests.csproj" />
+  </Folder>
+</Solution>

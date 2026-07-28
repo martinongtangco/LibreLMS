@@ -1,0 +1,78 @@
+@page "{id:guid}"
+@using LearningLms.Host.Pages.Courses
+@model CourseDetailModel
+@{
+    ViewData["Title"] = Model.Course?.Title ?? "Course Not Found";
+}
+
+@if (Model.Course is null)
+{
+    <div class="card empty-state">
+        <h2>Course Not Found</h2>
+        <p>The course you are looking for does not exist.</p>
+        <a asp-page="Index" class="btn btn-primary">Back to Catalog</a>
+    </div>
+}
+else
+{
+    <div style="margin-bottom: 1rem;">
+        <a asp-page="Index" style="color: #666; text-decoration: none;">&larr; Back to Catalog</a>
+    </div>
+
+    <div class="card">
+        <h1>@Model.Course.Title</h1>
+        <div style="display: flex; gap: 0.5rem; margin: 0.75rem 0;">
+            <span class="badge badge-category">@Model.Course.Category</span>
+            <span class="badge badge-duration">@Model.Course.Duration</span>
+        </div>
+        <p style="font-size: 1.1rem; margin-bottom: 1rem;">@Model.Course.ShortDescription</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 1.5rem 0;" />
+        <h3>Full Description</h3>
+        <p style="white-space: pre-wrap; margin-top: 0.5rem;">@Model.Course.FullDescription</p>
+
+        @if (Model.IsEnrolled)
+        {
+            <div style="margin-top: 1.5rem;">
+                <span class="badge badge-enrolled" style="font-size: 1rem; padding: 0.4rem 1rem;">✓ Enrolled</span>
+            </div>
+        }
+        else
+        {
+            <div style="margin-top: 1.5rem;">
+                <button class="btn btn-primary" onclick="enrollInCourse('@Model.Course.Id')">Enroll in This Course</button>
+                <span id="enroll-message" style="margin-left: 1rem;"></span>
+            </div>
+        }
+    </div>
+}
+
+<script>
+    async function enrollInCourse(courseId) {
+        const msg = document.getElementById('enroll-message');
+        msg.textContent = 'Enrolling...';
+        msg.style.color = '#666';
+
+        try {
+            const response = await fetch('/api/enrollments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ courseId: courseId })
+            });
+
+            if (response.status === 201) {
+                msg.textContent = '✓ Successfully enrolled!';
+                msg.style.color = '#2e7d32';
+                setTimeout(() => location.reload(), 1500);
+            } else if (response.status === 409) {
+                msg.textContent = 'You are already enrolled in this course.';
+                msg.style.color = '#f57c00';
+            } else {
+                msg.textContent = 'Failed to enroll. Please try again.';
+                msg.style.color = '#c62828';
+            }
+        } catch (err) {
+            msg.textContent = 'Network error. Please try again.';
+            msg.style.color = '#c62828';
+        }
+    }
+</script>

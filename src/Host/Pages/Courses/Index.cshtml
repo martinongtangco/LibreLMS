@@ -1,0 +1,50 @@
+@page
+@using LearningLms.Host.Pages.Courses
+@model CourseIndexModel
+@{
+    ViewData["Title"] = "Browse Courses";
+}
+
+<h1 style="margin-bottom: 1rem;">Browse Courses</h1>
+
+<form method="get" class="filters">
+    <input type="text" name="search" value="@Model.Search" placeholder="Search by course name..." />
+    <select name="category">
+        <option value="">All Categories</option>
+        @foreach (var cat in Model.Categories)
+        {
+            <option value="@cat" selected="@(Model.Category == cat ? "selected" : null)">@cat</option>
+        }
+    </select>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a asp-page="Index" class="btn btn-secondary">Clear</a>
+</form>
+
+@if (Model.Courses is null || !Model.Courses.Any())
+{
+    <div class="card empty-state">
+        <h2>No courses found</h2>
+        <p>Try adjusting your search or filter criteria.</p>
+    </div>
+}
+else
+{
+    @foreach (var course in Model.Courses)
+    {
+        <div class="card">
+            <h3><a asp-page="Detail" asp-route-id="@course.Id" style="text-decoration: none; color: inherit;">@course.Title</a></h3>
+            <p>@course.ShortDescription</p>
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                <span class="badge badge-category">@course.Category</span>
+                <span class="badge badge-duration">@course.Duration</span>
+                @if (course.IsEnrolled)
+                {
+                    <span class="badge badge-enrolled">✓ Enrolled</span>
+                }
+            </div>
+            <div style="margin-top: 0.75rem;">
+                <a asp-page="Detail" asp-route-id="@course.Id" class="btn btn-secondary">View Details</a>
+            </div>
+        </div>
+    }
+}

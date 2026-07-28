@@ -1,0 +1,19 @@
+{
+  "name": "learning-lms-sandbox",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "none",
+  "remoteUser": "vscode",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "ms-azuretools.vscode-docker",
+        "ms-mssql.mssql"
+      ]
+    }
+  },
+  "forwardPorts": [5000, 5001, 1433, 6380],
+  "postCreateCommand": "dotnet restore LearningLms.slnx"
+}
