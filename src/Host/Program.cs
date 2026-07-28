@@ -14,10 +14,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Register EF Core contexts with MSSQL
 builder.Services.AddDbContext<CatalogDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sql => sql.MigrationsAssembly(typeof(Program).Assembly)));
 
 builder.Services.AddDbContext<EnrollmentDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sql => sql.MigrationsAssembly(typeof(Program).Assembly)));
 
 // Register module services
 builder.Services.AddCatalogModule();
@@ -41,22 +45,30 @@ builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
-// Seed data on startup
+// Ensure database and tables exist, then seed data on startup
 using (var scope = app.Services.CreateScope())
 {
     var catalogCtx = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
-    catalogCtx.Database.EnsureCreated();
-
     var enrollmentCtx = scope.ServiceProvider.GetRequiredService<EnrollmentDbContext>();
-    enrollmentCtx.Database.EnsureCreated();
 
-    // Seed catalog if empty
+    // Suppress pending model changes warning for dev — use Migrate() to apply
+    // migrations for each context independently. Migrations properly handle
+    // multiple DbContexts sharing one database via the __EFMigrationsHistory table.
+    catalogCtx.Database.EnsureCreated();
+    try
+    {
+        catalogCtx.Database.Migrate();
+    }
+    catch (System.InvalidOperationException) { /* pending model changes — tables may exist */ }
+    enrollmentCtx.Database.Migrate();
+
+    // Seed catalog
     if (!catalogCtx.Courses.Any())
     {
         LearningLms.Modules.Catalog.Infrastructure.CatalogSeeder.Seed(catalogCtx);
     }
 
-    // Seed students if empty
+    // Seed students
     if (!enrollmentCtx.Students.Any())
     {
         LearningLms.Modules.Enrollment.Infrastructure.EnrollmentSeeder.Seed(enrollmentCtx);

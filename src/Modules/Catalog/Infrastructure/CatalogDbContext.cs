@@ -27,7 +27,7 @@ public class CatalogDbContext(DbContextOptions<CatalogDbContext> options) : DbCo
 
             entity.Property(e => e.FullDescription)
                 .IsRequired()
-                .HasMaxLength(5000);
+                .HasMaxLength(4000);
 
             entity.Property(e => e.Category)
                 .IsRequired()
