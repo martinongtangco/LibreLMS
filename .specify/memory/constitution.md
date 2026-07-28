@@ -1,3 +1,19 @@
+<!--
+  Sync Impact Report
+  ==================
+  Version change: 1.0.0 → 1.1.0 (MINOR: new principle added)
+  Added principles:
+    - VIII. Branching Discipline (new)
+  Modified principles: none
+  Removed sections: none
+  Templates updated:
+    - ✅ .specify/templates/plan-template.md (branch naming convention)
+    - ✅ .specify/templates/spec-template.md (branch naming convention)
+    - ⚠  .specify/templates/tasks-template.md (no branch-specific task types needed)
+    - ⚠  README.md (no workflow change — branches are agent-side, not documented here)
+  Deferred items: none
+-->
+
 # Learning LMS Constitution
 
 This project is a teaching exercise, not a product. Its purpose is to learn (a) spec-driven
@@ -67,6 +83,19 @@ No code gets written before its slice has gone through `/speckit.specify` → `/
 module first"). A module only gets built when a slice currently needs it; no module is scaffolded
 ahead of demand.
 
+### VIII. Branching Discipline
+Every `/speckit.implement` execution MUST create a dedicated Git branch from `main` so that
+agentic coding tasks can run in parallel without interfering with each other or the integration
+branch. Branch names follow a strict convention:
+
+- **Prefix**: `bug/` for defect work, `story/` for feature or enhancement work.
+- **Format**: `<prefix>/<task-id>-<short-description>` where `task-id` is the numeric or
+  alphanumeric identifier from the spec (e.g. `001`, `FEAT-42`) and `short-description` is a
+  concise kebab-case phrase (e.g. `story/001-course-catalog-browse`).
+- **Lifecycle**: The branch is created at the start of `/speckit.implement`, work is committed
+  there, and the branch is merged into `main` (or opened as a PR) only after the implementation
+  completes and all validation checks pass. No commits land on `main` outside of a merge.
+
 ## Technology & Scope Constraints
 
 - **.NET 10 (GA/LTS)**, pinned via `global.json` to a released SDK band — never a preview band,
@@ -104,4 +133,4 @@ simplify the instruction, not to add more words explaining it. Amendments requir
 file, bumping the version below, and — if the amendment reverses a prior ADR — recording that
 reversal as a new ADR rather than editing the old one.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-07-28
+**Version**: 1.1.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-07-28

@@ -1,6 +1,9 @@
 # Feature Specification: [FEATURE NAME]
 
-**Feature Branch**: `[###-feature-name]`
+**Feature Branch**: `<prefix>/<task-id>-<short-description>`
+
+> **Branch naming** (Constitution Principle VIII): `bug/<id>-<desc>` for defects,
+> `story/<id>-<desc>` for features. Example: `story/001-course-catalog-browse`.
 
 **Created**: [DATE]
 
