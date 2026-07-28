@@ -1,113 +1,129 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: SCORM Launch & Completion
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Branch**: `002-scorm-launch-completion` | **Date**: 2025-07-29 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
-
-**Note**: This template is filled in by the `/speckit.plan` command; its definition describes the execution workflow.
+**Input**: Feature specification from `specs/002-scorm-launch-completion/spec.md`
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+Students launch SCORM 1.2 courses, track progress during interactive sessions, commit completion results, and resume from checkpoints. Implemented as the `Scorm` module within the existing modular monolith, using .NET 10, EF Core against MSSQL for durable records, and StackExchange.Redis against Valkey for live session state. The Scorm module depends on `Catalog.Contracts` (course validation) and a new `IEnrollmentLookup` in `Enrollment.Contracts` (enrollment validation). SCORM content is served as static files from extracted ZIP packages, with a JavaScript API shim enabling standard SCORM 1.2 content communication.
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
+**Language/Version**: C# / .NET 10 (SDK 10.0.103, pinned in `global.json`)
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
+**Primary Dependencies**: ASP.NET Core minimal APIs + Razor Pages, EF Core (MSSQL provider), StackExchange.Redis (Valkey client), System.IO.Compression (ZIP extraction), System.Xml.Linq (manifest parsing), xUnit (tests)
 
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
+**Storage**: MSSQL 2022 (ScormPackage, CourseAttempt tables via EF Core Code-First) + Valkey (live `cmi.*` session bags with 30-min TTL) + filesystem (extracted SCORM content under `wwwroot/scorm-content/`)
 
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+**Testing**: xUnit with `Microsoft.NET.Test.Sdk`; NetArchTest for architecture boundary enforcement
 
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
+**Target Platform**: Linux server inside devcontainer (Docker Compose)
 
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: Web application (modular monolith, one deployable process)
 
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
+**Performance Goals**: Sub-3s SCORM content launch (SC-001); sub-500ms SCORM API call response (SC-002); sub-1s commit durability (SC-003)
 
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
+**Constraints**: Modular monolith (Principle I), compiled module boundaries (Principle III), no MediatR/CQRS (Principle II), SCORM 1.2 simplified only, spec-driven workflow (Principle VII)
 
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
-
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Scale/Scope**: Learning project — small number of SCORM packages (5-10), single-user demo scenario. Session TTL 30 minutes.
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+*GATE: Must pass before Phase 0 research. Re-checked after Phase 1 design below.*
 
-[Gates determined based on constitution file]
+| Principle | Status | Notes |
+|-----------|--------|-------|
+| I. Modular Monolith | ✅ Pass | Scorm module added to existing Host process, no new services |
+| II. Clean Architecture (Simple) | ✅ Pass | EF Core directly, StackExchange.Redis directly, no extra abstractions |
+| III. Compiled Boundaries | ✅ Pass | Scorm depends on Catalog.Contracts + new Enrollment.Contracts interface; ArchitectureTests extended |
+| IV. Human-Legible Code | ✅ Pass | SCORM decisions documented in research.md and ADRs |
+| V. Sandbox | ✅ Pass | All work inside devcontainer |
+| VI. Polyglot Storage | ✅ Pass | MSSQL for durable records, Valkey for live session state (ADR-0003), filesystem for content |
+| VII. Spec-Driven | ✅ Pass | Spec → Plan → Tasks → Implement workflow followed |
+
+### Post-Design Re-Check (after Phase 1)
+
+| Principle | Status | Notes |
+|-----------|--------|-------|
+| I. Modular Monolith | ✅ Pass | Scorm module follows existing pattern |
+| II. Clean Architecture (Simple) | ✅ Pass | Direct DbContext and Redis usage, no repository wrappers |
+| III. Compiled Boundaries | ✅ Pass | New `IEnrollmentLookup` contract added; ArchitectureTests verify Scorm→Enrollment.Contracts only |
+| IV. Human-Legible Code | ✅ Pass | research.md documents 8 technical decisions with rationale |
+| V. Sandbox | ✅ Pass | Unchanged |
+| VI. Polyglot Storage | ✅ Pass | Three stores used with clear rationale: MSSQL (durable), Valkey (ephemeral session), filesystem (static content) |
+| VII. Spec-Driven | ✅ Pass | All phases complete |
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/[###-feature]/
-├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+specs/002-scorm-launch-completion/
+├── spec.md              # Feature specification (with clarifications)
+├── plan.md              # This file
+├── research.md          # Phase 0: 8 technical decisions documented
+├── data-model.md        # Phase 1: 3 entities + 1 new contract interface
+├── quickstart.md        # Phase 1: 8 validation scenarios
+├── contracts/
+│   └── api.md           # Phase 1: 8 endpoints + 1 cross-module contract
+└── checklists/
+    └── requirements.md  # Spec quality checklist
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
 src/
-├── models/
-├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+├── Host/
+│   ├── Program.cs                    # Add ScormDbContext, ScormModule, StackExchange.Redis
+│   ├── Pages/
+│   │   └── Scorm/
+│   │       └── Launch.cshtml(.cs)    # SCORM wrapper page (injects API script + beforeunload)
+│   └── wwwroot/
+│       └── scorm-content/            # Extracted SCORM package content (created at runtime)
+│
+├── Modules/
+│   ├── Enrollment.Contracts/
+│   │   └── IEnrollmentLookup.cs      # NEW: IsEnrolledAsync(studentId, courseId)
+│   │
+│   ├── Enrollment/
+│   │   └── Application/
+│   │       └── EnrollmentLookup.cs   # NEW: Implements IEnrollmentLookup
+│   │
+│   ├── Scorm/
+│   │   ├── Domain/
+│   │   │   ├── ScormPackage.cs       # Package entity (extends Entity<Guid>)
+│   │   │   └── CourseAttempt.cs      # Attempt entity (extends Entity<Guid>)
+│   │   ├── Application/
+│   │   │   ├── ScormSessionService.cs      # Session lifecycle (init, setValue, getValue, commit, finish)
+│   │   │   ├── ScormPackageService.cs      # Upload, parse manifest, extract ZIP
+│   │   │   └── ScormAttemptService.cs      # Attempt management, resume data
+│   │   ├── Infrastructure/
+│   │   │   ├── ScormDbContext.cs             # EF Core DbContext for ScormPackage + CourseAttempt
+│   │   │   ├── ScormSessionStore.cs          # Valkey-backed session state (StackExchange.Redis)
+│   │   │   ├── ManifestParser.cs             # Parse imsmanifest.xml via XDocument
+│   │   │   └── ScormSeeder.cs                # Seed sample SCORM package for demo
+│   │   ├── Endpoints/
+│   │   │   ├── ScormEndpoints.cs             # POST /upload, POST /{id}/launch, GET /attempts/my
+│   │   │   ├── ScormSessionEndpoints.cs      # setValue, getValue, commit, finish
+│   │   │   ├── ScormApiScriptEndpoint.cs     # GET /session/{id}/api.js (SCORM API shim)
+│   │   │   └── ScormModuleExtensions.cs      # IEndpointRouteBuilder.MapScormEndpoints()
+│   │   ├── Scorm.csproj
+│   │   └── ModuleMarker.cs
+│   │
+│   └── Scorm.Contracts/
+│       ├── Scorm.Contracts.csproj
+│       └── ModuleMarker.cs
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: The Scorm module follows the same Domain → Application → Infrastructure → Endpoints pattern as Catalog and Enrollment. It introduces three new components:
+1. **`IEnrollmentLookup`** in `Enrollment.Contracts` — a minimal new contract for cross-module enrollment validation (Principle III)
+2. **`ScormSessionStore`** — Valkey-backed session state using StackExchange.Redis (ADR-0003)
+3. **`wwwroot/scorm-content/`** — filesystem directory for extracted SCORM package content
+
+The SCORM API shim is served as a JavaScript endpoint (`api.js`) rather than embedded in the Razor page, allowing the content to reference it via a standard `<script src="...">` tag. The wrapper page (`/scorm/launch/{courseId}`) injects the API script and the `beforeunload` auto-commit handler.
 
 ## Complexity Tracking
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+No constitution violations. The new `IEnrollmentLookup` contract in Enrollment.Contracts is a minimal, justified cross-module boundary that follows the existing `ICourseLookup` pattern. No complexity tracking needed.
