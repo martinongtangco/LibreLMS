@@ -1,0 +1,49 @@
+@page
+@using LearningLms.Host.Pages.Admin
+@model ScormUploadModel
+@{
+    ViewData["Title"] = "Upload SCORM Package";
+}
+
+<h1 style="margin-bottom: 1.5rem;">Upload SCORM Package</h1>
+
+@if (Model.SuccessMessage is not null)
+{
+    <div class="card" style="border-left: 4px solid #2e7d32;">
+        <h3 style="color: #2e7d32;">@Model.SuccessMessage</h3>
+        @if (Model.UploadedCourseId.HasValue)
+        {
+            <p style="margin-top: 0.5rem;">
+                <a asp-page="/Courses/Detail" asp-route-id="@Model.UploadedCourseId" class="btn btn-primary">View Course</a>
+            </p>
+        }
+    </div>
+}
+
+@if (Model.Error is not null)
+{
+    <div class="card" style="border-left: 4px solid #c62828;">
+        <h3 style="color: #c62828;">Error</h3>
+        <p>@Model.Error</p>
+    </div>
+}
+
+<div class="card">
+    <form method="post" enctype="multipart/form-data">
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Course ID</label>
+            <input type="text" name="courseId" placeholder="Enter the course GUID"
+                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;" />
+            <small style="color: #999;">The GUID of the course in the catalog to associate with this SCORM package.</small>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">SCORM Package (.zip)</label>
+            <input type="file" name="package" accept=".zip"
+                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;" />
+            <small style="color: #999;">Upload a SCORM 1.2 ZIP package containing imsmanifest.xml.</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Upload Package</button>
+    </form>
+</div>

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using LearningLms.Contracts.Enrollment;
 using LearningLms.Modules.Enrollment.Application;
 
 namespace LearningLms.Modules.Enrollment;
@@ -9,6 +10,7 @@ public static class EnrollmentModuleExtensions
     public static IServiceCollection AddEnrollmentModule(this IServiceCollection services)
     {
         services.AddScoped<EnrollmentService>();
+        services.AddScoped<IEnrollmentLookup, EnrollmentLookup>();
         return services;
     }
 }

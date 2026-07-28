@@ -1,0 +1,83 @@
+@page "{courseId:guid}"
+@using LearningLms.Host.Pages.Scorm
+@model ScormLaunchModel
+@{
+    Layout = null;
+    ViewData["Title"] = "SCORM Course";
+}
+
+@if (Model.Error is not null)
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Error - Learning LMS</title>
+        <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 2rem; background: #f5f5f5; }
+            .error { max-width: 600px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+            h1 { color: #c62828; }
+            a { color: #1565c0; text-decoration: none; }
+        </style>
+    </head>
+    <body>
+        <div class="error">
+            <h1>Launch Failed</h1>
+            <p>@Model.Error</p>
+            <a asp-page="/MyCourses/Index">Back to My Courses</a>
+        </div>
+    </body>
+    </html>
+}
+else
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>SCORM Course - Learning LMS</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body, html { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+            #scorm-frame { width: 100%; height: 100%; border: none; }
+            #status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a2e; color: white; padding: 0.5rem 1rem; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
+            #status-bar .entry-badge { background: #2e7d32; padding: 0.15rem 0.5rem; border-radius: 3px; font-size: 0.75rem; }
+            #status-bar .attempt-badge { background: #1565c0; padding: 0.15rem 0.5rem; border-radius: 3px; font-size: 0.75rem; }
+        </style>
+    </head>
+    <body>
+        <iframe id="scorm-frame" src="@Model.ContentUrl"></iframe>
+
+        @if (Model.SessionId is not null)
+        {
+            <!-- SCORM API shim — injected into iframe via script tag in the content -->
+            <script>
+                // Make session info available to child frames
+                window.scormSessionId = '@Model.SessionId';
+                window.scormBaseUrl = '/api/scorm/session/@Model.SessionId';
+            </script>
+        }
+
+        <div id="status-bar">
+            <span>
+                <span class="entry-badge">@Model.Entry</span>
+                SCORM Session Active
+            </span>
+            <a href="/MyCourses" style="color: white; text-decoration: none; font-size: 0.85rem;">My Courses &rarr;</a>
+        </div>
+
+        <script>
+            // Auto-commit on page/tab close
+            window.addEventListener('beforeunload', function(event) {
+                var sessionId = '@Model.SessionId';
+                if (sessionId) {
+                    // Use sendBeacon for reliable delivery during page unload
+                    navigator.sendBeacon('/api/scorm/session/' + sessionId + '/commit', new Blob([], { type: 'application/json' }));
+                }
+            });
+        </script>
+    </body>
+    </html>
+}

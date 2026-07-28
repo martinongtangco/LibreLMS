@@ -5,25 +5,65 @@
     ViewData["Title"] = "My Courses";
 }
 
-<h1 style="margin-bottom: 1rem;">My Enrolled Courses</h1>
+<h1 style="margin-bottom: 1.5rem;">My Courses</h1>
 
-@if (Model.Enrollments.Count == 0)
+@if (Model.Enrollments.Any())
 {
-    <div class="card empty-state">
-        <h2>No enrollments yet</h2>
-        <p>Browse the catalog to find courses you'd like to enroll in.</p>
-        <a asp-page="/Courses/Index" class="btn btn-primary">Browse Courses</a>
+    <div class="card">
+        <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Enrolled Courses</h2>
+        @foreach (var enrollment in Model.Enrollments)
+        {
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #eee;">
+                <div>
+                    <strong><a asp-page="/Courses/Detail" asp-route-id="@enrollment.CourseId" style="color: #333; text-decoration: none;">@enrollment.CourseTitle</a></strong>
+                    <div style="color: #999; font-size: 0.85rem;">Enrolled @enrollment.EnrolledAt.ToString("MMM d, yyyy")</div>
+                </div>
+                <div>
+                    @{
+                        var attempt = Model.ScormAttempts.FirstOrDefault(a => a.CourseId == enrollment.CourseId && a.AttemptNumber == Model.ScormAttempts.Where(x => x.CourseId == enrollment.CourseId).Max(x => x.AttemptNumber));
+                    }
+                    @if (attempt != null)
+                    {
+                        <span class="badge" style="background: @(attempt.Status switch
+                        {
+                            "completed" => "#e8f5e9",
+                            "passed" => "#e8f5e9",
+                            "in-progress" => "#fff3e0",
+                            _ => "#f5f5f5"
+                        }); color: @(attempt.Status switch
+                        {
+                            "completed" => "#2e7d32",
+                            "passed" => "#2e7d32",
+                            "in-progress" => "#e65100",
+                            _ => "#666"
+                        });">
+                            @(attempt.Status switch
+                            {
+                                "completed" => "✓ Completed",
+                                "passed" => "✓ Passed",
+                                "in-progress" => "In Progress",
+                                _ => attempt.Status
+                            })
+                        </span>
+                        @if (attempt.ScoreRaw.HasValue)
+                        {
+                            <span style="margin-left: 0.5rem; font-size: 0.85rem; color: #666;">Score: @attempt.ScoreRaw.Value</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="badge" style="background: #f5f5f5; color: #666;">Not Started</span>
+                    }
+                </div>
+            </div>
+        }
     </div>
 }
 else
 {
-    @foreach (var enrollment in Model.Enrollments)
-    {
-        <div class="card">
-            <h3><a asp-page="/Courses/Detail" asp-route-id="@enrollment.CourseId" style="text-decoration: none; color: inherit;">@enrollment.CourseTitle</a></h3>
-            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                <span class="badge badge-enrolled">Enrolled @enrollment.EnrolledAt.ToString("MMM dd, yyyy")</span>
-            </div>
-        </div>
-    }
+    <div class="card empty-state">
+        <h3>No Enrollments Yet</h3>
+        <p>Browse the course catalog to find and enroll in courses.</p>
+        <a asp-page="/Courses/Index" class="btn btn-primary" style="margin-top: 1rem;">Browse Courses</a>
+    </div>
 }

@@ -494,3 +494,6 @@ docker-compose.override.local.yml
 .pi/credentials*
 .pi/auth*.json
 .pi/*.token
+
+# SCORM content (extracted at runtime, not checked in)
+src/Host/wwwroot/scorm-content/

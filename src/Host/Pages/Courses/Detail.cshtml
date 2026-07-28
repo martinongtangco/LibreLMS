@@ -34,6 +34,10 @@ else
         {
             <div style="margin-top: 1.5rem;">
                 <span class="badge badge-enrolled" style="font-size: 1rem; padding: 0.4rem 1rem;">✓ Enrolled</span>
+                @if (Model.Course?.IsScorm == true)
+                {
+                    <a asp-page="/Scorm/Launch" asp-route-courseId="@Model.Course.Id" class="btn btn-primary" style="margin-left: 1rem;">Launch SCORM Course</a>
+                }
             </div>
         }
         else

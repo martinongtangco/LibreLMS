@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 using LearningLms.Modules.Catalog;
 using LearningLms.Modules.Catalog.Infrastructure;
 using LearningLms.Modules.Catalog.Application;
@@ -9,6 +10,11 @@ using LearningLms.Modules.Enrollment;
 using LearningLms.Modules.Enrollment.Infrastructure;
 using LearningLms.Modules.Enrollment.Application;
 using LearningLms.Modules.Enrollment.Endpoints;
+using LearningLms.Modules.Scorm;
+using LearningLms.Modules.Scorm.Application;
+using LearningLms.Modules.Scorm.Infrastructure;
+using LearningLms.Modules.Scorm.Endpoints;
+using static LearningLms.Host.ScormHelpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +32,28 @@ builder.Services.AddDbContext<EnrollmentDbContext>(options =>
 // Register module services
 builder.Services.AddCatalogModule();
 builder.Services.AddEnrollmentModule();
+builder.Services.AddScormModule();
+
+// Register EF Core context for Scorm
+builder.Services.AddDbContext<ScormDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sql => sql.MigrationsAssembly(typeof(Program).Assembly)));
+
+// Configure Scorm module with wwwRoot path
+var wwwRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(wwwRootPath);
+builder.Services.ConfigureScormModule(wwwRootPath);
+
+// Register Valkey (StackExchange.Redis) for SCORM session storage
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var config = ConfigurationOptions.Parse(
+        builder.Configuration.GetConnectionString("Valkey") ?? "localhost:6379",
+        true);
+    config.AbortOnConnectFail = false; // Graceful degradation
+    return ConnectionMultiplexer.Connect(config);
+});
 
 // Authentication (Cookie-based for web portal)
 builder.Services.AddAuthentication(options =>
@@ -51,9 +79,6 @@ using (var scope = app.Services.CreateScope())
     var catalogCtx = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
     var enrollmentCtx = scope.ServiceProvider.GetRequiredService<EnrollmentDbContext>();
 
-    // Suppress pending model changes warning for dev — use Migrate() to apply
-    // migrations for each context independently. Migrations properly handle
-    // multiple DbContexts sharing one database via the __EFMigrationsHistory table.
     catalogCtx.Database.EnsureCreated();
     try
     {
@@ -73,11 +98,23 @@ using (var scope = app.Services.CreateScope())
     {
         LearningLms.Modules.Enrollment.Infrastructure.EnrollmentSeeder.Seed(enrollmentCtx);
     }
+
+    // Seed Scorm sample package
+    var scormCtx = scope.ServiceProvider.GetRequiredService<ScormDbContext>();
+    var hostEnv = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+    scormCtx.Database.EnsureCreated();
+    try
+    {
+        scormCtx.Database.Migrate();
+    }
+    catch (System.InvalidOperationException) { /* pending model changes — tables may exist */ }
+    await ScormSeeder.SeedAsync(scormCtx, hostEnv.WebRootPath);
 }
 
 // Middleware pipeline
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseStaticFiles();
 
 // === Catalog Module Endpoints ===
 var courses = app.MapGroup("/api/courses");
@@ -88,11 +125,13 @@ courses.MapGet("/", async (CourseCatalogService service, string? search, string?
     return Results.Ok(new { courses = dto });
 });
 
-courses.MapGet("/{id:guid}", async (CourseCatalogService service, Guid id) =>
+courses.MapGet("/{id:guid}", async (CourseCatalogService service, ScormPackageService scormService, Guid id) =>
 {
     var course = await service.GetByIdAsync(id);
     if (course is null)
         return Results.NotFound();
+
+    var scormPackage = await scormService.GetPackageByCourseIdAsync(id);
 
     return Results.Ok(new
     {
@@ -101,7 +140,9 @@ courses.MapGet("/{id:guid}", async (CourseCatalogService service, Guid id) =>
         course.ShortDescription,
         course.FullDescription,
         course.Category,
-        course.Duration
+        course.Duration,
+        IsScorm = scormPackage is not null,
+        ScormPackageId = scormPackage?.Id
     });
 });
 
@@ -140,6 +181,147 @@ enrollments.MapGet("/my", [Authorize] async (
 
     return Results.Ok(new { enrollments = result });
 });
+
+// === Scorm Module Endpoints ===
+var scorm = app.MapGroup("/api/scorm").WithTags("Scorm");
+
+// POST /api/scorm/{courseId}/launch
+scorm.MapPost("/{courseId:guid}/launch", [Authorize] async (
+    ScormSessionService sessionService,
+    HttpContext httpContext,
+    Guid courseId) =>
+{
+    var studentId = GetStudentId(httpContext);
+    var result = await sessionService.LaunchAsync(studentId, courseId);
+
+    if (result.Error == "Student is not enrolled in this course.")
+        return Results.Forbid();
+
+    if (!result.Success)
+        return Results.BadRequest(new { error = result.Error });
+
+    return Results.Ok(new
+    {
+        sessionId = result.SessionId,
+        entry = result.EntryMode,
+        attemptNumber = result.AttemptNumber
+    });
+});
+
+// POST /api/scorm/upload
+scorm.MapPost("/upload", [Authorize] async (
+    ScormPackageService packageService,
+    HttpContext httpContext,
+    IFormCollection form) =>
+{
+    var isAdmin = httpContext.User.IsInRole("Admin");
+    if (!isAdmin)
+        return Results.Forbid();
+
+    var file = form.Files.GetFile("package");
+    if (file is null || file.Length == 0)
+        return Results.BadRequest(new { error = "No file uploaded" });
+
+    if (!file.FileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        return Results.BadRequest(new { error = "File must be a ZIP archive" });
+
+    var courseId = Guid.Empty;
+    if (form.ContainsKey("courseId") && Guid.TryParse(form["courseId"], out var parsedCourseId))
+        courseId = parsedCourseId;
+
+    if (courseId == Guid.Empty)
+        return Results.BadRequest(new { error = "courseId is required" });
+
+    using var stream = file.OpenReadStream();
+    var (package, error) = await packageService.UploadAsync(stream, courseId);
+
+    if (error is not null)
+        return Results.BadRequest(new { error });
+
+    return Results.Created($"/api/scorm/packages/{package.Id}", new
+    {
+        packageId = package.Id,
+        courseId = package.CourseId,
+        title = package.ManifestTitle,
+        launchPath = package.LaunchPath
+    });
+});
+
+// GET /api/scorm/attempts/my
+scorm.MapGet("/attempts/my", [Authorize] async (
+    ScormAttemptService attemptService,
+    HttpContext httpContext) =>
+{
+    var studentId = GetStudentId(httpContext);
+    var attempts = await attemptService.GetMyAttemptsAsync(studentId);
+
+    var result = attempts.Select(a => new
+    {
+        a.Id,
+        a.CourseId,
+        a.CourseTitle,
+        a.AttemptNumber,
+        a.Status,
+        a.ScoreRaw,
+        a.SessionTime,
+        a.StartedAt,
+        a.CompletedAt,
+        a.LastCommitAt
+    });
+
+    return Results.Ok(new { attempts = result });
+});
+
+// === Scorm Session Endpoints ===
+var sessionGroup = app.MapGroup("/api/scorm/session/{sessionId:guid}").WithTags("Scorm Session");
+
+sessionGroup.MapPost("/setValue", async (
+    ScormSessionService sessionService,
+    [FromBody] SetValueRequest request,
+    Guid sessionId) =>
+{
+    var result = await sessionService.SetValueAsync(sessionId, request.Element, request.Value);
+    if (!result.Success)
+        return Results.BadRequest(new { success = false, errorCode = result.ErrorCode, errorMsg = result.ErrorMsg });
+    return Results.Ok(new { success = true });
+});
+
+sessionGroup.MapGet("/getValue", async (
+    ScormSessionService sessionService,
+    Guid sessionId,
+    [FromQuery] string element) =>
+{
+    var result = await sessionService.GetValueAsync(sessionId, element);
+    if (!result.Found)
+        return Results.NotFound();
+    return Results.Ok(new { value = result.Value });
+});
+
+sessionGroup.MapPost("/commit", async (
+    ScormSessionService sessionService,
+    Guid sessionId) =>
+{
+    var result = await sessionService.CommitAsync(sessionId);
+    if (!result.Success)
+        return Results.NotFound(new { error = result.Error });
+    return Results.Ok(new { success = true, committedAt = result.CommittedAt });
+});
+
+sessionGroup.MapPost("/finish", async (
+    ScormSessionService sessionService,
+    [FromBody] FinishRequest? request,
+    Guid sessionId) =>
+{
+    var result = await sessionService.FinishAsync(sessionId, request?.Exit ?? "normal");
+    if (!result.Success)
+        return Results.NotFound(new { error = result.Error });
+    return Results.Ok(new { success = true, status = result.Status, score = result.Score });
+});
+
+// SCORM API JavaScript shim
+app.MapGet("/api/scorm/session/{sessionId:guid}/api.js", (Guid sessionId) =>
+    Results.Text(ScormApiScriptContent, "application/javascript"))
+.DisableAntiforgery();
 
 // Map Razor Pages
 app.MapRazorPages();

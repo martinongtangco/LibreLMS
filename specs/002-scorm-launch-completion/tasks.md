@@ -20,10 +20,10 @@
 
 **Purpose**: Add EF Core, StackExchange.Redis, and project references needed by the Scorm module.
 
-- [ ] T001 Add EF Core packages (`Microsoft.EntityFrameworkCore.SqlServer`, `Microsoft.EntityFrameworkCore.Design`) to `src/Modules/Scorm/Scorm.csproj`
-- [ ] T002 [P] Add `StackExchange.Redis` package to `src/Modules/Scorm/Scorm.csproj` for Valkey session storage
-- [ ] T003 [P] Add project reference from `src/Modules/Scorm/Scorm.csproj` to `src/Modules/Catalog.Contracts/Catalog.Contracts.csproj`
-- [ ] T004 Add Valkey connection string key to `src/Host/appsettings.Development.json` (`ConnectionStrings:Valkey`)
+- [X] T001 Add EF Core packages (`Microsoft.EntityFrameworkCore.SqlServer`, `Microsoft.EntityFrameworkCore.Design`) to `src/Modules/Scorm/Scorm.csproj`
+- [X] T002 [P] Add `StackExchange.Redis` package to `src/Modules/Scorm/Scorm.csproj` for Valkey session storage
+- [X] T003 [P] Add project reference from `src/Modules/Scorm/Scorm.csproj` to `src/Modules/Catalog.Contracts/Catalog.Contracts.csproj`
+- [X] T004 Add Valkey connection string key to `src/Host/appsettings.Development.json` (`ConnectionStrings:Valkey`)
 
 ---
 
@@ -33,18 +33,18 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T005 Define `IEnrollmentLookup` interface in `src/Modules/Enrollment.Contracts/IEnrollmentLookup.cs` (`Task<bool> IsEnrolledAsync(Guid studentId, Guid courseId)`)
-- [ ] T006 Implement `EnrollmentLookup` in `src/Modules/Enrollment/Application/EnrollmentLookup.cs` (queries `EnrollmentDbContext.Enrollments`)
-- [ ] T007 Register `IEnrollmentLookup` in `src/Modules/Enrollment/Endpoints/EnrollmentModuleExtensions.cs` DI registration
-- [ ] T008 Add project reference from `src/Modules/Scorm/Scorm.csproj` to `src/Modules/Enrollment.Contracts/Enrollment.Contracts.csproj`
-- [ ] T009 Create `ScormPackage` entity in `src/Modules/Scorm/Domain/ScormPackage.cs` (extends `Entity<Guid>`, fields: `CourseId`, `ManifestTitle`, `LaunchPath`, `ContentDirectory`, `CreatedAt`)
-- [ ] T010 [P] Create `CourseAttempt` entity in `src/Modules/Scorm/Domain/CourseAttempt.cs` (extends `Entity<Guid>`, fields: `StudentId`, `CourseId`, `AttemptNumber`, `Status`, `ScoreRaw`, `SessionTime`, `SuspendData`, `StartedAt`, `CompletedAt`, `LastCommitAt`)
-- [ ] T011 Create `ScormDbContext` in `src/Modules/Scorm/Infrastructure/ScormDbContext.cs` (extends `DbContext`, owns `ScormPackages` and `CourseAttempts` tables, with unique index on `(StudentId, CourseId, AttemptNumber)`)
-- [ ] T012 [P] Create `ScormSessionStore` in `src/Modules/Scorm/Infrastructure/ScormSessionStore.cs` (Valkey-backed session state using `StackExchange.Redis` — methods: `CreateSessionAsync`, `SetValueAsync`, `GetValueAsync`, `CommitAsync`, `DeleteSessionAsync`, with 30-minute TTL)
-- [ ] T013 [P] Create `ManifestParser` in `src/Modules/Scorm/Infrastructure/ManifestParser.cs` (parse `imsmanifest.xml` via `XDocument`, extract launch SCO path and manifest title)
-- [ ] T014 Create module registration extension `ScormModuleExtensions` in `src/Modules/Scorm/Endpoints/ScormModuleExtensions.cs` (`IEndpointRouteBuilder.MapScormEndpoints()`)
-- [ ] T015 Update `src/Host/Program.cs` to: register `ScormDbContext` with MSSQL, register `IConnectionMultiplexer` for Valkey, register `ScormModule`, add `MapScormEndpoints()`
-- [ ] T016 Create `ScormSeeder` in `src/Modules/Scorm/Infrastructure/ScormSeeder.cs` (seeds a minimal sample SCORM package with a dummy manifest and content for demo)
+- [X] T005 Define `IEnrollmentLookup` interface in `src/Modules/Enrollment.Contracts/IEnrollmentLookup.cs` (`Task<bool> IsEnrolledAsync(Guid studentId, Guid courseId)`)
+- [X] T006 Implement `EnrollmentLookup` in `src/Modules/Enrollment/Application/EnrollmentLookup.cs` (queries `EnrollmentDbContext.Enrollments`)
+- [X] T007 Register `IEnrollmentLookup` in `src/Modules/Enrollment/Endpoints/EnrollmentModuleExtensions.cs` DI registration
+- [X] T008 Add project reference from `src/Modules/Scorm/Scorm.csproj` to `src/Modules/Enrollment.Contracts/Enrollment.Contracts.csproj`
+- [X] T009 Create `ScormPackage` entity in `src/Modules/Scorm/Domain/ScormPackage.cs` (extends `Entity<Guid>`, fields: `CourseId`, `ManifestTitle`, `LaunchPath`, `ContentDirectory`, `CreatedAt`)
+- [X] T010 [P] Create `CourseAttempt` entity in `src/Modules/Scorm/Domain/CourseAttempt.cs` (extends `Entity<Guid>`, fields: `StudentId`, `CourseId`, `AttemptNumber`, `Status`, `ScoreRaw`, `SessionTime`, `SuspendData`, `StartedAt`, `CompletedAt`, `LastCommitAt`)
+- [X] T011 Create `ScormDbContext` in `src/Modules/Scorm/Infrastructure/ScormDbContext.cs` (extends `DbContext`, owns `ScormPackages` and `CourseAttempts` tables, with unique index on `(StudentId, CourseId, AttemptNumber)`)
+- [X] T012 [P] Create `ScormSessionStore` in `src/Modules/Scorm/Infrastructure/ScormSessionStore.cs` (Valkey-backed session state using `StackExchange.Redis` — methods: `CreateSessionAsync`, `SetValueAsync`, `GetValueAsync`, `CommitAsync`, `DeleteSessionAsync`, with 30-minute TTL)
+- [X] T013 [P] Create `ManifestParser` in `src/Modules/Scorm/Infrastructure/ManifestParser.cs` (parse `imsmanifest.xml` via `XDocument`, extract launch SCO path and manifest title)
+- [X] T014 Create module registration extension `ScormModuleExtensions` in `src/Modules/Scorm/Endpoints/ScormModuleExtensions.cs` (`IEndpointRouteBuilder.MapScormEndpoints()`)
+- [X] T015 Update `src/Host/Program.cs` to: register `ScormDbContext` with MSSQL, register `IConnectionMultiplexer` for Valkey, register `ScormModule`, add `MapScormEndpoints()`
+- [X] T016 Create `ScormSeeder` in `src/Modules/Scorm/Infrastructure/ScormSeeder.cs` (seeds a minimal sample SCORM package with a dummy manifest and content for demo)
 
 **Checkpoint**: Foundation ready — Scorm module has entities, DbContext, session store, manifest parser, DI wiring, and cross-module contracts. User story implementation can now begin.
 
@@ -58,14 +58,14 @@
 
 ### Implementation for User Story 1
 
-- [ ] T017 [US1] Implement `ScormPackageService` in `src/Modules/Scorm/Application/ScormPackageService.cs` (methods: `GetPackageByCourseIdAsync(courseId)`, `FindLaunchPath(courseId)`) using `ScormDbContext`
-- [ ] T018 [US1] Implement `ScormSessionService` in `src/Modules/Scorm/Application/ScormSessionService.cs` (method: `LaunchAsync(studentId, courseId)` — validates enrollment via `IEnrollmentLookup`, checks for active session, creates session in Valkey with default CMI values, creates `CourseAttempt` record in MSSQL)
-- [ ] T019 [US1] Implement `POST /api/scorm/{courseId}/launch` endpoint in `src/Modules/Scorm/Endpoints/ScormEndpoints.cs` (requires authentication, returns sessionId, contentUrl, apiUrl, entry mode)
-- [ ] T020 [US1] Create SCORM wrapper Razor Page at `src/Host/Pages/Scorm/Launch.cshtml` and `Launch.cshtml.cs` (minimal layout, injects SCORM API script, shows course content via iframe or embedded HTML)
-- [ ] T021 [US1] Configure static file serving for `wwwroot/scorm-content/` in `src/Host/Program.cs`
-- [ ] T022 [US1] Wire seeder into `src/Host/Program.cs` (seed sample SCORM package on first startup if no packages exist)
-- [ ] T023 [US1] Update course detail page (`src/Host/Pages/Courses/Detail.cshtml`) to show "Launch" button for SCORM courses (check if course has a ScormPackage)
-- [ ] T024 [US1] Update `GET /api/courses/{id}` to include `isScorm` and `scormPackageId` fields in the response for course detail UI
+- [X] T017 [US1] Implement `ScormPackageService` in `src/Modules/Scorm/Application/ScormPackageService.cs` (methods: `GetPackageByCourseIdAsync(courseId)`, `FindLaunchPath(courseId)`) using `ScormDbContext`
+- [X] T018 [US1] Implement `ScormSessionService` in `src/Modules/Scorm/Application/ScormSessionService.cs` (method: `LaunchAsync(studentId, courseId)` — validates enrollment via `IEnrollmentLookup`, checks for active session, creates session in Valkey with default CMI values, creates `CourseAttempt` record in MSSQL)
+- [X] T019 [US1] Implement `POST /api/scorm/{courseId}/launch` endpoint in `src/Modules/Scorm/Endpoints/ScormEndpoints.cs` (requires authentication, returns sessionId, contentUrl, apiUrl, entry mode)
+- [X] T020 [US1] Create SCORM wrapper Razor Page at `src/Host/Pages/Scorm/Launch.cshtml` and `Launch.cshtml.cs` (minimal layout, injects SCORM API script, shows course content via iframe or embedded HTML)
+- [X] T021 [US1] Configure static file serving for `wwwroot/scorm-content/` in `src/Host/Program.cs`
+- [X] T022 [US1] Wire seeder into `src/Host/Program.cs` (seed sample SCORM package on first startup if no packages exist)
+- [X] T023 [US1] Update course detail page (`src/Host/Pages/Courses/Detail.cshtml`) to show "Launch" button for SCORM courses (check if course has a ScormPackage)
+- [X] T024 [US1] Update `GET /api/courses/{id}` to include `isScorm` and `scormPackageId` fields in the response for course detail UI
 
 **Checkpoint**: At this point, enrolled students can launch a seeded SCORM course and see the content with an active session.
 
@@ -79,12 +79,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T025 [US2] Extend `ScormSessionService` with `SetValueAsync(sessionId, element, value)` — validates CMI fields (score 0-100, valid status values), stores in Valkey via `ScormSessionStore`
-- [ ] T026 [US2] Extend `ScormSessionService` with `GetValueAsync(sessionId, element)` — reads from Valkey via `ScormSessionStore`
-- [ ] T027 [US2] Implement `POST /api/scorm/session/{sessionId}/setValue` endpoint in `src/Modules/Scorm/Endpoints/ScormSessionEndpoints.cs` (returns success/error with SCORM error code)
-- [ ] T028 [P] [US2] Implement `GET /api/scorm/session/{sessionId}/getValue` endpoint in `src/Modules/Scorm/Endpoints/ScormSessionEndpoints.cs` (returns value string)
-- [ ] T029 [US2] Create SCORM API JavaScript shim in `src/Modules/Scorm/Endpoints/ScormApiScriptEndpoint.cs` — serves `api.js` that defines `window.API` with `LMSInitialize`, `LMSFinish`, `LMSGetValue`, `LMSSetValue`, `LMSCommit` calling server endpoints via `fetch()`
-- [ ] T030 [US2] Add `beforeunload` handler to SCORM wrapper page (`src/Host/Pages/Scorm/Launch.cshtml`) that calls `/api/scorm/session/{sessionId}/commit` on tab close
+- [X] T025 [US2] Extend `ScormSessionService` with `SetValueAsync(sessionId, element, value)` — validates CMI fields (score 0-100, valid status values), stores in Valkey via `ScormSessionStore`
+- [X] T026 [US2] Extend `ScormSessionService` with `GetValueAsync(sessionId, element)` — reads from Valkey via `ScormSessionStore`
+- [X] T027 [US2] Implement `POST /api/scorm/session/{sessionId}/setValue` endpoint in `src/Modules/Scorm/Endpoints/ScormSessionEndpoints.cs` (returns success/error with SCORM error code)
+- [X] T028 [P] [US2] Implement `GET /api/scorm/session/{sessionId}/getValue` endpoint in `src/Modules/Scorm/Endpoints/ScormSessionEndpoints.cs` (returns value string)
+- [X] T029 [US2] Create SCORM API JavaScript shim in `src/Modules/Scorm/Endpoints/ScormApiScriptEndpoint.cs` — serves `api.js` that defines `window.API` with `LMSInitialize`, `LMSFinish`, `LMSGetValue`, `LMSSetValue`, `LMSCommit` calling server endpoints via `fetch()`
+- [X] T030 [US2] Add `beforeunload` handler to SCORM wrapper page (`src/Host/Pages/Scorm/Launch.cshtml`) that calls `/api/scorm/session/{sessionId}/commit` on tab close
 
 **Checkpoint**: At this point, SCORM content can communicate with the system via the API shim — set and get values, with score validation.
 
@@ -98,13 +98,13 @@
 
 ### Implementation for User Story 3
 
-- [ ] T031 [US3] Extend `ScormSessionService` with `CommitAsync(sessionId)` — reads full CMI bag from Valkey, updates/creates `CourseAttempt` in MSSQL with status, score, session time, suspend data
-- [ ] T032 [US3] Extend `ScormSessionService` with `FinishAsync(sessionId, exitReason)` — commits data, sets `CompletedAt`, deletes Valkey session (cleanup)
-- [ ] T033 [US3] Implement `POST /api/scorm/session/{sessionId}/commit` endpoint in `src/Modules/Scorm/Endpoints/ScormSessionEndpoints.cs`
-- [ ] T034 [P] [US3] Implement `POST /api/scorm/session/{sessionId}/finish` endpoint in `src/Modules/Scorm/Endpoints/ScormSessionEndpoints.cs`
-- [ ] T035 [US3] Implement `ScormAttemptService` in `src/Modules/Scorm/Application/ScormAttemptService.cs` (method: `GetMyAttemptsAsync(studentId)` — returns attempts with course titles via `ICourseLookup`)
-- [ ] T036 [US3] Implement `GET /api/scorm/attempts/my` endpoint in `src/Modules/Scorm/Endpoints/ScormEndpoints.cs` (requires authentication, returns attempts with course titles)
-- [ ] T037 [US3] Update "My Courses" Razor Page (`src/Host/Pages/MyCourses/Index.cshtml`) to display SCORM attempt status and score alongside enrollment info
+- [X] T031 [US3] Extend `ScormSessionService` with `CommitAsync(sessionId)` — reads full CMI bag from Valkey, updates/creates `CourseAttempt` in MSSQL with status, score, session time, suspend data
+- [X] T032 [US3] Extend `ScormSessionService` with `FinishAsync(sessionId, exitReason)` — commits data, sets `CompletedAt`, deletes Valkey session (cleanup)
+- [X] T033 [US3] Implement `POST /api/scorm/session/{sessionId}/commit` endpoint in `src/Modules/Scorm/Endpoints/ScormSessionEndpoints.cs`
+- [X] T034 [P] [US3] Implement `POST /api/scorm/session/{sessionId}/finish` endpoint in `src/Modules/Scorm/Endpoints/ScormSessionEndpoints.cs`
+- [X] T035 [US3] Implement `ScormAttemptService` in `src/Modules/Scorm/Application/ScormAttemptService.cs` (method: `GetMyAttemptsAsync(studentId)` — returns attempts with course titles via `ICourseLookup`)
+- [X] T036 [US3] Implement `GET /api/scorm/attempts/my` endpoint in `src/Modules/Scorm/Endpoints/ScormEndpoints.cs` (requires authentication, returns attempts with course titles)
+- [X] T037 [US3] Update "My Courses" Razor Page (`src/Host/Pages/MyCourses/Index.cshtml`) to display SCORM attempt status and score alongside enrollment info
 
 **Checkpoint**: Students can complete SCORM courses and view their results. Data persists across page reloads.
 
@@ -118,9 +118,9 @@
 
 ### Implementation for User Story 4
 
-- [ ] T038 [US4] Extend `ScormSessionService.LaunchAsync` to check for existing incomplete attempt — if found, set `entry="resume"`, restore `suspendData` and `sessionTime` into the new Valkey session from the last `CourseAttempt` record
-- [ ] T039 [US4] Extend `ScormSessionService.LaunchAsync` to auto-increment `AttemptNumber` for new attempts (query max attempt number for this student/course)
-- [ ] T040 [US4] Update SCORM wrapper page (`src/Host/Pages/Scorm/Launch.cshtml.cs`) to pass `entry` mode (initial/resume/retake) to the session initialization and show appropriate UI message for completed courses
+- [X] T038 [US4] Extend `ScormSessionService.LaunchAsync` to check for existing incomplete attempt — if found, set `entry="resume"`, restore `suspendData` and `sessionTime` into the new Valkey session from the last `CourseAttempt` record
+- [X] T039 [US4] Extend `ScormSessionService.LaunchAsync` to auto-increment `AttemptNumber` for new attempts (query max attempt number for this student/course)
+- [X] T040 [US4] Update SCORM wrapper page (`src/Host/Pages/Scorm/Launch.cshtml.cs`) to pass `entry` mode (initial/resume/retake) to the session initialization and show appropriate UI message for completed courses
 
 **Checkpoint**: Students can resume courses from their last checkpoint and track multiple attempts.
 
@@ -134,10 +134,10 @@
 
 ### Implementation for User Story 5
 
-- [ ] T041 [US5] Extend `ScormPackageService` with `UploadAsync(file, title)` — validates ZIP contains `imsmanifest.xml`, parses manifest via `ManifestParser`, extracts ZIP to `wwwroot/scorm-content/{packageId}/`, creates `ScormPackage` entity, creates/links `Course` in Catalog via DbContext
-- [ ] T042 [US5] Implement `POST /api/scorm/upload` endpoint in `src/Modules/Scorm/Endpoints/ScormEndpoints.cs` (requires admin authorization, accepts multipart form-data with `package` field, returns package details)
-- [ ] T043 [US5] Create admin upload Razor Page at `src/Host/Pages/Admin/Upload.cshtml` and `Upload.cshtml.cs` (file picker for ZIP, upload button, error/success messages)
-- [ ] T044 [US5] Add admin authorization check — update Program.cs or endpoint to require `[Authorize(Roles = "Admin")]` for upload endpoint
+- [X] T041 [US5] Extend `ScormPackageService` with `UploadAsync(file, title)` — validates ZIP contains `imsmanifest.xml`, parses manifest via `ManifestParser`, extracts ZIP to `wwwroot/scorm-content/{packageId}/`, creates `ScormPackage` entity, creates/links `Course` in Catalog via DbContext
+- [X] T042 [US5] Implement `POST /api/scorm/upload` endpoint in `src/Modules/Scorm/Endpoints/ScormEndpoints.cs` (requires admin authorization, accepts multipart form-data with `package` field, returns package details)
+- [X] T043 [US5] Create admin upload Razor Page at `src/Host/Pages/Admin/Upload.cshtml` and `Upload.cshtml.cs` (file picker for ZIP, upload button, error/success messages)
+- [X] T044 [US5] Add admin authorization check — update Program.cs or endpoint to require `[Authorize(Roles = "Admin")]` for upload endpoint
 
 **Checkpoint**: Admins can upload SCORM packages that become available in the catalog.
 
@@ -147,13 +147,13 @@
 
 **Purpose**: Improvements that affect multiple user stories.
 
-- [ ] T045 [P] Add `dotnet ef migrations add` migration files for `ScormDbContext` (ScormPackages + CourseAttempts tables)
-- [ ] T046 Update `tests/ArchitectureTests/ModuleBoundaryTests.cs` to verify Scorm module boundaries (Scorm → Catalog.Contracts, Scorm → Enrollment.Contracts only; no direct module references)
-- [ ] T047 [P] Update `.gitignore` to exclude `wwwroot/scorm-content/` (runtime-extracted content)
-- [ ] T048 [P] Add session timeout handling — server-side check in ScormSessionStore for expired Valkey keys (TTL exceeded), returning 404 for stale session IDs
-- [ ] T049 [P] Update shared layout (`src/Host/Pages/Shared/_Layout.cshtml`) with admin upload link in navigation
-- [ ] T050 Run full `dotnet build` and `dotnet test` to verify everything compiles and tests pass
-- [ ] T051 Validate against `quickstart.md` scenarios (all 8 validation checks)
+- [X] T045 [P] Add `dotnet ef migrations add` migration files for `ScormDbContext` (ScormPackages + CourseAttempts tables)
+- [X] T046 Update `tests/ArchitectureTests/ModuleBoundaryTests.cs` to verify Scorm module boundaries (Scorm → Catalog.Contracts, Scorm → Enrollment.Contracts only; no direct module references)
+- [X] T047 [P] Update `.gitignore` to exclude `wwwroot/scorm-content/` (runtime-extracted content)
+- [X] T048 [P] Add session timeout handling — server-side check in ScormSessionStore for expired Valkey keys (TTL exceeded), returning 404 for stale session IDs
+- [X] T049 [P] Update shared layout (`src/Host/Pages/Shared/_Layout.cshtml`) with admin upload link in navigation
+- [X] T050 Run full `dotnet build` and `dotnet test` to verify everything compiles and tests pass
+- [X] T051 Validate against `quickstart.md` scenarios (all 8 validation checks)
 
 ---
 

@@ -53,7 +53,7 @@ public class CourseDetailModel : PageModel
 
 public record CourseDetail(
     Guid Id, string Title, string ShortDescription, string FullDescription,
-    string Category, string Duration);
+    string Category, string Duration, bool IsScorm, Guid? ScormPackageId);
 
 public record MyEnrollmentsResponse(IEnumerable<MyEnrollmentItem> Enrollments);
 public record MyEnrollmentItem(Guid Id, Guid CourseId, string CourseTitle, DateTimeOffset EnrolledAt);
