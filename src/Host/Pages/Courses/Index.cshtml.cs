@@ -1,15 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using LearningLms.Contracts.Enrollment;
+using LearningLms.Modules.Catalog.Application;
 
 namespace LearningLms.Host.Pages.Courses;
 
 public class CourseIndexModel : PageModel
 {
-    private readonly HttpClient _httpClient;
+    private readonly CourseCatalogService _catalogService;
+    private readonly IEnrollmentLookup _enrollmentLookup;
 
-    public CourseIndexModel(IHttpClientFactory httpClientFactory)
+    public CourseIndexModel(
+        CourseCatalogService catalogService,
+        IEnrollmentLookup enrollmentLookup)
     {
-        _httpClient = httpClientFactory.CreateClient();
+        _catalogService = catalogService;
+        _enrollmentLookup = enrollmentLookup;
     }
 
     public List<CourseItem> Courses { get; set; } = new();
@@ -19,30 +25,15 @@ public class CourseIndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        var url = "/api/courses";
-        var queryParams = new List<string>();
-        if (!string.IsNullOrWhiteSpace(Search)) queryParams.Add($"search={Uri.EscapeDataString(Search)}");
-        if (!string.IsNullOrWhiteSpace(Category)) queryParams.Add($"category={Uri.EscapeDataString(Category)}");
-        if (queryParams.Count > 0) url += "?" + string.Join("&", queryParams);
-
         try
         {
-            var response = await _httpClient.GetAsync(url);
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync();
-                var data = System.Text.Json.JsonSerializer.Deserialize<CourseListResponse>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                if (data?.Courses != null)
-                {
-                    // Fetch current user's enrollments to determine enrollment status per course
-                    var enrolledCourseIds = await GetEnrolledCourseIds();
+            var courses = await _catalogService.ListAsync(Search, Category);
+            var enrolledIds = await GetEnrolledCourseIds();
 
-                    Courses = data.Courses.Select(c => new CourseItem(
-                        c.Id, c.Title, c.ShortDescription, c.Category, c.Duration,
-                        enrolledCourseIds.Contains(c.Id))).ToList();
-                    Categories = Courses.Select(c => c.Category).Distinct().OrderBy(c => c).ToList();
-                }
-            }
+            Courses = courses.Select(c => new CourseItem(
+                c.Id, c.Title, c.ShortDescription, c.Category, c.Duration,
+                enrolledIds.Contains(c.Id))).ToList();
+            Categories = Courses.Select(c => c.Category).Distinct().OrderBy(c => c).ToList();
         }
         catch
         {
@@ -50,34 +41,44 @@ public class CourseIndexModel : PageModel
         }
     }
 
-    /// <summary>Fetch the set of course IDs the current student is enrolled in.</summary>
-    private async Task<HashSet<Guid>> GetEnrolledCourseIds()
+    /// <summary>HTMX handler: return course list partial for inline swap.</summary>
+    public async Task<PartialViewResult> OnGetCourseListAsync(string? search, string? category)
     {
-        var ids = new HashSet<Guid>();
         try
         {
-            var response = await _httpClient.GetAsync("/api/enrollments/my");
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync();
-                var data = System.Text.Json.JsonSerializer.Deserialize<EnrollmentListResponse>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                if (data?.Enrollments != null)
-                {
-                    foreach (var e in data.Enrollments)
-                        ids.Add(e.CourseId);
-                }
-            }
+            var courses = await _catalogService.ListAsync(search, category);
+            var enrolledIds = await GetEnrolledCourseIds();
+
+            var model = courses.Select(c => new CourseItem(
+                c.Id, c.Title, c.ShortDescription, c.Category, c.Duration,
+                enrolledIds.Contains(c.Id))).ToList();
+
+            return Partial("_CourseList", model);
         }
         catch
         {
-            // Best-effort — show courses without enrollment indicators
+            return Partial("_ErrorPartial", "Unable to load data. Please refresh.");
         }
+    }
+
+    /// <summary>Fetch the set of course IDs the current student is enrolled in.</summary>
+    private async Task<HashSet<Guid>> GetEnrolledCourseIds()
+    {
+        var studentId = ScormHelpers.GetStudentId(HttpContext);
+        var ids = new HashSet<Guid>();
+
+        var courses = await _catalogService.ListAsync();
+        foreach (var course in courses)
+        {
+            if (await _enrollmentLookup.IsEnrolledAsync(studentId, course.Id))
+            {
+                ids.Add(course.Id);
+            }
+        }
+
         return ids;
     }
 }
-
-public record EnrollmentListResponse(System.Collections.Generic.IEnumerable<EnrollmentItem> Enrollments);
-public record EnrollmentItem(Guid Id, Guid CourseId, string CourseTitle, System.DateTimeOffset EnrolledAt);
 
 public record CourseListResponse(IEnumerable<CourseItem> Courses);
 public record CourseItem(Guid Id, string Title, string ShortDescription, string Category, string Duration, bool IsEnrolled = false);

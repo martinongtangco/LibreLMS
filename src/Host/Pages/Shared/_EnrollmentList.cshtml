@@ -1,0 +1,21 @@
+@using LearningLms.Host.Pages.MyCourses
+@model IEnumerable<EnrollmentRow>
+
+@if (!Model.Any())
+{
+    <div class="card empty-state">
+        <h3>No Enrollments Yet</h3>
+        <p>Browse the course catalog to find and enroll in courses.</p>
+        <a href="/Courses" class="btn btn-primary" style="margin-top: 1rem;">Browse Courses</a>
+    </div>
+}
+else
+{
+    <div class="card">
+        <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Enrolled Courses</h2>
+        @foreach (var row in Model)
+        {
+            @await Html.PartialAsync("_MyCourseRow", row)
+        }
+    </div>
+}

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace LearningLms.Host;
 
 /// <summary>DTOs and constants used by Scorm endpoints in Program.cs.</summary>
@@ -81,4 +83,17 @@ public static class ScormHelpers
     }
 })();
 ";
+
+    /// <summary>Extract student ID from HTTP context (claims or demo fallback).</summary>
+    public static Guid GetStudentId(HttpContext httpContext)
+    {
+        var claim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? httpContext.User.FindFirst("sub")?.Value;
+
+        if (!string.IsNullOrEmpty(claim) && Guid.TryParse(claim, out var parsedGuid))
+            return parsedGuid;
+
+        // Demo fallback: use first seeded student
+        return Guid.Parse("550e8400-e29b-41d4-a716-446655440001");
+    }
 }

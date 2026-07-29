@@ -1,75 +1,88 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using LearningLms.Modules.Enrollment.Application;
+using LearningLms.Modules.Scorm.Application;
 
 namespace LearningLms.Host.Pages.MyCourses;
 
 public class MyCoursesModel : PageModel
 {
-    private readonly HttpClient _httpClient;
+    private readonly EnrollmentService _enrollmentService;
+    private readonly ScormAttemptService _scormAttemptService;
 
-    public MyCoursesModel(IHttpClientFactory httpClientFactory)
+    public MyCoursesModel(
+        EnrollmentService enrollmentService,
+        ScormAttemptService scormAttemptService)
     {
-        _httpClient = httpClientFactory.CreateClient();
+        _enrollmentService = enrollmentService;
+        _scormAttemptService = scormAttemptService;
     }
 
-    public List<MyEnrollment> Enrollments { get; set; } = new();
-    public List<ScormAttempt> ScormAttempts { get; set; } = new();
+    public List<EnrollmentRow> EnrollmentRows { get; set; } = new();
 
     public async Task OnGetAsync()
     {
-        // Fetch enrollments
         try
         {
-            var response = await _httpClient.GetAsync("/api/enrollments/my");
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync();
-                var data = System.Text.Json.JsonSerializer.Deserialize<MyEnrollmentsResponse>(json,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                if (data?.Enrollments != null)
-                {
-                    Enrollments = data.Enrollments.ToList();
-                }
-            }
+            await LoadEnrollments();
         }
         catch
         {
-            // API call failed — show empty state
+            // Show empty state on failure
         }
+    }
 
-        // Fetch SCORM attempts
+    /// <summary>HTMX handler: return enrollment list partial for inline refresh (US4).</summary>
+    public async Task<PartialViewResult> OnGetEnrollmentsAsync()
+    {
         try
         {
-            var attemptResponse = await _httpClient.GetAsync("/api/scorm/attempts/my");
-            if (attemptResponse.IsSuccessStatusCode)
-            {
-                var attemptJson = await attemptResponse.Content.ReadAsStringAsync();
-                var attemptData = System.Text.Json.JsonSerializer.Deserialize<ScormAttemptsResponse>(attemptJson,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                if (attemptData?.Attempts != null)
-                {
-                    ScormAttempts = attemptData.Attempts.ToList();
-                }
-            }
+            var model = await BuildEnrollmentRows();
+            return Partial("_EnrollmentList", model);
         }
         catch
         {
-            // No attempts yet
+            return Partial("_ErrorPartial", "Unable to load enrollment data. Please refresh.");
         }
+    }
+
+    private async Task LoadEnrollments()
+    {
+        var rows = await BuildEnrollmentRows();
+        EnrollmentRows = rows;
+    }
+
+    private async Task<List<EnrollmentRow>> BuildEnrollmentRows()
+    {
+        var studentId = ScormHelpers.GetStudentId(HttpContext);
+
+        var enrollments = await _enrollmentService.GetMyEnrollmentsAsync(studentId);
+        var attempts = await _scormAttemptService.GetMyAttemptsAsync(studentId);
+
+        // Join enrollments with latest SCORM attempt per course
+        var attemptByCourse = attempts
+            .GroupBy(a => a.CourseId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(a => a.AttemptNumber).First());
+
+        return enrollments.Select(e =>
+        {
+            var attempt = attemptByCourse.TryGetValue(e.Enrollment.CourseId, out var a) ? a : null;
+            return new EnrollmentRow(
+                EnrollmentId: e.Enrollment.Id,
+                CourseId: e.Enrollment.CourseId,
+                CourseTitle: e.CourseTitle,
+                EnrolledAt: e.Enrollment.EnrolledAt,
+                LatestStatus: attempt?.Status,
+                LatestScore: attempt?.ScoreRaw);
+        }).ToList();
     }
 }
 
-public record MyEnrollmentsResponse(System.Collections.Generic.IEnumerable<MyEnrollment> Enrollments);
-public record MyEnrollment(Guid Id, Guid CourseId, string CourseTitle, DateTimeOffset EnrolledAt);
-
-public record ScormAttemptsResponse(System.Collections.Generic.IEnumerable<ScormAttempt> Attempts);
-public record ScormAttempt(
-    Guid Id,
+/// <summary>View model for enrollment row partial view (HTMX swaps).</summary>
+public record EnrollmentRow(
+    Guid EnrollmentId,
     Guid CourseId,
     string CourseTitle,
-    int AttemptNumber,
-    string Status,
-    double? ScoreRaw,
-    string? SessionTime,
-    DateTimeOffset StartedAt,
-    DateTimeOffset? CompletedAt,
-    DateTimeOffset LastCommitAt);
+    DateTimeOffset EnrolledAt,
+    string? LatestStatus,
+    double? LatestScore);

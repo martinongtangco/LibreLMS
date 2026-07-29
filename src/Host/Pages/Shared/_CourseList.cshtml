@@ -1,0 +1,17 @@
+@using LearningLms.Host.Pages.Courses
+@model IEnumerable<CourseItem>
+
+@if (!Model.Any())
+{
+    <div class="card empty-state">
+        <h2>No courses found</h2>
+        <p>Try adjusting your search or filter criteria.</p>
+    </div>
+}
+else
+{
+    @foreach (var course in Model)
+    {
+        @await Html.PartialAsync("_CourseCard", course)
+    }
+}

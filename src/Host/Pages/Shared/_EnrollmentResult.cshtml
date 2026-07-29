@@ -1,0 +1,32 @@
+@using LearningLms.Host.Pages.Courses
+@model EnrollmentResult
+
+@if (Model.Success)
+{
+    <div>
+        <span class="badge badge-enrolled" style="font-size: 1rem; padding: 0.4rem 1rem;">✓ Enrolled</span>
+        @if (Model.IsScorm == true)
+        {
+            <a asp-page="/Scorm/Launch" asp-route-courseId="@Model.CourseId" class="btn btn-primary" style="margin-left: 1rem;">Launch SCORM Course</a>
+        }
+    </div>
+}
+else if (Model.MessageType == "warning")
+{
+    <div>
+        <span style="color: #f57c00; font-weight: 500;">@Model.Message</span>
+    </div>
+}
+else
+{
+    <div>
+        <span style="color: #c62828; font-weight: 500;">@Model.Message</span>
+        <form hx-post="/Courses/Detail?handler=Enroll"
+              hx-vals='{"courseId": "@Model.CourseId"}'
+              hx-swap="outerHTML"
+              hx-target="#enroll-region"
+              style="display: inline;">
+            <button type="submit" class="btn btn-primary" style="margin-left: 0.5rem;">Retry</button>
+        </form>
+    </div>
+}

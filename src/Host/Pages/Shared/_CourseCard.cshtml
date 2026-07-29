@@ -1,0 +1,28 @@
+@using LearningLms.Host.Pages.Courses
+@model CourseItem
+
+<div class="card">
+    <h3>
+        <a asp-page="/Courses/Detail" asp-route-id="@Model.Id"
+           hx-get="/Courses/Detail?id=@Model.Id&handler=Detail"
+           hx-target="#main-content"
+           hx-push-url="true"
+           style="text-decoration: none; color: inherit;">@Model.Title</a>
+    </h3>
+    <p>@Model.ShortDescription</p>
+    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+        <span class="badge badge-category">@Model.Category</span>
+        <span class="badge badge-duration">@Model.Duration</span>
+        @if (Model.IsEnrolled)
+        {
+            <span class="badge badge-enrolled">✓ Enrolled</span>
+        }
+    </div>
+    <div style="margin-top: 0.75rem;">
+        <a asp-page="/Courses/Detail" asp-route-id="@Model.Id"
+           hx-get="/Courses/Detail?id=@Model.Id&handler=Detail"
+           hx-target="#main-content"
+           hx-push-url="true"
+           class="btn btn-secondary">View Details</a>
+    </div>
+</div>
