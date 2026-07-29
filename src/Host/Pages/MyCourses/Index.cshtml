@@ -17,6 +17,6 @@
 
 <div id="enrollment-list"
      hx-get="/MyCourses?handler=Enrollments"
-     hx-trigger="from:[data-refresh-enrollments]">
+     hx-trigger="load">
     @await Html.PartialAsync("_EnrollmentList", Model.EnrollmentRows)
 </div>

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using LearningLms.Modules.Enrollment.Application;
@@ -22,28 +23,15 @@ public class MyCoursesModel : PageModel
 
     public async Task OnGetAsync()
     {
-        try
-        {
-            await LoadEnrollments();
-        }
-        catch
-        {
-            // Show empty state on failure
-        }
+        await LoadEnrollments();
     }
 
     /// <summary>HTMX handler: return enrollment list partial for inline refresh (US4).</summary>
+    [Authorize]
     public async Task<PartialViewResult> OnGetEnrollmentsAsync()
     {
-        try
-        {
-            var model = await BuildEnrollmentRows();
-            return Partial("_EnrollmentList", model);
-        }
-        catch
-        {
-            return Partial("_ErrorPartial", "Unable to load enrollment data. Please refresh.");
-        }
+        var model = await BuildEnrollmentRows();
+        return Partial("_EnrollmentList", model);
     }
 
     private async Task LoadEnrollments()

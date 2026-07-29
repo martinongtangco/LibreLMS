@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using LearningLms.Contracts.Enrollment;
@@ -32,87 +33,72 @@ public class CourseDetailModel : PageModel
 
     public async Task OnGetAsync()
     {
-        try
-        {
-            var course = await _catalogService.GetByIdAsync(Id);
-            if (course is null)
-                return;
+        var course = await _catalogService.GetByIdAsync(Id);
+        if (course is null)
+            return; // Course is null → "Course Not Found" view renders
 
-            var studentId = ScormHelpers.GetStudentId(HttpContext);
-            var enrolled = await _enrollmentLookup.IsEnrolledAsync(studentId, Id);
-            var scormPkg = await _scormPackageService.GetPackageByCourseIdAsync(Id);
+        var studentId = ScormHelpers.GetStudentId(HttpContext);
+        var enrolled = await _enrollmentLookup.IsEnrolledAsync(studentId, Id);
+        var scormPkg = await _scormPackageService.GetPackageByCourseIdAsync(Id);
 
-            Course = new CourseDetailItem(
-                Id: course.Id,
-                Title: course.Title,
-                ShortDescription: course.ShortDescription,
-                FullDescription: course.FullDescription,
-                Category: course.Category,
-                Duration: course.Duration,
-                IsEnrolled: enrolled,
-                IsScorm: scormPkg is not null,
-                ScormPackageId: scormPkg?.Id);
+        Course = new CourseDetailItem(
+            Id: course.Id,
+            Title: course.Title,
+            ShortDescription: course.ShortDescription,
+            FullDescription: course.FullDescription,
+            Category: course.Category,
+            Duration: course.Duration,
+            IsEnrolled: enrolled,
+            IsScorm: scormPkg is not null,
+            ScormPackageId: scormPkg?.Id);
 
-            IsEnrolled = enrolled;
-        }
-        catch
-        {
-            // API call failed
-        }
+        IsEnrolled = enrolled;
     }
 
     /// <summary>HTMX handler: return course detail partial for inline swap (US3).</summary>
     public async Task<PartialViewResult> OnGetDetailAsync(Guid id)
     {
-        try
+        var course = await _catalogService.GetByIdAsync(id);
+        if (course is null)
         {
-            var course = await _catalogService.GetByIdAsync(id);
-            if (course is null)
-            {
-                return Partial("_ErrorPartial", "Course not found");
-            }
-
-            var studentId = ScormHelpers.GetStudentId(HttpContext);
-            var enrolled = await _enrollmentLookup.IsEnrolledAsync(studentId, id);
-            var scormPkg = await _scormPackageService.GetPackageByCourseIdAsync(id);
-
-            var model = new CourseDetailItem(
-                Id: course.Id,
-                Title: course.Title,
-                ShortDescription: course.ShortDescription,
-                FullDescription: course.FullDescription,
-                Category: course.Category,
-                Duration: course.Duration,
-                IsEnrolled: enrolled,
-                IsScorm: scormPkg is not null,
-                ScormPackageId: scormPkg?.Id);
-
-            return Partial("_CourseDetail", model);
+            return Partial("_ErrorPartial", "Course not found");
         }
-        catch
-        {
-            return Partial("_ErrorPartial", "Unable to load data. Please refresh.");
-        }
+
+        var studentId = ScormHelpers.GetStudentId(HttpContext);
+        var enrolled = await _enrollmentLookup.IsEnrolledAsync(studentId, id);
+        var scormPkg = await _scormPackageService.GetPackageByCourseIdAsync(id);
+
+        var model = new CourseDetailItem(
+            Id: course.Id,
+            Title: course.Title,
+            ShortDescription: course.ShortDescription,
+            FullDescription: course.FullDescription,
+            Category: course.Category,
+            Duration: course.Duration,
+            IsEnrolled: enrolled,
+            IsScorm: scormPkg is not null,
+            ScormPackageId: scormPkg?.Id);
+
+        return Partial("_CourseDetail", model);
     }
 
     /// <summary>HTMX handler: enroll in a course and return result partial (US2).</summary>
-    public async Task<PartialViewResult> OnPostEnrollAsync(Guid courseId)
+    [Authorize]
+    [IgnoreAntiforgeryToken]
+    public async Task<PartialViewResult> OnPostEnrollAsync()
     {
-        try
-        {
-            var result = await TryEnrollAsync(courseId);
-            return Partial("_EnrollmentResult", result);
-        }
-        catch
-        {
-            return Partial("_ErrorPartial", "Unable to process enrollment. Please try again.");
-        }
+        // Use the route-bound Id (from @page "{id:guid}") as the course ID
+        var result = await TryEnrollAsync(Id);
+        return Partial("_EnrollmentResult", result);
     }
 
     /// <summary>Attempt to enroll the current student in a course.</summary>
     private async Task<EnrollmentResult> TryEnrollAsync(Guid courseId)
     {
         var studentId = ScormHelpers.GetStudentId(HttpContext);
+        if (studentId == Guid.Empty)
+            return new EnrollmentResult(false, "Please log in to enroll in courses.", "error", courseId);
+
         var (enrollment, isDuplicate, courseNotFound) = await _enrollmentService.EnrollAsync(studentId, courseId);
 
         if (courseNotFound)
