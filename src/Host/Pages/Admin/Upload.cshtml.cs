@@ -5,9 +5,39 @@ namespace LearningLms.Host.Pages.Admin;
 
 public class ScormUploadModel : PageModel
 {
+    private readonly IHttpClientFactory _httpClientFactory;
+
     public string? Error { get; set; }
     public string? SuccessMessage { get; set; }
     public Guid? UploadedCourseId { get; set; }
+
+    /// <summary>Available courses for the dropdown selector (US4 - T017).</summary>
+    public List<CourseSummary> Courses { get; set; } = new();
+
+    public ScormUploadModel(IHttpClientFactory httpClientFactory)
+    {
+        _httpClientFactory = httpClientFactory;
+    }
+
+    public async Task OnGetAsync()
+    {
+        var httpClient = _httpClientFactory.CreateClient();
+        try
+        {
+            var response = await httpClient.GetAsync("/api/courses");
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var data = System.Text.Json.JsonSerializer.Deserialize<CoursesResponse>(json,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                Courses = data?.Courses?.ToList() ?? new();
+            }
+        }
+        catch
+        {
+            // If course listing fails, proceed with empty list
+        }
+    }
 
     public async Task OnPostAsync(IFormCollection form)
     {
@@ -22,15 +52,15 @@ public class ScormUploadModel : PageModel
 
         if (!Guid.TryParse(courseIdStr, out var courseId))
         {
-            Error = "Invalid course ID. Please enter a valid GUID.";
+            Error = "Invalid course ID. Please select a valid course.";
             return;
         }
 
-        using var httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:5000") };
+        var httpClient = _httpClientFactory.CreateClient();
         using var content = new MultipartFormDataContent();
         using var streamContent = new StreamContent(file.OpenReadStream());
         content.Add(streamContent, "package", file.FileName);
-        content.Add(new StringContent(courseIdStr ?? ""), "courseId");
+        content.Add(new StringContent(courseIdStr), "courseId");
 
         var response = await httpClient.PostAsync("/api/scorm/upload", content);
 
@@ -52,5 +82,7 @@ public class ScormUploadModel : PageModel
     }
 }
 
+public record CourseSummary(Guid Id, string Title);
+public record CoursesResponse(IEnumerable<CourseSummary> Courses);
 public record UploadResponse(Guid PackageId, Guid CourseId, string Title, string LaunchPath);
 public record ErrorResponse(string Error);

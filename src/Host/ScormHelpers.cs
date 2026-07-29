@@ -84,7 +84,7 @@ public static class ScormHelpers
 })();
 ";
 
-    /// <summary>Extract student ID from HTTP context (claims or demo fallback).</summary>
+    /// <summary>Extract student ID from HTTP context (claims only — no hardcoded fallback).</summary>
     public static Guid GetStudentId(HttpContext httpContext)
     {
         var claim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
@@ -93,7 +93,7 @@ public static class ScormHelpers
         if (!string.IsNullOrEmpty(claim) && Guid.TryParse(claim, out var parsedGuid))
             return parsedGuid;
 
-        // Demo fallback: use first seeded student
-        return Guid.Parse("550e8400-e29b-41d4-a716-446655440001");
+        // No demo fallback — rely on [Authorize] to enforce login
+        return Guid.Empty;
     }
 }

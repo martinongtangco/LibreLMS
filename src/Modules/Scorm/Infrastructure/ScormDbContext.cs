@@ -56,7 +56,7 @@ public class ScormDbContext(DbContextOptions<ScormDbContext> options) : DbContex
                 .HasMaxLength(10);
 
             entity.Property(e => e.SuspendData)
-                .HasMaxLength(65536);
+                .HasColumnType("nvarchar(max)");
 
             entity.Property(e => e.StartedAt).IsRequired();
             entity.Property(e => e.LastCommitAt).IsRequired();

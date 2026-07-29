@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Host.Migrations.Scorm
 {
     [DbContext(typeof(ScormDbContext))]
-    [Migration("20250729000000_InitialCreate")]
+    [Migration("20250729000002_ScormInitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -91,7 +91,7 @@ namespace Host.Migrations.Scorm
 
                     b.Property<string>("SuspendData")
                         .HasMaxLength(65536)
-                        .HasColumnType("nvarchar(65536)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

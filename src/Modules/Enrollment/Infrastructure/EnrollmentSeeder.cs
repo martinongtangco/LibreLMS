@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using LearningLms.Modules.Enrollment.Domain;
 using LearningLms.Modules.Enrollment.Infrastructure;
 
@@ -6,8 +8,18 @@ namespace LearningLms.Modules.Enrollment.Infrastructure;
 /// <summary>Seeds test students with known credentials for demonstration.</summary>
 public static class EnrollmentSeeder
 {
+    /// <summary>Hash a password using SHA256 for seeding purposes.</summary>
+    private static string HashPassword(string password)
+    {
+        using var sha256 = SHA256.Create();
+        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+        return Convert.ToBase64String(hash);
+    }
+
     public static void Seed(EnrollmentDbContext context)
     {
+        var passwordHash = HashPassword("password123");
+
         var students = new[]
         {
             new Student
@@ -15,6 +27,8 @@ public static class EnrollmentSeeder
                 Id = Guid.Parse("550e8400-e29b-41d4-a716-446655440001"),
                 Name = "Alice Johnson",
                 Email = "alice@example.com",
+                PasswordHash = passwordHash,
+                Roles = "",
                 CreatedAt = DateTimeOffset.UtcNow
             },
             new Student
@@ -22,6 +36,8 @@ public static class EnrollmentSeeder
                 Id = Guid.Parse("550e8400-e29b-41d4-a716-446655440002"),
                 Name = "Bob Smith",
                 Email = "bob@example.com",
+                PasswordHash = passwordHash,
+                Roles = "",
                 CreatedAt = DateTimeOffset.UtcNow
             },
             new Student
@@ -29,11 +45,40 @@ public static class EnrollmentSeeder
                 Id = Guid.Parse("550e8400-e29b-41d4-a716-446655440003"),
                 Name = "Carol Davis",
                 Email = "carol@example.com",
+                PasswordHash = passwordHash,
+                Roles = "",
+                CreatedAt = DateTimeOffset.UtcNow
+            },
+            new Student
+            {
+                Id = Guid.Parse("550e8400-e29b-41d4-a716-446655440099"),
+                Name = "Admin User",
+                Email = "admin@example.com",
+                PasswordHash = passwordHash,
+                Roles = "Admin",
                 CreatedAt = DateTimeOffset.UtcNow
             }
         };
 
         context.Students.AddRange(students);
         context.SaveChanges();
+
+        // T007: Enroll Alice in the seeded SCORM course ("Introduction to C#" - course ID from CatalogSeeder)
+        var scormCourseId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var aliceId = Guid.Parse("550e8400-e29b-41d4-a716-446655440001");
+
+        var existingEnrollment = context.Enrollments
+            .FirstOrDefault(e => e.StudentId == aliceId && e.CourseId == scormCourseId);
+
+        if (existingEnrollment is null)
+        {
+            context.Enrollments.Add(new LearningLms.Modules.Enrollment.Domain.Enrollment
+            {
+                StudentId = aliceId,
+                CourseId = scormCourseId,
+                EnrolledAt = DateTimeOffset.UtcNow
+            });
+            context.SaveChanges();
+        }
     }
 }

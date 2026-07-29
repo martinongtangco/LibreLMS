@@ -41,4 +41,24 @@ public class CourseCatalogService(CatalogDbContext context)
     {
         return await context.Courses.FindAsync(id);
     }
+
+    /// <summary>Create a new course in the catalog.</summary>
+    public async Task<Course> CreateAsync(Endpoints.CreateCourseRequest request)
+    {
+        var course = new Domain.Course
+        {
+            Id = Guid.NewGuid(),
+            Title = request.Title,
+            ShortDescription = request.ShortDescription,
+            FullDescription = request.FullDescription,
+            Category = request.Category,
+            Duration = request.Duration,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        context.Courses.Add(course);
+        await context.SaveChangesAsync();
+
+        return course;
+    }
 }

@@ -1,0 +1,37 @@
+@page
+@model LoginModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Login";
+}
+
+<div style="max-width: 400px; margin: 2rem auto;">
+    <div class="card">
+        <h1 style="margin-bottom: 1.5rem;">Login</h1>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="error-message" style="margin-bottom: 1rem;">
+                @Model.ErrorMessage
+            </div>
+        }
+
+        <form method="post">
+            <div style="margin-bottom: 1rem;">
+                <label asp-for="Email" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
+                <input asp-for="Email" type="email" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;" />
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label asp-for="Password" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Password</label>
+                <input asp-for="Password" type="password" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;" />
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+        </form>
+
+        <p style="margin-top: 1rem; font-size: 0.85rem; color: #999;">
+            Demo credentials: alice@example.com / password123 (student) or admin@example.com / password123 (admin)
+        </p>
+    </div>
+</div>
