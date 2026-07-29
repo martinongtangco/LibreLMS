@@ -14,14 +14,14 @@
                value="@Model.Search"
                placeholder="Search by course name..."
                hx-get="/Courses/Index?handler=CourseList"
-               hx-trigger="keyup changed delay:300ms"
+               hx-trigger="keyup changed delay:300ms, load:false"
                hx-target="#course-list"
-               hx-indicator=".htmx-indicator" />
+               hx-indicator="#course-list .htmx-indicator" />
         <select name="category"
                 hx-get="/Courses/Index?handler=CourseList"
-                hx-trigger="change"
+                hx-trigger="change from:body"
                 hx-target="#course-list"
-                hx-indicator=".htmx-indicator">
+                hx-indicator="#course-list .htmx-indicator">
             <option value="">All Categories</option>
             @foreach (var cat in Model.Categories)
             {
@@ -33,8 +33,18 @@
            hx-target="#course-list">Clear</a>
     </form>
 
-    <div id="course-list" hx-on::htmx:after-request="if(event.detail.failed) { document.getElementById('course-list').innerHTML = '<div class=\"error-message\"><strong>Error:</strong> Request failed. Please try again.</div>'; }">
+    <div id="course-list">
         <div class="htmx-indicator" style="display: none; text-align: center; padding: 1rem; color: #666;">⏳ Loading...</div>
         @await Html.PartialAsync("_CourseList", Model.Courses)
     </div>
+
+    <script>
+        document.body.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.failedRequest) {
+                var target = document.getElementById('course-list');
+                var indicator = target.querySelector('.htmx-indicator');
+                target.innerHTML = '<div class="error-message"><strong>Error:</strong> Request failed. Please try again.</div>' + (indicator ? indicator.outerHTML : '');
+            }
+        });
+    </script>
 </div>
