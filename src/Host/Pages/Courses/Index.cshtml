@@ -34,7 +34,7 @@
            hx-target="#course-list">Clear</a>
     </form>
 
-    <div id="course-list">
+    <div id="course-list" hx-on::htmx:after-request="if(event.detail.failed) { document.getElementById('course-list').innerHTML = '<div class=\"error-message\"><strong>Error:</strong> Request failed. Please try again.</div>'; }">
         <div class="htmx-indicator" style="display: none; text-align: center; padding: 1rem; color: #666;">⏳ Loading...</div>
         @await Html.PartialAsync("_CourseList", Model.Courses)
     </div>
