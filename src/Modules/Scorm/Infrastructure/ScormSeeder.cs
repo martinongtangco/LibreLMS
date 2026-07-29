@@ -105,12 +105,11 @@ public static class ScormSeeder
         var indexPath = Path.Combine(contentFullPath, "index.html");
         await File.WriteAllTextAsync(indexPath, indexHtml);
 
-        // We need a courseId to link to. For the demo, we'll create a package
-        // that can be linked later. Store it with a placeholder courseId.
+        // Link to the first seeded course from CatalogSeeder ("Introduction to C#")
         var package = new ScormPackage
         {
             Id = packageId,
-            CourseId = Guid.Parse("00000000-0000-0000-0000-000000000000"), // Placeholder — will be linked
+            CourseId = Guid.Parse("11111111-1111-1111-1111-111111111111"), // CatalogSeeder's first course
             ManifestTitle = "Sample SCORM Course",
             LaunchPath = "index.html",
             ContentDirectory = contentDir,

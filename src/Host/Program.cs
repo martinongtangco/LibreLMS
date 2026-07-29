@@ -19,15 +19,14 @@ using static LearningLms.Host.ScormHelpers;
 var builder = WebApplication.CreateBuilder(args);
 
 // Register EF Core contexts with MSSQL
-builder.Services.AddDbContext<CatalogDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sql => sql.MigrationsAssembly(typeof(Program).Assembly)));
+void ConfigureDbContext(DbContextOptionsBuilder opts, string? connStr)
+{
+    opts.UseSqlServer(connStr, sql => sql.MigrationsAssembly(typeof(Program).Assembly));
+    opts.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+}
 
-builder.Services.AddDbContext<EnrollmentDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sql => sql.MigrationsAssembly(typeof(Program).Assembly)));
+builder.Services.AddDbContext<CatalogDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<EnrollmentDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register module services
 builder.Services.AddCatalogModule();
@@ -35,10 +34,7 @@ builder.Services.AddEnrollmentModule();
 builder.Services.AddScormModule();
 
 // Register EF Core context for Scorm
-builder.Services.AddDbContext<ScormDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sql => sql.MigrationsAssembly(typeof(Program).Assembly)));
+builder.Services.AddDbContext<ScormDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure Scorm module with wwwRoot path
 var wwwRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
@@ -78,14 +74,19 @@ using (var scope = app.Services.CreateScope())
 {
     var catalogCtx = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
     var enrollmentCtx = scope.ServiceProvider.GetRequiredService<EnrollmentDbContext>();
+    var scormCtx = scope.ServiceProvider.GetRequiredService<ScormDbContext>();
+    var hostEnv = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
 
+    // Create database if it doesn't exist
     catalogCtx.Database.EnsureCreated();
-    try
-    {
-        catalogCtx.Database.Migrate();
-    }
-    catch (System.InvalidOperationException) { /* pending model changes — tables may exist */ }
+
+    // Drop and recreate database cleanly, then apply all migrations
+    catalogCtx.Database.EnsureDeleted();
+    catalogCtx.Database.Migrate();
     enrollmentCtx.Database.Migrate();
+    scormCtx.Database.Migrate();
+    enrollmentCtx.Database.Migrate();
+    scormCtx.Database.Migrate();
 
     // Seed catalog
     if (!catalogCtx.Courses.Any())
@@ -100,14 +101,6 @@ using (var scope = app.Services.CreateScope())
     }
 
     // Seed Scorm sample package
-    var scormCtx = scope.ServiceProvider.GetRequiredService<ScormDbContext>();
-    var hostEnv = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
-    scormCtx.Database.EnsureCreated();
-    try
-    {
-        scormCtx.Database.Migrate();
-    }
-    catch (System.InvalidOperationException) { /* pending model changes — tables may exist */ }
     await ScormSeeder.SeedAsync(scormCtx, hostEnv.WebRootPath);
 }
 
@@ -123,6 +116,13 @@ courses.MapGet("/", async (CourseCatalogService service, string? search, string?
     var courseList = await service.ListAsync(search, category);
     var dto = courseList.Select(c => new CourseDto(c.Id, c.Title, c.ShortDescription, c.Category, c.Duration));
     return Results.Ok(new { courses = dto });
+});
+
+// POST /api/courses — Admin-only course creation
+courses.MapPost("/", [Authorize(Roles = "Admin")] async (CourseCatalogService service, [FromBody] LearningLms.Modules.Catalog.Endpoints.CreateCourseRequest request) =>
+{
+    var course = await service.CreateAsync(request);
+    return Results.Created($"/api/courses/{course.Id}", new CourseDto(course.Id, course.Title, course.ShortDescription, course.Category, course.Duration));
 });
 
 courses.MapGet("/{id:guid}", async (CourseCatalogService service, ScormPackageService scormService, Guid id) =>
@@ -203,6 +203,7 @@ scorm.MapPost("/{courseId:guid}/launch", [Authorize] async (
     return Results.Ok(new
     {
         sessionId = result.SessionId,
+        contentUrl = result.ContentUrl,
         entry = result.EntryMode,
         attemptNumber = result.AttemptNumber
     });

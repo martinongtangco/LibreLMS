@@ -30,6 +30,14 @@ public class EnrollmentDbContext(DbContextOptions<EnrollmentDbContext> options) 
             entity.HasIndex(e => e.Email)
                 .IsUnique();
 
+            entity.Property(e => e.PasswordHash)
+                .IsRequired()
+                .HasMaxLength(256);
+
+            entity.Property(e => e.Roles)
+                .IsRequired()
+                .HasMaxLength(100);
+
             entity.Property(e => e.CreatedAt)
                 .IsRequired();
         });
