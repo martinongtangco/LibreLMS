@@ -7,63 +7,16 @@
 
 <h1 style="margin-bottom: 1.5rem;">My Courses</h1>
 
-@if (Model.Enrollments.Any())
-{
-    <div class="card">
-        <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Enrolled Courses</h2>
-        @foreach (var enrollment in Model.Enrollments)
-        {
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #eee;">
-                <div>
-                    <strong><a asp-page="/Courses/Detail" asp-route-id="@enrollment.CourseId" style="color: #333; text-decoration: none;">@enrollment.CourseTitle</a></strong>
-                    <div style="color: #999; font-size: 0.85rem;">Enrolled @enrollment.EnrolledAt.ToString("MMM d, yyyy")</div>
-                </div>
-                <div>
-                    @{
-                        var attempt = Model.ScormAttempts.FirstOrDefault(a => a.CourseId == enrollment.CourseId && a.AttemptNumber == Model.ScormAttempts.Where(x => x.CourseId == enrollment.CourseId).Max(x => x.AttemptNumber));
-                    }
-                    @if (attempt != null)
-                    {
-                        <span class="badge" style="background: @(attempt.Status switch
-                        {
-                            "completed" => "#e8f5e9",
-                            "passed" => "#e8f5e9",
-                            "in-progress" => "#fff3e0",
-                            _ => "#f5f5f5"
-                        }); color: @(attempt.Status switch
-                        {
-                            "completed" => "#2e7d32",
-                            "passed" => "#2e7d32",
-                            "in-progress" => "#e65100",
-                            _ => "#666"
-                        });">
-                            @(attempt.Status switch
-                            {
-                                "completed" => "✓ Completed",
-                                "passed" => "✓ Passed",
-                                "in-progress" => "In Progress",
-                                _ => attempt.Status
-                            })
-                        </span>
-                        @if (attempt.ScoreRaw.HasValue)
-                        {
-                            <span style="margin-left: 0.5rem; font-size: 0.85rem; color: #666;">Score: @attempt.ScoreRaw.Value</span>
-                        }
-                    }
-                    else
-                    {
-                        <span class="badge" style="background: #f5f5f5; color: #666;">Not Started</span>
-                    }
-                </div>
-            </div>
-        }
-    </div>
-}
-else
-{
-    <div class="card empty-state">
-        <h3>No Enrollments Yet</h3>
-        <p>Browse the course catalog to find and enroll in courses.</p>
-        <a asp-page="/Courses/Index" class="btn btn-primary" style="margin-top: 1rem;">Browse Courses</a>
-    </div>
-}
+<div style="margin-bottom: 1rem;">
+    <button type="button"
+            data-refresh-enrollments
+            class="btn btn-secondary"
+            hx-get="/MyCourses?handler=Enrollments"
+            hx-target="#enrollment-list">↻ Refresh</button>
+</div>
+
+<div id="enrollment-list"
+     hx-get="/MyCourses?handler=Enrollments"
+     hx-trigger="from:[data-refresh-enrollments]">
+    @await Html.PartialAsync("_EnrollmentList", Model.EnrollmentRows)
+</div>

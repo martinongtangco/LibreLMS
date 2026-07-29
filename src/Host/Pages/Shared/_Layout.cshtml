@@ -28,6 +28,9 @@
         .filters input { flex: 1; min-width: 200px; }
         .empty-state { text-align: center; padding: 3rem; color: #999; }
         .footer { text-align: center; padding: 2rem; color: #999; font-size: 0.85rem; }
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator { display: inline; }
+        .error-message { background: #fdecea; border-left: 4px solid #c62828; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
     </style>
 </head>
 <body>
@@ -43,5 +46,6 @@
         @RenderBody()
     </div>
     <div class="footer">&copy; 2025 Learning LMS</div>
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js"></script>
 </body>
 </html>

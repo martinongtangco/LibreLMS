@@ -1,0 +1,41 @@
+@using LearningLms.Host.Pages.Courses
+@model CourseDetailItem
+
+<div style="margin-bottom: 1rem;">
+    <a href="/Courses"
+       hx-get="/Courses/Index?handler=CourseList"
+       hx-target="#main-content"
+       style="color: #666; text-decoration: none;">&larr; Back to Catalog</a>
+</div>
+
+<div class="card">
+    <h1>@Model.Title</h1>
+    <div style="display: flex; gap: 0.5rem; margin: 0.75rem 0;">
+        <span class="badge badge-category">@Model.Category</span>
+        <span class="badge badge-duration">@Model.Duration</span>
+    </div>
+    <p style="font-size: 1.1rem; margin-bottom: 1rem;">@Model.ShortDescription</p>
+    <hr style="border: none; border-top: 1px solid #eee; margin: 1.5rem 0;" />
+    <h3>Full Description</h3>
+    <p style="white-space: pre-wrap; margin-top: 0.5rem;">@Model.FullDescription</p>
+
+    <div id="enroll-region" style="margin-top: 1.5rem;">
+        @if (Model.IsEnrolled)
+        {
+            <span class="badge badge-enrolled" style="font-size: 1rem; padding: 0.4rem 1rem;">✓ Enrolled</span>
+            @if (Model.IsScorm)
+            {
+                <a asp-page="/Scorm/Launch" asp-route-courseId="@Model.Id" class="btn btn-primary" style="margin-left: 1rem;">Launch SCORM Course</a>
+            }
+        }
+        else
+        {
+            <form hx-post="/Courses/Detail?handler=Enroll"
+                  hx-vals='{"courseId": "@Model.Id"}'
+                  hx-swap="outerHTML"
+                  hx-target="#enroll-region">
+                <button type="submit" class="btn btn-primary">Enroll in This Course</button>
+            </form>
+        }
+    </div>
+</div>
