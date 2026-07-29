@@ -38,7 +38,7 @@ namespace Host.Migrations.Scorm
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     ScoreRaw = table.Column<double>(type: "float", nullable: true),
                     SessionTime = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
-                    SuspendData = table.Column<string>(type: "nvarchar(65536)", maxLength: 65536, nullable: true),
+                    SuspendData = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     StartedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     CompletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     LastCommitAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)

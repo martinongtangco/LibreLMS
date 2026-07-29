@@ -9,7 +9,6 @@ public static class ScormModuleExtensions
 {
     public static IServiceCollection AddScormModule(this IServiceCollection services)
     {
-        services.AddScoped<ScormPackageService>();
         services.AddScoped<ScormSessionService>();
         services.AddScoped<ScormAttemptService>();
         services.AddScoped<IScormSessionStore, ScormSessionStore>();

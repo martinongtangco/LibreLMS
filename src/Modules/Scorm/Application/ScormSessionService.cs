@@ -14,15 +14,18 @@ public class ScormSessionService
     private readonly ScormDbContext _scormContext;
     private readonly IScormSessionStore _sessionStore;
     private readonly IEnrollmentLookup _enrollmentLookup;
+    private readonly ScormPackageService _packageService;
 
     public ScormSessionService(
         ScormDbContext scormContext,
         IScormSessionStore sessionStore,
-        IEnrollmentLookup enrollmentLookup)
+        IEnrollmentLookup enrollmentLookup,
+        ScormPackageService packageService)
     {
         _scormContext = scormContext;
         _sessionStore = sessionStore;
         _enrollmentLookup = enrollmentLookup;
+        _packageService = packageService;
     }
 
     /// <summary>Valid SCORM 1.2 lesson_status values.</summary>
@@ -89,9 +92,12 @@ public class ScormSessionService
             await _sessionStore.SetValueAsync(sessionId, "cmi.suspend_data", suspendData);
         }
 
+        // Compute contentUrl from the SCORM package
+        var contentUrl = await _packageService.FindLaunchPath(courseId);
+
         await _sessionStore.CreateSessionAsync(sessionData);
 
-        return LaunchResult.CreateSuccess(sessionId.ToString(), entryMode, attemptNumber);
+        return LaunchResult.CreateSuccess(sessionId.ToString(), entryMode, attemptNumber, contentUrl);
     }
 
     /// <summary>
@@ -242,10 +248,11 @@ public record LaunchResult
     public string? SessionId { get; init; }
     public string? EntryMode { get; init; }
     public int? AttemptNumber { get; init; }
+    public string? ContentUrl { get; init; }
     public string? Error { get; init; }
 
-    public static LaunchResult CreateSuccess(string sessionId, string entryMode, int attemptNumber)
-        => new() { Success = true, SessionId = sessionId, EntryMode = entryMode, AttemptNumber = attemptNumber };
+    public static LaunchResult CreateSuccess(string sessionId, string entryMode, int attemptNumber, string? contentUrl = null)
+        => new() { Success = true, SessionId = sessionId, EntryMode = entryMode, AttemptNumber = attemptNumber, ContentUrl = contentUrl };
 
     public static LaunchResult CreateNotEnrolled()
         => new() { Success = false, Error = "Student is not enrolled in this course." };

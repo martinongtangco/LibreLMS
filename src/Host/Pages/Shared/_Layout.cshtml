@@ -39,7 +39,22 @@
         <div>
             <a asp-page="/Courses/Index">Browse Courses</a>
             <a asp-page="/MyCourses/Index">My Courses</a>
-            <a asp-page="/Admin/Upload">Upload SCORM</a>
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-page="/Admin/Courses/Create">Create Course</a>
+                <a asp-page="/Admin/Upload">Upload SCORM</a>
+            }
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <span style="color: #aaa; margin-left: 1rem;">@User.Identity.Name</span>
+                <form method="post" asp-page="/Account/Logout" style="display: inline; margin-left: 0.5rem;">
+                    <button type="submit" style="background: none; border: none; color: white; cursor: pointer; font-size: inherit; text-decoration: none; font-weight: 500;">Logout</button>
+                </form>
+            }
+            else
+            {
+                <a asp-page="/Account/Login">Login</a>
+            }
         </div>
     </nav>
     <div class="container">
