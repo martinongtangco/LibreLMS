@@ -1,16 +1,17 @@
 <!--
   Sync Impact Report
   ==================
-  Version change: 1.0.0 → 1.1.0 (MINOR: new principle added)
+  Version change: 1.1.0 → 1.2.0 (MINOR: new principle added)
   Added principles:
-    - VIII. Branching Discipline (new)
+    - IX. No Ad-Hoc Fixes — Document Before You Code (new)
   Modified principles: none
   Removed sections: none
   Templates updated:
-    - ✅ .specify/templates/plan-template.md (branch naming convention)
-    - ✅ .specify/templates/spec-template.md (branch naming convention)
-    - ⚠  .specify/templates/tasks-template.md (no branch-specific task types needed)
-    - ⚠  README.md (no workflow change — branches are agent-side, not documented here)
+    - ✅ .specify/templates/plan-template.md (no changes needed — Principle VIII reference already present)
+    - ✅ .specify/templates/spec-template.md (no changes needed — branch naming already present)
+    - ✅ .specify/templates/tasks-template.md (no changes needed — workflow is general)
+    - ✅ .specify/memory/constitution.md (new Principle IX added)
+    - ⚠  README.md (update dev workflow section to note ad-hoc fix rule)
   Deferred items: none
 -->
 
@@ -84,17 +85,41 @@ module first"). A module only gets built when a slice currently needs it; no mod
 ahead of demand.
 
 ### VIII. Branching Discipline
-Every `/speckit.implement` execution MUST create a dedicated Git branch from `main` so that
-agentic coding tasks can run in parallel without interfering with each other or the integration
-branch. Branch names follow a strict convention:
+Every coding task — whether planned or discovered ad-hoc — MUST run on a dedicated Git branch
+from `main` so that agentic work can proceed in parallel without interfering with each other or
+the integration branch. No commits land on `main` outside of a merge. Branch names follow a
+strict convention:
 
 - **Prefix**: `bug/` for defect work, `story/` for feature or enhancement work.
 - **Format**: `<prefix>/<task-id>-<short-description>` where `task-id` is the numeric or
   alphanumeric identifier from the spec (e.g. `001`, `FEAT-42`) and `short-description` is a
   concise kebab-case phrase (e.g. `story/001-course-catalog-browse`).
-- **Lifecycle**: The branch is created at the start of `/speckit.implement`, work is committed
-  there, and the branch is merged into `main` (or opened as a PR) only after the implementation
-  completes and all validation checks pass. No commits land on `main` outside of a merge.
+- **Lifecycle**: The branch is created before code changes begin, work is committed there, and
+  the branch is merged into `main` (or opened as a PR) only after the implementation completes
+  and all validation checks pass.
+
+### IX. No Ad-Hoc Fixes — Document Before You Code
+When an issue is discovered through conversation with the AI (outside a planned slice), the fix
+MUST still follow the SpecKit workflow — no direct code edits on `main` or any branch without
+documentation. The agent MUST NOT fix things "inline" in a chat session.
+
+The required flow for an ad-hoc issue:
+
+1. **Root cause first**: Before touching code, identify and state the root cause of the issue.
+2. **Branch off**: Create a `bug/<id>-<desc>` branch from `main` (Principle VIII) before any
+   code changes begin.
+3. **Document via SpecKit**: Run `/speckit.specify` to capture the issue, root cause, and
+   proposed fix in a spec. Then `/speckit.plan` → `/speckit.tasks` → `/speckit.implement` to
+   execute the fix through the normal pipeline. This creates a permanent record of the decision
+   and the change.
+4. **Structural changes get an ADR**: If root cause analysis reveals the issue stems from a
+   design or architectural decision, record that finding as an ADR under `docs/adr/` before
+   proceeding to the SpecKit steps.
+
+The spec entry serves as the decision record — future interactions can review what was changed
+and why. If the issue is trivially small (e.g. a typo fix, a single misnamed variable), the
+agent MAY note it inline but MUST still branch and MUST still file a minimal spec capturing the
+change. There is no "too small to document" exemption for code changes.
 
 ## Technology & Scope Constraints
 
@@ -133,4 +158,4 @@ simplify the instruction, not to add more words explaining it. Amendments requir
 file, bumping the version below, and — if the amendment reverses a prior ADR — recording that
 reversal as a new ADR rather than editing the old one.
 
-**Version**: 1.1.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-07-28
+**Version**: 1.2.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-07-29

@@ -38,14 +38,17 @@ else
                     <a asp-page="/Scorm/Launch" asp-route-courseId="@Model.Course.Id" class="btn btn-primary" style="margin-left: 1rem;">Launch SCORM Course</a>
                 }
             }
-            else
+            else if (User.Identity?.IsAuthenticated == true)
             {
-                <form hx-post="/Courses/Detail?handler=Enroll"
-                      hx-vals='{"courseId": "@Model.Course.Id"}'
+                <form hx-post="/Courses/Detail/@Model.Course.Id?handler=Enroll"
                       hx-swap="outerHTML"
                       hx-target="#enroll-region">
                     <button type="submit" class="btn btn-primary">Enroll in This Course</button>
                 </form>
+            }
+            else
+            {
+                <a asp-page="/Account/Login" class="btn btn-primary">Login to Enroll</a>
             }
         </div>
     </div>
