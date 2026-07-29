@@ -3,9 +3,6 @@
 <div class="card">
     <h3>
         <a asp-page="/Courses/Detail" asp-route-id="@Model.Id"
-           hx-get="/Courses/Detail?id=@Model.Id&handler=Detail"
-           hx-target="#main-content"
-           hx-push-url="/Courses/Detail/@Model.Id"
            style="text-decoration: none; color: inherit;">@Model.Title</a>
     </h3>
     <p>@Model.ShortDescription</p>
@@ -19,9 +16,6 @@
     </div>
     <div style="margin-top: 0.75rem;">
         <a asp-page="/Courses/Detail" asp-route-id="@Model.Id"
-           hx-get="/Courses/Detail?id=@Model.Id&handler=Detail"
-           hx-target="#main-content"
-           hx-push-url="/Courses/Detail/@Model.Id"
            class="btn btn-secondary">View Details</a>
     </div>
 </div>
