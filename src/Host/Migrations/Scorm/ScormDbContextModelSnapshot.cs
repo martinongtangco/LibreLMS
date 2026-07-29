@@ -87,7 +87,7 @@ namespace Host.Migrations.Scorm
 
                     b.Property<string>("SuspendData")
                         .HasMaxLength(65536)
-                        .HasColumnType("nvarchar(65536)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

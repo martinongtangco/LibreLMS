@@ -1,5 +1,4 @@
 @page
-@using LearningLms.Host.Pages.Admin
 @model ScormUploadModel
 @{
     ViewData["Title"] = "Upload SCORM Package";
@@ -38,10 +37,16 @@
           hx-target="#upload-result"
           hx-indicator=".htmx-indicator">
         <div style="margin-bottom: 1rem;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Course ID</label>
-            <input type="text" name="courseId" placeholder="Enter the course GUID"
-                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;" />
-            <small style="color: #999;">The GUID of the course in the catalog to associate with this SCORM package.</small>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Course</label>
+            <select name="courseId"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+                <option value="">— Select a course —</option>
+                @foreach (var course in Model.Courses)
+                {
+                    <option value="@course.Id">@course.Title</option>
+                }
+            </select>
+            <small style="color: #999;">Select the course from the catalog to associate with this SCORM package.</small>
         </div>
 
         <div style="margin-bottom: 1.5rem;">

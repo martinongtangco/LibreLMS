@@ -20,8 +20,8 @@ services:
       valkey:
         condition: service_started
     environment:
-      ConnectionStrings__Sql: "Server=mssql,1433;Database=LearningLms;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
-      ConnectionStrings__Redis: "valkey:6379"
+      ConnectionStrings__DefaultConnection: "Server=mssql,1433;Database=LearningLms;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      ConnectionStrings__Valkey: "valkey:6379"
 
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest

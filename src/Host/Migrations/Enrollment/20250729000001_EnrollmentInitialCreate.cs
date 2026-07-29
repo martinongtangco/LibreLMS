@@ -10,7 +10,7 @@ namespace LearningLms.Host.Migrations.Enrollment
     /// Scaffolded from EnrollmentDbContext entity configurations.
     /// Apply: dotnet ef database update --context EnrollmentDbContext --project src/Host
     /// </summary>
-    [Migration("20250729000000_InitialCreate")]
+    [Migration("20250729000001_EnrollmentInitialCreate")]
     public partial class InitialCreate : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
