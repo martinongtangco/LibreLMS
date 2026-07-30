@@ -26,6 +26,8 @@
     <ProjectReference Include="..\..\src\Modules\Enrollment.Contracts\Enrollment.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Modules\Scorm\Scorm.csproj" />
     <ProjectReference Include="..\..\src\Modules\Scorm.Contracts\Scorm.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Management\Management.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Management.Contracts\Management.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

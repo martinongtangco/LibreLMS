@@ -4,16 +4,19 @@ using LibreLms.Modules.Catalog.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace LibreLms.Host.Migrations.Catalog
+namespace Host.Migrations.Catalog
 {
     [DbContext(typeof(CatalogDbContext))]
-    partial class CatalogDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260730145329_AddOrganizationIdToCourse")]
+    partial class AddOrganizationIdToCourse
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

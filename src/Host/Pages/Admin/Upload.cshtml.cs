@@ -1,42 +1,37 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using LibreLms.Modules.Catalog.Application;
+using LibreLms.Modules.Management.Application;
 
 namespace LibreLms.Host.Pages.Admin;
 
+[Authorize(Roles = "SuperUser,OrgAdmin")]
 public class ScormUploadModel : PageModel
 {
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly CourseCatalogService _catalogService;
+    private readonly CourseVisibilityService _visibilityService;
 
     public string? Error { get; set; }
     public string? SuccessMessage { get; set; }
     public Guid? UploadedCourseId { get; set; }
 
-    /// <summary>Available courses for the dropdown selector (US4 - T017).</summary>
-    public List<CourseSummary> Courses { get; set; } = new();
+    /// <summary>Available courses for the dropdown selector.</summary>
+    public List<CourseSummaryWithOrg> Courses { get; set; } = new();
 
-    public ScormUploadModel(IHttpClientFactory httpClientFactory)
+    public ScormUploadModel(IHttpClientFactory httpClientFactory, CourseCatalogService catalogService, CourseVisibilityService visibilityService)
     {
         _httpClientFactory = httpClientFactory;
+        _catalogService = catalogService;
+        _visibilityService = visibilityService;
     }
 
     public async Task OnGetAsync()
     {
-        var httpClient = _httpClientFactory.CreateClient();
-        try
-        {
-            var response = await httpClient.GetAsync("/api/courses");
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync();
-                var data = System.Text.Json.JsonSerializer.Deserialize<CoursesResponse>(json,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                Courses = data?.Courses?.ToList() ?? new();
-            }
-        }
-        catch
-        {
-            // If course listing fails, proceed with empty list
-        }
+        // Load all courses with org info
+        var allCourses = await _visibilityService.GetAllCoursesAsync();
+        Courses = allCourses.Select(c => new CourseSummaryWithOrg(c.CourseId, c.Title, c.OwningOrganizationName)).ToList();
     }
 
     public async Task OnPostAsync(IFormCollection form)
@@ -47,12 +42,14 @@ public class ScormUploadModel : PageModel
         if (file is null || file.Length == 0)
         {
             Error = "No file selected.";
+            await OnGetAsync();
             return;
         }
 
         if (!Guid.TryParse(courseIdStr, out var courseId))
         {
             Error = "Invalid course ID. Please select a valid course.";
+            await OnGetAsync();
             return;
         }
 
@@ -79,8 +76,12 @@ public class ScormUploadModel : PageModel
                 new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })?.Error
                 ?? "Upload failed. Please check the file and try again.";
         }
+
+        await OnGetAsync();
     }
 }
+
+public record CourseSummaryWithOrg(Guid Id, string Title, string OrganizationName);
 
 public record CourseSummary(Guid Id, string Title);
 public record CoursesResponse(IEnumerable<CourseSummary> Courses);

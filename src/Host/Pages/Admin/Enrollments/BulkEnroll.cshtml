@@ -1,0 +1,37 @@
+@page
+@model LibreLms.Host.Pages.Admin.Enrollments.BulkEnrollModel
+@{
+    ViewData["Title"] = "Bulk Enrollment";
+}
+
+<h1>Bulk Enrollment</h1>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success">@Model.SuccessMessage</div>
+}
+
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="SelectedCourseId" class="form-label">Course</label>
+        <select name="courseId" asp-items="Model.Courses" class="form-select" required>
+            <option value="">-- Select a Course --</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Learners (hold Ctrl/Cmd to select multiple)</label>
+        <select name="studentIds" asp-items="Model.Students" class="form-select" multiple
+                style="height: 200px;" required>
+        </select>
+        <small style="color:#999;">Select one or more learners to enroll.</small>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Enroll Selected</button>
+    <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+</form>

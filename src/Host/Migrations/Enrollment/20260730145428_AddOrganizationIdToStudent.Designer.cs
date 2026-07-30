@@ -4,16 +4,19 @@ using LibreLms.Modules.Enrollment.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace LibreLms.Host.Migrations.Enrollment
+namespace Host.Migrations.Enrollment
 {
     [DbContext(typeof(EnrollmentDbContext))]
-    partial class EnrollmentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260730145428_AddOrganizationIdToStudent")]
+    partial class AddOrganizationIdToStudent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -17,6 +17,8 @@ using LibreLms.Modules.Scorm.Infrastructure;
 using LibreLms.Modules.Scorm.Endpoints;
 using LibreLms.Modules.Management;
 using LibreLms.Modules.Management.Infrastructure;
+using LibreLms.Modules.Management.Endpoints;
+using LibreLms.Modules.Management.Application;
 using LibreLms.Host.ManagementAuth;
 using LibreLms.SharedKernel;
 using static LibreLms.Host.ScormHelpers;
@@ -79,6 +81,12 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole(RoleNames.SuperUser));
     options.AddPolicy("OrgAdminOrSuperUser", policy =>
         policy.RequireRole(RoleNames.SuperUser, RoleNames.OrgAdmin));
+    options.AddPolicy("AuthenticatedWithOrgScope", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var role = context.User.FindFirstValue(System.Security.Claims.ClaimTypes.Role);
+            return role == RoleNames.SuperUser || role == RoleNames.OrgAdmin;
+        }));
 });
 builder.Services.AddScoped<IAuthorizationHandler, OrgScopeAuthorizationHandler>();
 
@@ -190,7 +198,7 @@ enrollments.MapPost("/", [Authorize] async (
     if (isDuplicate)
         return Results.Conflict(new { error = "Already enrolled in this course" });
 
-    return Results.Created($"/api/enrollments/{enrollment.Id}", new EnrollmentDto(
+    return Results.Created($"/api/enrollments/{enrollment.Id}", new LibreLms.Modules.Enrollment.Endpoints.EnrollmentDto(
         enrollment.Id, enrollment.StudentId, enrollment.CourseId, enrollment.EnrolledAt));
 });
 
@@ -528,6 +536,132 @@ orgs.MapDelete("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles
     {
         return Results.NotFound();
     }
+});
+
+// === Admin Course Management Endpoints ===
+var adminCourses = app.MapGroup("/api/admin/courses")
+    .WithTags("Admin Courses")
+    .RequireAuthorization();
+
+adminCourses.MapGet("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.CourseVisibilityService service,
+    [Microsoft.AspNetCore.Mvc.FromQuery] Guid? organizationId) =>
+{
+    var courses = organizationId.HasValue
+        ? await service.GetVisibleCoursesAsync(organizationId.Value)
+        : await service.GetAllCoursesAsync();
+    return Results.Ok(new { courses });
+});
+
+adminCourses.MapPut("/{id:guid}/visibility", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.CourseVisibilityService service,
+    Guid id,
+    [Microsoft.AspNetCore.Mvc.FromQuery] Guid organizationId,
+    [Microsoft.AspNetCore.Mvc.FromQuery] bool isHidden,
+    [Microsoft.AspNetCore.Mvc.FromQuery] Guid? createdBy) =>
+{
+    try
+    {
+        var @override = await service.SetVisibilityOverrideAsync(organizationId, id, isHidden, createdBy);
+        return Results.Ok(new { id = @override.Id, courseId = @override.CourseId, organizationId = @override.OrganizationId, isHidden = @override.IsHidden });
+    }
+    catch (KeyNotFoundException) { return Results.NotFound(); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+
+adminCourses.MapDelete("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.CourseVisibilityService service, Guid id) =>
+{
+    try { await service.DeleteCourseAsync(id); return Results.NoContent(); }
+    catch (KeyNotFoundException) { return Results.NotFound(); }
+});
+
+// === Admin Dashboard Endpoints ===
+var dashboard = app.MapGroup("/api/dashboard")
+    .WithTags("Dashboard")
+    .RequireAuthorization();
+
+dashboard.MapGet("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin,Learner")] async (
+    LibreLms.Modules.Management.Application.DashboardService service,
+    System.Security.Claims.ClaimsPrincipal user) =>
+{
+    var role = user.FindFirstValue(System.Security.Claims.ClaimTypes.Role);
+    var studentIdStr = user.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+    if (!Guid.TryParse(studentIdStr, out var studentId)) return Results.Unauthorized();
+
+    if (role == RoleNames.SuperUser)
+    {
+        var metrics = await service.GetSystemMetricsAsync();
+        return Results.Ok(new { role = "SuperUser", metrics = metrics });
+    }
+    if (role == RoleNames.OrgAdmin)
+    {
+        var orgIdStr = user.FindFirstValue(OrgClaimTypes.OrganizationId);
+        if (!Guid.TryParse(orgIdStr, out var orgId)) return Results.Unauthorized();
+        var metrics = await service.GetOrgMetricsAsync(orgId);
+        return Results.Ok(new { role = "OrgAdmin", metrics = metrics });
+    }
+    if (role == RoleNames.Learner)
+    {
+        var metrics = await service.GetPersonalMetricsAsync(studentId);
+        return Results.Ok(new { role = "Learner", metrics = metrics });
+    }
+    return Results.Unauthorized();
+});
+
+dashboard.MapGet("/activity", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.DashboardService service,
+    [Microsoft.AspNetCore.Mvc.FromQuery] int limit = 10) =>
+{
+    var activities = await service.GetRecentActivityAsync(limit);
+    return Results.Ok(new { activities });
+});
+
+// === Admin Enrollment Endpoints ===
+var adminEnrollments = app.MapGroup("/api/admin/enrollments")
+    .WithTags("Admin Enrollments")
+    .RequireAuthorization(new AuthorizeAttribute { Roles = "SuperUser,OrgAdmin" });
+
+adminEnrollments.MapGet("/", async (
+    LibreLms.Modules.Management.Application.AdminEnrollmentService service,
+    [Microsoft.AspNetCore.Mvc.FromQuery] string? student,
+    [Microsoft.AspNetCore.Mvc.FromQuery] string? course) =>
+{
+    var enrollments = await service.ListAllEnrollmentsAsync(student, course);
+    return Results.Ok(new { enrollments });
+});
+
+adminEnrollments.MapPost("/", async (
+    LibreLms.Modules.Management.Application.AdminEnrollmentService service,
+    [Microsoft.AspNetCore.Mvc.FromBody] LibreLms.Modules.Management.Endpoints.CreateEnrollmentRequest request) =>
+{
+    try
+    {
+        var enrollment = await service.EnrollAsync(request.StudentId, request.CourseId);
+        return Results.Created($"/api/admin/enrollments/{enrollment.Id}", new { enrollment.Id, enrollment.StudentId, enrollment.CourseId, enrollment.EnrolledAt });
+    }
+    catch (KeyNotFoundException ex) { return Results.NotFound(new { error = ex.Message }); }
+    catch (InvalidOperationException ex) { return Results.Conflict(new { error = ex.Message }); }
+});
+
+adminEnrollments.MapPost("/bulk", async (
+    LibreLms.Modules.Management.Application.AdminEnrollmentService service,
+    [Microsoft.AspNetCore.Mvc.FromBody] LibreLms.Modules.Management.Endpoints.BulkEnrollmentRequest request) =>
+{
+    try
+    {
+        var result = await service.BulkEnrollAsync(request.StudentIds, request.CourseId);
+        return Results.Ok(new { enrolled = result.Enrolled, skipped = result.Skipped, errors = result.Errors, errorMessages = result.ErrorMessages });
+    }
+    catch (KeyNotFoundException ex) { return Results.NotFound(new { error = ex.Message }); }
+    catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+
+adminEnrollments.MapDelete("/{id:guid}", async (
+    LibreLms.Modules.Management.Application.AdminEnrollmentService service, Guid id) =>
+{
+    try { await service.CancelEnrollmentAsync(id); return Results.NoContent(); }
+    catch (KeyNotFoundException) { return Results.NotFound(); }
 });
 
 // Map Razor Pages
