@@ -1,4 +1,4 @@
-namespace LearningLms.Modules.Catalog.Endpoints;
+namespace LibreLms.Modules.Catalog.Endpoints;
 
 /// <summary>Request body for creating a new course.</summary>
 public record CreateCourseRequest(

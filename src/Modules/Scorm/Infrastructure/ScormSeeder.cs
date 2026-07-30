@@ -1,8 +1,8 @@
 using System.IO.Compression;
-using LearningLms.Modules.Scorm.Domain;
+using LibreLms.Modules.Scorm.Domain;
 using Microsoft.EntityFrameworkCore;
 
-namespace LearningLms.Modules.Scorm.Infrastructure;
+namespace LibreLms.Modules.Scorm.Infrastructure;
 
 /// <summary>
 /// Seeds a minimal sample SCORM package for demo purposes.
@@ -71,7 +71,7 @@ public static class ScormSeeder
             </head>
             <body>
                 <h1>Sample SCORM Course</h1>
-                <p>This is a demo SCORM 1.2 course for testing the Learning LMS platform.</p>
+                <p>This is a demo SCORM 1.2 course for testing the Libre LMS platform.</p>
                 
                 <div class="progress">
                     <h3>Course Progress</h3>

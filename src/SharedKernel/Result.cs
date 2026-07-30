@@ -1,4 +1,4 @@
-namespace LearningLms.SharedKernel;
+namespace LibreLms.SharedKernel;
 
 /// <summary>
 /// A plain success/failure wrapper for application-layer operations that can fail in an

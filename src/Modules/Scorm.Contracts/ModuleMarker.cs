@@ -1,4 +1,4 @@
-namespace LearningLms.Contracts.Scorm;
+namespace LibreLms.Contracts.Scorm;
 
 /// <summary>
 /// No behavior yet — this project is the ONLY thing other modules are allowed to

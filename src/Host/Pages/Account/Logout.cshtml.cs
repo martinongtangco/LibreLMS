@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace LearningLms.Host.Pages.Account;
+namespace LibreLms.Host.Pages.Account;
 
 public class LogoutModel : PageModel
 {

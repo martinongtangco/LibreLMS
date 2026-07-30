@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
-using LearningLms.Contracts.Catalog;
-using LearningLms.Modules.Catalog.Application;
+using LibreLms.Contracts.Catalog;
+using LibreLms.Modules.Catalog.Application;
 
-namespace LearningLms.Modules.Catalog;
+namespace LibreLms.Modules.Catalog;
 
 /// <summary>Registration extension for the Catalog module's DI services.</summary>
 public static class CatalogModuleExtensions

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using LearningLms.Modules.Catalog.Domain;
+using LibreLms.Modules.Catalog.Domain;
 
-namespace LearningLms.Modules.Catalog.Infrastructure;
+namespace LibreLms.Modules.Catalog.Infrastructure;
 
 /// <summary>EF Core context for the Catalog module — owns the Courses table.</summary>
 public class CatalogDbContext(DbContextOptions<CatalogDbContext> options) : DbContext(options)

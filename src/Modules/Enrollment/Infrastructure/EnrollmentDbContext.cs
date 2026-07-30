@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
-using LearningLms.Modules.Enrollment.Domain;
+using LibreLms.Modules.Enrollment.Domain;
 
-namespace LearningLms.Modules.Enrollment.Infrastructure;
+namespace LibreLms.Modules.Enrollment.Infrastructure;
 
 /// <summary>EF Core context for the Enrollment module — owns Students and Enrollments tables.</summary>
 public class EnrollmentDbContext(DbContextOptions<EnrollmentDbContext> options) : DbContext(options)
 {
     public DbSet<Student> Students => Set<Student>();
-    public DbSet<LearningLms.Modules.Enrollment.Domain.Enrollment> Enrollments => Set<LearningLms.Modules.Enrollment.Domain.Enrollment>();
+    public DbSet<LibreLms.Modules.Enrollment.Domain.Enrollment> Enrollments => Set<LibreLms.Modules.Enrollment.Domain.Enrollment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -42,7 +42,7 @@ public class EnrollmentDbContext(DbContextOptions<EnrollmentDbContext> options) 
                 .IsRequired();
         });
 
-        builder.Entity<LearningLms.Modules.Enrollment.Domain.Enrollment>(entity =>
+        builder.Entity<LibreLms.Modules.Enrollment.Domain.Enrollment>(entity =>
         {
             entity.ToTable("Enrollments");
             entity.HasKey(e => e.Id);

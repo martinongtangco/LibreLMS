@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace LearningLms.Host.Pages.Admin;
+namespace LibreLms.Host.Pages.Admin;
 
 public class ScormUploadModel : PageModel
 {

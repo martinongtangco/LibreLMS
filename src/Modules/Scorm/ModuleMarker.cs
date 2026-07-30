@@ -1,4 +1,4 @@
-namespace LearningLms.Modules.Scorm;
+namespace LibreLms.Modules.Scorm;
 
 /// <summary>
 /// No behavior — exists so tests and DI wiring have a stable type to anchor on

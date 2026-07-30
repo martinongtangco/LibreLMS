@@ -1,4 +1,4 @@
-namespace LearningLms.Modules.Enrollment;
+namespace LibreLms.Modules.Enrollment;
 
 /// <summary>
 /// No behavior — exists so tests and DI wiring have a stable type to anchor on

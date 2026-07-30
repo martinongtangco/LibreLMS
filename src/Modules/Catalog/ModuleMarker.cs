@@ -1,4 +1,4 @@
-namespace LearningLms.Modules.Catalog;
+namespace LibreLms.Modules.Catalog;
 
 /// <summary>
 /// No behavior — exists so tests and DI wiring have a stable type to anchor on

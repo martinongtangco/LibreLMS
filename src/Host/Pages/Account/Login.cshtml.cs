@@ -7,10 +7,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using LearningLms.Modules.Enrollment.Domain;
-using LearningLms.Modules.Enrollment.Infrastructure;
+using LibreLms.Modules.Enrollment.Domain;
+using LibreLms.Modules.Enrollment.Infrastructure;
 
-namespace LearningLms.Host.Pages.Account;
+namespace LibreLms.Host.Pages.Account;
 
 public class LoginModel : PageModel
 {

@@ -1,6 +1,6 @@
-using LearningLms.SharedKernel;
+using LibreLms.SharedKernel;
 
-namespace LearningLms.Modules.Scorm.Domain;
+namespace LibreLms.Modules.Scorm.Domain;
 
 /// <summary>
 /// Represents an uploaded SCORM 1.2 package. One package is linked to one Course
