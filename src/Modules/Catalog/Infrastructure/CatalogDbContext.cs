@@ -37,6 +37,12 @@ public class CatalogDbContext(DbContextOptions<CatalogDbContext> options) : DbCo
                 .IsRequired()
                 .HasMaxLength(50);
 
+            entity.Property(e => e.OrganizationId)
+                .IsRequired();
+
+            entity.HasIndex(e => new { e.Title, e.OrganizationId })
+                .IsUnique();
+
             entity.Property(e => e.CreatedAt)
                 .IsRequired();
         });

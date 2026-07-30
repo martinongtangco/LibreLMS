@@ -38,6 +38,9 @@ public class EnrollmentDbContext(DbContextOptions<EnrollmentDbContext> options) 
                 .IsRequired()
                 .HasMaxLength(100);
 
+            entity.Property(e => e.OrganizationId)
+                .IsRequired();
+
             entity.Property(e => e.CreatedAt)
                 .IsRequired();
         });

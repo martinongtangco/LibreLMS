@@ -20,10 +20,10 @@
 
 **Purpose**: Create the new Management module project structure and wire it into the build.
 
-- [ ] T001 Create Management module project structure: `src/Modules/Management/{Domain,Application,Infrastructure,Endpoints}/` and `src/Modules/Management.Contracts/` with `.csproj` files
-- [ ] T002 [P] Add Management module references to Host project and existing solution (update `.csproj` and solution file)
-- [ ] T003 [P] Create `ModuleMarker.cs` in `src/Modules/Management/` and `src/Modules/Management.Contracts/`
-- [ ] T004 Add Management module to `ArchitectureTests/ModuleBoundaryTests.cs` module array so boundary checks include it
+- [x] T001 Create Management module project structure: `src/Modules/Management/{Domain,Application,Infrastructure,Endpoints}/` and `src/Modules/Management.Contracts/` with `.csproj` files
+- [x] T002 [P] Add Management module references to Host project and existing solution (update `.csproj` and solution file)
+- [x] T003 [P] Create `ModuleMarker.cs` in `src/Modules/Management/` and `src/Modules/Management.Contracts/`
+- [x] T004 Add Management module to `ArchitectureTests/ModuleBoundaryTests.cs` module array so boundary checks include it
 
 ---
 
@@ -33,18 +33,18 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T005 Create `Organization` domain entity in `src/Modules/Management/Domain/Organization.cs` (Id, Name, Description, ParentId self-ref FK, CreatedAt, IsDeleted)
-- [ ] T006 [P] Create `CourseVisibilityOverride` domain entity in `src/Modules/Management/Domain/CourseVisibilityOverride.cs` (Id, OrganizationId FK, CourseId FK, IsHidden, CreatedAt, CreatedBy)
-- [ ] T007 [P] Create `IOrganizationLookup` interface and `OrganizationSummary` DTO in `src/Modules/Management.Contracts/`
-- [ ] T008 [P] Create `IUserInfoLookup` interface in `src/Modules/Management.Contracts/`
-- [ ] T009 Create `ManagementDbContext` in `src/Modules/Management/Infrastructure/ManagementDbContext.cs` with DbSets for Organization and CourseVisibilityOverride
-- [ ] T010 Add `OrganizationId` field to `Student` entity in `src/Modules/Enrollment/Domain/Student.cs` (nullable first, migration strategy: nullable → backfill → NOT NULL)
-- [ ] T011 [P] Add `OrganizationId` field to `Course` entity in `src/Modules/Catalog/Domain/Course.cs` (nullable first, migration strategy: nullable → backfill → NOT NULL)
+- [x] T005 Create `Organization` domain entity in `src/Modules/Management/Domain/Organization.cs` (Id, Name, Description, ParentId self-ref FK, CreatedAt, IsDeleted)
+- [x] T006 [P] Create `CourseVisibilityOverride` domain entity in `src/Modules/Management/Domain/CourseVisibilityOverride.cs` (Id, OrganizationId FK, CourseId FK, IsHidden, CreatedAt, CreatedBy)
+- [x] T007 [P] Create `IOrganizationLookup` interface and `OrganizationSummary` DTO in `src/Modules/Management.Contracts/`
+- [x] T008 [P] Create `IUserInfoLookup` interface in `src/Modules/Management.Contracts/`
+- [x] T009 Create `ManagementDbContext` in `src/Modules/Management/Infrastructure/ManagementDbContext.cs` with DbSets for Organization and CourseVisibilityOverride
+- [x] T010 Add `OrganizationId` field to `Student` entity in `src/Modules/Enrollment/Domain/Student.cs` (nullable first, migration strategy: nullable → backfill → NOT NULL)
+- [x] T011 [P] Add `OrganizationId` field to `Course` entity in `src/Modules/Catalog/Domain/Course.cs` (nullable first, migration strategy: nullable → backfill → NOT NULL)
 - [ ] T012 Create EF Core migrations for: Organizations table, CourseVisibilityOverrides table, Student.OrganizationId, Course.OrganizationId (in `src/Host/Migrations/`)
-- [ ] T013 Create `RequireOrgScopeHandler` authorization handler in `src/Host/ManagementAuth/OrgScopeAuthorizationHandler.cs` implementing `IAuthorizationHandler` — grants access if SuperUser, or if target org is in the user's subtree
-- [ ] T014 [P] Create `RequireOrgScopeRequirement` authorization requirement class in `src/Host/ManagementAuth/OrgScopeRequirement.cs`
-- [ ] T015 Create `OrgScopeExtensions` helper in `src/Host/ManagementAuth/OrgScopeExtensions.cs` with static methods for building ancestor paths and checking subtree membership
-- [ ] T016 Register Management module in `src/Host/Program.cs`: add DbContext, register services, configure DI for Management module contracts, register authorization policies
+- [x] T013 Create `RequireOrgScopeHandler` authorization handler in `src/Host/ManagementAuth/OrgScopeAuthorizationHandler.cs` implementing `IAuthorizationHandler` — grants access if SuperUser, or if target org is in the user's subtree
+- [x] T014 [P] Create `RequireOrgScopeRequirement` authorization requirement class in `src/Host/ManagementAuth/OrgScopeRequirement.cs`
+- [x] T015 Create `OrgScopeExtensions` helper in `src/Host/ManagementAuth/OrgScopeExtensions.cs` with static methods for building ancestor paths and checking subtree membership
+- [x] T016 Register Management module in `src/Host/Program.cs`: add DbContext, register services, configure DI for Management module contracts, register authorization policies
 
 **Checkpoint**: Foundation ready — user story implementation can now begin.
 
@@ -56,14 +56,14 @@
 
 **Independent Test**: Create a root org, add child orgs, verify tree displays correctly, edit and delete orgs, confirm dashboard shows aggregate metrics.
 
-- [ ] T017 [US1] Implement `OrganizationService` in `src/Modules/Management/Application/OrganizationService.cs` with methods: CreateAsync, GetByIdAsync, ListByParentAsync, UpdateAsync, DeleteAsync, GetSubtreeAsync, CanDeleteAsync (checks for dependents)
-- [ ] T018 [US1] Implement `IOrganizationLookup` in `src/Modules/Management/Infrastructure/OrganizationLookup.cs` for cross-module org hierarchy queries
-- [ ] T019 [P] [US1] Create organization management API endpoints in `src/Modules/Management/Endpoints/OrganizationEndpoints.cs`: GET/POST/PUT/DELETE `/api/organizations` and GET `/api/organizations/{id}`
-- [ ] T020 [P] [US1] Create `OrganizationSeeder` in `src/Modules/Management/Infrastructure/ManagementSeeder.cs` to seed root organization and default SuperUser on startup
-- [ ] T021 [US1] Create Razor Page `/Admin/Organizations/Index.cshtml` and `.cs` for org tree view with expand/collapse, learner/course counts per org
-- [ ] T022 [P] [US1] Create Razor Page `/Admin/Organizations/Create.cshtml` and `.cs` for creating organizations with parent selection dropdown
-- [ ] T023 [P] [US1] Create Razor Page `/Admin/Organizations/Edit.cshtml` and `.cs` for editing org name and description
-- [ ] T024 [US1] Wire up organization endpoints in `src/Host/Program.cs` (MapGroup for `/api/organizations`)
+- [x] T017 [US1] Implement `OrganizationService` in `src/Modules/Management/Application/OrganizationService.cs` with methods: CreateAsync, GetByIdAsync, ListByParentAsync, UpdateAsync, DeleteAsync, GetSubtreeAsync, CanDeleteAsync (checks for dependents)
+- [x] T018 [US1] Implement `IOrganizationLookup` in `src/Modules/Management/Application/OrganizationLookup.cs` for cross-module org hierarchy queries
+- [x] T019 [P] [US1] Create organization management API endpoints in `src/Host/Program.cs` (Management module endpoints): GET/POST/PUT/DELETE `/api/organizations`
+- [x] T020 [P] [US1] Create `ManagementSeeder` in `src/Modules/Management/Infrastructure/ManagementSeeder.cs` to seed root organization and default SuperUser on startup
+- [x] T021 [US1] Create Razor Page `/Admin/Organizations/Index.cshtml` and `.cs` for org tree view with expand/collapse
+- [x] T022 [P] [US1] Create Razor Page `/Admin/Organizations/Create.cshtml` and `.cs` for creating organizations with parent selection dropdown
+- [x] T023 [P] [US1] Create Razor Page `/Admin/Organizations/Edit.cshtml` and `.cs` for editing org name and description
+- [x] T024 [US1] Wire up organization endpoints in `src/Host/Program.cs` (MapGroup for `/api/organizations`)
 
 **Checkpoint**: SuperUser can fully manage the organization hierarchy.
 
@@ -75,9 +75,9 @@
 
 **Independent Test**: Login as OrgAdmin, create a learner, verify visibility, confirm cross-org access is denied.
 
-- [ ] T025 [US2] Implement `UserService` in `src/Modules/Management/Application/UserService.cs` with methods: CreateAsync, GetByIdAsync, ListByOrgScopeAsync, UpdateAsync, DeleteAsync, GetAllRolesAsync
-- [ ] T026 [US2] Implement `IUserInfoLookup` in `src/Modules/Management/Infrastructure/UserInfoLookup.cs` for cross-module user/org queries (uses Enrollment module's Student data)
-- [ ] T027 [P] [US2] Create user management API endpoints in `src/Modules/Management/Endpoints/UserEndpoints.cs`: GET/POST/PUT/DELETE `/api/users`
+- [x] T025 [US2] Implement `UserService` in `src/Modules/Management/Application/UserService.cs` with methods: CreateAsync, GetByIdAsync, ListByOrgScopeAsync, UpdateAsync, DeleteAsync
+- [x] T026 [US2] Implement `IUserInfoLookup` in `src/Modules/Management/Application/UserInfoLookup.cs` for cross-module user/org queries (uses Enrollment module's Student data)
+- [x] T027 [P] [US2] Create user management API endpoints in `src/Host/Program.cs`: GET/POST/PUT/DELETE `/api/users`
 - [ ] T028 [P] [US2] Create Razor Page `/Admin/Learners/Index.cshtml` and `.cs` for scoped learner list with search, role filter, org filter
 - [ ] T029 [P] [US2] Create Razor Page `/Admin/Learners/Create.cshtml` and `.cs` for creating learners with role selection (Learner/OrgAdmin) and org assignment
 - [ ] T030 [P] [US2] Create Razor Page `/Admin/Learners/Edit.cshtml` and `.cs` for editing learner details, role, and org assignment

@@ -15,6 +15,7 @@ public class ModuleBoundaryTests
         ("Catalog", typeof(LibreLms.Modules.Catalog.ModuleMarker).Assembly, "LibreLms.Modules.Catalog"),
         ("Enrollment", typeof(LibreLms.Modules.Enrollment.ModuleMarker).Assembly, "LibreLms.Modules.Enrollment"),
         ("Scorm", typeof(LibreLms.Modules.Scorm.ModuleMarker).Assembly, "LibreLms.Modules.Scorm"),
+        ("Management", typeof(LibreLms.Modules.Management.ModuleMarker).Assembly, "LibreLms.Modules.Management"),
     ];
 
     public static IEnumerable<object[]> ModulePairs()
