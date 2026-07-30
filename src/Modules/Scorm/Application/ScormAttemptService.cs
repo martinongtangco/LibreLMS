@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using LearningLms.Contracts.Catalog;
-using LearningLms.Modules.Scorm.Domain;
-using LearningLms.Modules.Scorm.Infrastructure;
+using LibreLms.Contracts.Catalog;
+using LibreLms.Modules.Scorm.Domain;
+using LibreLms.Modules.Scorm.Infrastructure;
 
-namespace LearningLms.Modules.Scorm.Application;
+namespace LibreLms.Modules.Scorm.Application;
 
 /// <summary>
 /// Service for managing SCORM attempt records and student-facing queries.

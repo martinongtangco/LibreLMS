@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 
-namespace LearningLms.Modules.Scorm.Infrastructure;
+namespace LibreLms.Modules.Scorm.Infrastructure;
 
 /// <summary>
 /// Parse SCORM 1.2 imsmanifest.xml to extract the launch SCO path and manifest title.

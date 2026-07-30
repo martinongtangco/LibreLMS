@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace LearningLms.Modules.Catalog.Endpoints;
+namespace LibreLms.Modules.Catalog.Endpoints;
 
 /// <summary>Full course details with optional enrollment status for the current student.</summary>
 public record CourseDetailDto(

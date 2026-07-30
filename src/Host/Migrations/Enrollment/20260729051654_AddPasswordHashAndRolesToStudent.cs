@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace LearningLms.Host.Migrations.Enrollment
+namespace LibreLms.Host.Migrations.Enrollment
 {
     /// <inheritdoc />
     public partial class AddPasswordHashAndRolesToStudent : Migration

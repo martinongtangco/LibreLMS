@@ -1,6 +1,6 @@
-using LearningLms.SharedKernel;
+using LibreLms.SharedKernel;
 
-namespace LearningLms.Modules.Enrollment.Domain;
+namespace LibreLms.Modules.Enrollment.Domain;
 
 /// <summary>A learner on the platform.</summary>
 public class Student : Entity<Guid>

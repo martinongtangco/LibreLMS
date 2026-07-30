@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace LearningLms.Host.Pages;
+namespace LibreLms.Host.Pages;
 
 public class ErrorModel : PageModel
 {

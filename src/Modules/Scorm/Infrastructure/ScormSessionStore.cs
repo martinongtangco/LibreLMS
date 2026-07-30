@@ -1,7 +1,7 @@
 using System.Text.Json;
 using StackExchange.Redis;
 
-namespace LearningLms.Modules.Scorm.Infrastructure;
+namespace LibreLms.Modules.Scorm.Infrastructure;
 
 /// <summary>
 /// Valkey-backed session state for live SCORM sessions.

@@ -1,4 +1,4 @@
-namespace LearningLms.Modules.Catalog.Endpoints;
+namespace LibreLms.Modules.Catalog.Endpoints;
 
 /// <summary>DTO for catalog listing — excludes full description for brevity.</summary>
 public record CourseDto(

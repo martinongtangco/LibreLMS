@@ -1,4 +1,4 @@
-namespace LearningLms.Contracts.Catalog;
+namespace LibreLms.Contracts.Catalog;
 
 /// <summary>
 /// No behavior yet — this project is the ONLY thing other modules are allowed to

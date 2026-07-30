@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace LearningLms.Host.Migrations.Enrollment
+namespace LibreLms.Host.Migrations.Enrollment
 {
     /// <summary>
     /// Initial migration for the Enrollment module — creates Students and Enrollments tables.

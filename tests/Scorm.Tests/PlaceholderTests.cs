@@ -4,5 +4,5 @@ namespace Scorm.Tests;
 public class PlaceholderTests
 {
     [Fact]
-    public void Module_assembly_loads() => Assert.NotNull(typeof(LearningLms.Modules.Scorm.ModuleMarker));
+    public void Module_assembly_loads() => Assert.NotNull(typeof(LibreLms.Modules.Scorm.ModuleMarker));
 }

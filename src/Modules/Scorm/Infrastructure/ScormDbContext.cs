@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using LearningLms.Modules.Scorm.Domain;
+using LibreLms.Modules.Scorm.Domain;
 
-namespace LearningLms.Modules.Scorm.Infrastructure;
+namespace LibreLms.Modules.Scorm.Infrastructure;
 
 /// <summary>EF Core context for the Scorm module — owns ScormPackages and CourseAttempts tables.</summary>
 public class ScormDbContext(DbContextOptions<ScormDbContext> options) : DbContext(options)
