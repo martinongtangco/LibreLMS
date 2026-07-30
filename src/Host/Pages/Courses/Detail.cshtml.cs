@@ -14,22 +14,27 @@ public class CourseDetailModel : PageModel
     private readonly ScormPackageService _scormPackageService;
     private readonly EnrollmentService _enrollmentService;
     private readonly IEnrollmentLookup _enrollmentLookup;
+    private readonly ScormAttemptService _scormAttemptService;
 
     public CourseDetailModel(
         CourseCatalogService catalogService,
         ScormPackageService scormPackageService,
         EnrollmentService enrollmentService,
-        IEnrollmentLookup enrollmentLookup)
+        IEnrollmentLookup enrollmentLookup,
+        ScormAttemptService scormAttemptService)
     {
         _catalogService = catalogService;
         _scormPackageService = scormPackageService;
         _enrollmentService = enrollmentService;
         _enrollmentLookup = enrollmentLookup;
+        _scormAttemptService = scormAttemptService;
     }
 
     [BindProperty(SupportsGet = true)] public Guid Id { get; set; }
     public CourseDetailItem? Course { get; set; }
     public bool IsEnrolled { get; set; }
+    public string? LatestStatus { get; set; }
+    public double? LatestScore { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -40,6 +45,20 @@ public class CourseDetailModel : PageModel
         var studentId = ScormHelpers.GetStudentId(HttpContext);
         var enrolled = await _enrollmentLookup.IsEnrolledAsync(studentId, Id);
         var scormPkg = await _scormPackageService.GetPackageByCourseIdAsync(Id);
+
+        // Fetch latest SCORM attempt status/score for enrolled students (T015)
+        string? latestStatus = null;
+        double? latestScore = null;
+        if (enrolled && studentId != Guid.Empty)
+        {
+            var attempts = await _scormAttemptService.GetMyAttemptsAsync(studentId);
+            var latestAttempt = attempts
+                .Where(a => a.CourseId == Id)
+                .OrderByDescending(a => a.AttemptNumber)
+                .FirstOrDefault();
+            latestStatus = latestAttempt?.Status;
+            latestScore = latestAttempt?.ScoreRaw;
+        }
 
         Course = new CourseDetailItem(
             Id: course.Id,
@@ -53,6 +72,8 @@ public class CourseDetailModel : PageModel
             ScormPackageId: scormPkg?.Id);
 
         IsEnrolled = enrolled;
+        LatestStatus = latestStatus;
+        LatestScore = latestScore;
     }
 
     /// <summary>HTMX handler: enroll in a course and return result partial (US2).</summary>
@@ -112,7 +133,9 @@ public record CourseDetailItem(
     string Duration,
     bool IsEnrolled,
     bool IsScorm,
-    Guid? ScormPackageId);
+    Guid? ScormPackageId,
+    string? LatestStatus = null,
+    double? LatestScore = null);
 
 /// <summary>View model for enrollment result partial view (HTMX feedback).</summary>
 public record EnrollmentResult(
