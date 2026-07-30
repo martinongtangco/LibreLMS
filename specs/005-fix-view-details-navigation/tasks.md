@@ -40,9 +40,9 @@
 
 ### Implementation for User Story 1
 
-- [x] T004 [US1] Fix `hx-push-url` on "View Details" button in `src/Host/Pages/Shared/_CourseCard.cshtml`: change `hx-push-url="true"` to `hx-push-url="/Courses/Detail?id=@Model.Id"` so the browser address bar gets the clean Razor Pages route (which hits `OnGetAsync` on refresh) instead of the handler-specific URL (`?handler=Detail` which returns a partial without layout)
+- [x] T004 [US1] **Updated**: HTMX attributes (`hx-get`, `hx-target`, `hx-push-url`, `hx-swap`) were **removed** from the "View Details" button in `src/Host/Pages/Shared/_CourseCard.cshtml` and replaced with `asp-page="/Courses/Detail" asp-route-id="@Model.Id"` tag helper for full-page navigation. Rationale: simpler, more reliable, works without JavaScript, eliminates HTMX/full-page conflict.
 
-**Checkpoint**: At this point, clicking "View Details" should trigger an HTMX inline swap that loads the course detail partial into `#main-content`, and the browser URL should show `/Courses/Detail?id={guid}` (no `handler=`). Refreshing the page should render the full detail page correctly.
+**Checkpoint**: Clicking "View Details" performs a full-page navigation to `/Courses/Detail?id={guid}`. The page renders with the full layout (navbar, footer, etc.). Browser refresh works correctly.
 
 ---
 
@@ -54,9 +54,9 @@
 
 ### Implementation for User Story 2
 
-- [x] T005 [P] [US2] Apply the same `hx-push-url` fix to the course title link in `src/Host/Pages/Shared/_CourseCard.cshtml`: change `hx-push-url="true"` to `hx-push-url="/Courses/Detail?id=@Model.Id"` on the `<h3><a>` element
+- [x] T005 [P] [US2] **Updated**: HTMX attributes were **removed** from the course title link in `src/Host/Pages/Shared/_CourseCard.cshtml` and replaced with `asp-page="/Courses/Detail" asp-route-id="@Model.Id"` tag helper for full-page navigation (same approach as T004).
 
-**Checkpoint**: Both the title link and "View Details" button should now produce clean, bookmarkable URLs and render correctly on refresh.
+**Checkpoint**: Both the title link and "View Details" button perform full-page navigation to the course detail page and render correctly on refresh.
 
 ---
 
@@ -83,11 +83,13 @@
 
 ### Implementation for User Story 4
 
-- [x] T008 [P] [US4] Verify `OnGetDetailAsync` in `src/Host/Pages/Courses/Detail.cshtml.cs` returns `Partial("_CourseDetail", model)` (not a full page) — confirm this is correct and requires no changes
-- [x] T009 [P] [US4] Verify `#main-content` div exists in `src/Host/Pages/Courses/Index.cshtml` so HTMX has a valid swap target when the catalog page loads
-- [x] T010 [US4] Verify graceful degradation: confirm the `asp-page="/Courses/Detail" asp-route-id="@Model.Id"` tag helper on both links in `src/Host/Pages/Shared/_CourseCard.cshtml` generates a valid `href` attribute that works when JavaScript/HTMX is disabled
+> **SUPERSEDED** (by spec 006 cleanup): HTMX inline swap from the course card was intentionally abandoned in favor of full-page navigation via `asp-page` tag helpers. The `OnGetDetailAsync` handler these tasks reference no longer has callers and has been removed. These verification tasks are no longer applicable.
 
-**Checkpoint**: HTMX inline swap works, URL is clean, and disabling JavaScript falls back to full-page navigation via `href`.
+- [x] T008 [P] [US4] ~~Verify `OnGetDetailAsync` in `src/Host/Pages/Courses/Detail.cshtml.cs` returns `Partial("_CourseDetail", model)`~~ — **SUPERSEDED**: `OnGetDetailAsync` has been removed (no HTMX callers remain)
+- [x] T009 [P] [US4] ~~Verify `#main-content` div exists in `src/Host/Pages/Courses/Index.cshtml`~~ — **SUPERSEDED**: HTMX inline swap from course cards is no longer used
+- [x] T010 [US4] ~~Verify graceful degradation~~ — **SUPERSEDED**: Full-page navigation IS the primary approach; no HTMX on course card links. HTMX remains only for catalog filtering.
+
+**Checkpoint**: ~~HTMX inline swap works, URL is clean, and disabling JavaScript falls back to full-page navigation via `href`.~~ — N/A (US4 abandoned, full-page navigation is the approach).
 
 ---
 
@@ -96,8 +98,8 @@
 **Purpose**: Ensure no regressions and all validation scenarios pass.
 
 - [x] T011 Run all 8 validation scenarios from `specs/005-fix-view-details-navigation/quickstart.md` and confirm pass
-- [x] T012 [P] Verify existing HTMX catalog filtering (search, category dropdown) still works after the card changes in `src/Host/Pages/Courses/Index.cshtml`
-- [x] T013 [P] Verify "My Courses" page links to course detail pages correctly (no handler URL in `src/Host/Pages/Shared/_MyCourseRow.cshtml`)
+- [x] T012 [P] Verify existing HTMX catalog filtering (search, category dropdown) still works on `src/Host/Pages/Courses/Index.cshtml` after `_CourseCard.cshtml` changes
+- [x] T013 [P] Verify "My Courses" page links to course detail pages correctly (no `handler=` URL): check `src/Host/Pages/Shared/_MyCourseRow.cshtml` for the same `hx-push-url` pattern that was broken in `_CourseCard.cshtml` — this page uses a similar HTMX link structure and is a regression risk
 - [x] T014 Verify `_CourseDetail.cshtml` partial's "Back to Catalog" link uses the correct HTMX swap back to catalog in `src/Host/Pages/Shared/_CourseDetail.cshtml`
 
 ---

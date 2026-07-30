@@ -63,9 +63,11 @@ A student can bookmark or directly navigate to a course detail URL (e.g., from a
 
 ### User Story 4 - HTMX Inline Course Detail Swap Works from Catalog (Priority: P3)
 
+> **SUPERSEDED** (spec 006): HTMX inline swap from the course card was intentionally abandoned in favor of full-page navigation via `asp-page` tag helpers. Rationale: simpler, more reliable, works without JavaScript, eliminates HTMX/full-page conflict. The `OnGetDetailAsync` handler that would have served these inline swaps has been removed.
+
 When HTMX is available and the student is on the catalog page, clicking a course card can optionally load the course detail inline (within the page content area) without a full page reload. The navigation bar and page structure remain stable. If HTMX is unavailable or the swap fails, the interaction degrades gracefully to full-page navigation.
 
-**Why this priority**: This is a UX enhancement (faster, SPA-like feel) that builds on top of reliable full-page navigation. It should not block or break the core navigation flow. Spec 004 (HTMX + Razor conversion) depends on full-page navigation working first.
+**Why this priority**: ~~This is a UX enhancement (faster, SPA-like feel) that builds on top of reliable full-page navigation.~~ **Abandoned** — full-page navigation IS the approach.
 
 **Independent Test**: On the catalog page with HTMX loaded, click a course card — verify the detail loads inline within the content area. Disable JavaScript — verify the same click navigates to the full detail page.
 
@@ -79,7 +81,8 @@ When HTMX is available and the student is on the catalog page, clicking a course
 
 ### Edge Cases
 
-- **Catalog page reached via HTMX swap**: If the catalog listing itself was loaded via HTMX (not a full page load), clicking "View Details" must still work — the target element for the swap must exist
+- **Catalog page reached via HTMX swap**: If the catalog listing itself was loaded via HTMX (not a full page load), clicking "View Details" still works — full-page navigation via `asp-page` tag helpers is unaffected by how the catalog was loaded
+- **~~HTMX inline swap from course cards~~**: ~~SUPERSEDED~~ — HTMX inline swap was abandoned for course card navigation (see US4). The `OnGetDetailAsync` handler has been removed. Note: spec 004 (`004-htmx-razor-conversion`) may have cross-spec inconsistency regarding this handler, but that is out of scope for this cleanup.
 - **Browser back/forward with mixed navigation**: Student navigates catalog → detail (full page) → back to catalog → detail again (HTMX swap) — browser history should behave predictably
 - **URL with handler parameter from old HTMX push-url**: If a student has an old bookmark containing `?handler=Detail`, it should either redirect to the clean URL or render correctly
 - **Concurrent clicks**: Student rapidly clicks two different course cards — only one detail view should load, no duplicate requests
@@ -94,7 +97,7 @@ When HTMX is available and the student is on the catalog page, clicking a course
 - **FR-003**: The course detail page MUST render with the full page layout (navbar, footer, container) when accessed via direct URL or full-page navigation
 - **FR-004**: The course detail page URL MUST be bookmarkable and shareable — accessing it directly must produce the same result as navigating from the catalog
 - **FR-005**: System MUST NOT use HTMX `hx-push-url` with a handler-specific URL path that breaks on browser refresh
-- **FR-006**: System MUST support graceful degradation — when HTMX is unavailable or fails, course card links must fall back to standard full-page navigation via `href`
+- **FR-006**: System MUST use full-page navigation as the primary approach for course card links — `asp-page` tag helpers navigate directly to the detail page. HTMX is not used on course card navigation links. HTMX remains only for catalog filtering (search, category dropdown).
 - **FR-007**: The course detail page URL MUST use a clean path (e.g., `/Courses/Detail?id={guid}`) without HTMX handler parameters
 - **FR-008**: System MUST render the enrollment state (enroll button, enrolled badge, launch button) correctly on the detail page regardless of how the page was reached
 - **FR-009**: System MUST display a "Course Not Found" state when a student accesses a detail URL for a non-existent or deleted course
