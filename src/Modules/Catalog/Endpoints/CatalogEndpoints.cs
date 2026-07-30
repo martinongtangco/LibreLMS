@@ -1,4 +1,4 @@
-namespace LearningLms.Modules.Catalog.Endpoints;
+namespace LibreLms.Modules.Catalog.Endpoints;
 
 /// <summary>
 /// Marker for the Catalog module's endpoint definitions.

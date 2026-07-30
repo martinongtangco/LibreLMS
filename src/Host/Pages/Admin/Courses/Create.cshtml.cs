@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace LearningLms.Host.Pages.Admin.Courses;
+namespace LibreLms.Host.Pages.Admin.Courses;
 
 public class CreateCourseModel : PageModel
 {

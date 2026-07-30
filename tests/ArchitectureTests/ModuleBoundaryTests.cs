@@ -12,9 +12,9 @@ public class ModuleBoundaryTests
 {
     private static readonly (string Name, Assembly Assembly, string InternalNamespace)[] Modules =
     [
-        ("Catalog", typeof(LearningLms.Modules.Catalog.ModuleMarker).Assembly, "LearningLms.Modules.Catalog"),
-        ("Enrollment", typeof(LearningLms.Modules.Enrollment.ModuleMarker).Assembly, "LearningLms.Modules.Enrollment"),
-        ("Scorm", typeof(LearningLms.Modules.Scorm.ModuleMarker).Assembly, "LearningLms.Modules.Scorm"),
+        ("Catalog", typeof(LibreLms.Modules.Catalog.ModuleMarker).Assembly, "LibreLms.Modules.Catalog"),
+        ("Enrollment", typeof(LibreLms.Modules.Enrollment.ModuleMarker).Assembly, "LibreLms.Modules.Enrollment"),
+        ("Scorm", typeof(LibreLms.Modules.Scorm.ModuleMarker).Assembly, "LibreLms.Modules.Scorm"),
     ];
 
     public static IEnumerable<object[]> ModulePairs()

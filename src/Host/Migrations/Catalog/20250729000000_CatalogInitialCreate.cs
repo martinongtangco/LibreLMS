@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace LearningLms.Host.Migrations.Catalog
+namespace LibreLms.Host.Migrations.Catalog
 {
     /// <summary>
     /// Initial migration for the Catalog module — creates the Courses table.

@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
-using LearningLms.Contracts.Enrollment;
-using LearningLms.Modules.Enrollment.Application;
+using LibreLms.Contracts.Enrollment;
+using LibreLms.Modules.Enrollment.Application;
 
-namespace LearningLms.Modules.Enrollment;
+namespace LibreLms.Modules.Enrollment;
 
 /// <summary>Registration extension for the Enrollment module's DI services.</summary>
 public static class EnrollmentModuleExtensions

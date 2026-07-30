@@ -1,17 +1,21 @@
 <!--
   Sync Impact Report
   ==================
-  Version change: 1.1.0 → 1.2.0 (MINOR: new principle added)
+  Version change: 1.2.0 → 1.3.0 (MINOR: new principle added)
   Added principles:
-    - IX. No Ad-Hoc Fixes — Document Before You Code (new)
+    - IX. Plan On Master Only (new)
   Modified principles: none
   Removed sections: none
+  Number re-indexing:
+    - "No Ad-Hoc Fixes — Document Before You Code" renumbered IX → X
   Templates updated:
-    - ✅ .specify/templates/plan-template.md (no changes needed — Principle VIII reference already present)
-    - ✅ .specify/templates/spec-template.md (no changes needed — branch naming already present)
-    - ✅ .specify/templates/tasks-template.md (no changes needed — workflow is general)
-    - ✅ .specify/memory/constitution.md (new Principle IX added)
-    - ⚠  README.md (update dev workflow section to note ad-hoc fix rule)
+    - ✅ .specify/templates/plan-template.md (no changes needed)
+    - ✅ .specify/templates/spec-template.md (no changes needed)
+    - ✅ .specify/templates/tasks-template.md (no changes needed)
+    - ✅ .pi/prompts/speckit.specify.md (pre-execution branch gate added)
+    - ✅ .pi/prompts/speckit.plan.md (pre-execution branch gate added)
+    - ✅ .pi/prompts/speckit.tasks.md (pre-execution branch gate added)
+    - ⚠  README.md (update dev workflow section to note master-only planning rule)
   Deferred items: none
 -->
 
@@ -98,7 +102,23 @@ strict convention:
   the branch is merged into `main` (or opened as a PR) only after the implementation completes
   and all validation checks pass.
 
-### IX. No Ad-Hoc Fixes — Document Before You Code
+### IX. Plan On Master Only
+Any SpecKit command that performs planning or creates user stories
+(`/speckit.specify`, `/speckit.plan`, `/speckit.tasks`) MUST verify the
+active Git branch is `master` before proceeding. If the current branch is
+anything other than `master` (e.g. a `story/` or `bug/` working branch), the
+command MUST stop immediately and report:
+
+- The current branch name
+- That planning commands must run on `master`
+- The instruction to switch back: `git checkout master`
+
+This prevents specs, plans, and task lists from being authored while already
+inside an implementation branch — they belong on the integration branch where
+the full project state is visible. Implementation work on feature branches
+follows *after* planning is complete on `master`.
+
+### X. No Ad-Hoc Fixes — Document Before You Code
 When an issue is discovered through conversation with the AI (outside a planned slice), the fix
 MUST still follow the SpecKit workflow — no direct code edits on `main` or any branch without
 documentation. The agent MUST NOT fix things "inline" in a chat session.
@@ -158,4 +178,4 @@ simplify the instruction, not to add more words explaining it. Amendments requir
 file, bumping the version below, and — if the amendment reverses a prior ADR — recording that
 reversal as a new ADR rather than editing the old one.
 
-**Version**: 1.2.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-07-29
+**Version**: 1.3.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-07-30

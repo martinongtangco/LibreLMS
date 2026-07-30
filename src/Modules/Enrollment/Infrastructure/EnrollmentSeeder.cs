@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
-using LearningLms.Modules.Enrollment.Domain;
-using LearningLms.Modules.Enrollment.Infrastructure;
+using LibreLms.Modules.Enrollment.Domain;
+using LibreLms.Modules.Enrollment.Infrastructure;
 
-namespace LearningLms.Modules.Enrollment.Infrastructure;
+namespace LibreLms.Modules.Enrollment.Infrastructure;
 
 /// <summary>Seeds test students with known credentials for demonstration.</summary>
 public static class EnrollmentSeeder
@@ -72,7 +72,7 @@ public static class EnrollmentSeeder
 
         if (existingEnrollment is null)
         {
-            context.Enrollments.Add(new LearningLms.Modules.Enrollment.Domain.Enrollment
+            context.Enrollments.Add(new LibreLms.Modules.Enrollment.Domain.Enrollment
             {
                 StudentId = aliceId,
                 CourseId = scormCourseId,

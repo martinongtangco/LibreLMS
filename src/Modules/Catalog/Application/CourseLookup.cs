@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using LearningLms.Contracts.Catalog;
-using LearningLms.Modules.Catalog.Infrastructure;
+using LibreLms.Contracts.Catalog;
+using LibreLms.Modules.Catalog.Infrastructure;
 
-namespace LearningLms.Modules.Catalog.Application;
+namespace LibreLms.Modules.Catalog.Application;
 
 /// <summary>
 /// Implements the cross-module ICourseLookup contract.

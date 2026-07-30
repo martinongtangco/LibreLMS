@@ -1,6 +1,6 @@
-using LearningLms.SharedKernel;
+using LibreLms.SharedKernel;
 
-namespace LearningLms.Modules.Scorm.Domain;
+namespace LibreLms.Modules.Scorm.Domain;
 
 /// <summary>
 /// Represents a single student's attempt at a SCORM course. Multiple attempts

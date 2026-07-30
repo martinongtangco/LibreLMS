@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using LearningLms.Contracts.Enrollment;
-using LearningLms.Modules.Enrollment.Infrastructure;
+using LibreLms.Contracts.Enrollment;
+using LibreLms.Modules.Enrollment.Infrastructure;
 
-namespace LearningLms.Modules.Enrollment.Application;
+namespace LibreLms.Modules.Enrollment.Application;
 
 /// <summary>
 /// Implements the cross-module IEnrollmentLookup contract.

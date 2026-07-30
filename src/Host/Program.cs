@@ -2,19 +2,19 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
-using LearningLms.Modules.Catalog;
-using LearningLms.Modules.Catalog.Infrastructure;
-using LearningLms.Modules.Catalog.Application;
-using LearningLms.Modules.Catalog.Endpoints;
-using LearningLms.Modules.Enrollment;
-using LearningLms.Modules.Enrollment.Infrastructure;
-using LearningLms.Modules.Enrollment.Application;
-using LearningLms.Modules.Enrollment.Endpoints;
-using LearningLms.Modules.Scorm;
-using LearningLms.Modules.Scorm.Application;
-using LearningLms.Modules.Scorm.Infrastructure;
-using LearningLms.Modules.Scorm.Endpoints;
-using static LearningLms.Host.ScormHelpers;
+using LibreLms.Modules.Catalog;
+using LibreLms.Modules.Catalog.Infrastructure;
+using LibreLms.Modules.Catalog.Application;
+using LibreLms.Modules.Catalog.Endpoints;
+using LibreLms.Modules.Enrollment;
+using LibreLms.Modules.Enrollment.Infrastructure;
+using LibreLms.Modules.Enrollment.Application;
+using LibreLms.Modules.Enrollment.Endpoints;
+using LibreLms.Modules.Scorm;
+using LibreLms.Modules.Scorm.Application;
+using LibreLms.Modules.Scorm.Infrastructure;
+using LibreLms.Modules.Scorm.Endpoints;
+using static LibreLms.Host.ScormHelpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -91,13 +91,13 @@ using (var scope = app.Services.CreateScope())
     // Seed catalog
     if (!catalogCtx.Courses.Any())
     {
-        LearningLms.Modules.Catalog.Infrastructure.CatalogSeeder.Seed(catalogCtx);
+        LibreLms.Modules.Catalog.Infrastructure.CatalogSeeder.Seed(catalogCtx);
     }
 
     // Seed students
     if (!enrollmentCtx.Students.Any())
     {
-        LearningLms.Modules.Enrollment.Infrastructure.EnrollmentSeeder.Seed(enrollmentCtx);
+        LibreLms.Modules.Enrollment.Infrastructure.EnrollmentSeeder.Seed(enrollmentCtx);
     }
 
     // Seed Scorm sample package
@@ -119,7 +119,7 @@ courses.MapGet("/", async (CourseCatalogService service, string? search, string?
 });
 
 // POST /api/courses — Admin-only course creation
-courses.MapPost("/", [Authorize(Roles = "Admin")] async (CourseCatalogService service, [FromBody] LearningLms.Modules.Catalog.Endpoints.CreateCourseRequest request) =>
+courses.MapPost("/", [Authorize(Roles = "Admin")] async (CourseCatalogService service, [FromBody] LibreLms.Modules.Catalog.Endpoints.CreateCourseRequest request) =>
 {
     var course = await service.CreateAsync(request);
     return Results.Created($"/api/courses/{course.Id}", new CourseDto(course.Id, course.Title, course.ShortDescription, course.Category, course.Duration));

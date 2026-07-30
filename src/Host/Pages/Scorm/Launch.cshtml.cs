@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace LearningLms.Host.Pages.Scorm;
+namespace LibreLms.Host.Pages.Scorm;
 
 public class ScormLaunchModel : PageModel
 {

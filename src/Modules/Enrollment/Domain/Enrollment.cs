@@ -1,6 +1,6 @@
-using LearningLms.SharedKernel;
+using LibreLms.SharedKernel;
 
-namespace LearningLms.Modules.Enrollment.Domain;
+namespace LibreLms.Modules.Enrollment.Domain;
 
 /// <summary>Represents the relationship between a Student and a Course.</summary>
 public class Enrollment : Entity<Guid>
