@@ -1,0 +1,24 @@
+@model List<LibreLms.Modules.Management.Endpoints.OrganizationPickerDto>
+
+<nav aria-label="Organization breadcrumb" style="margin-bottom:1rem;">
+    <ol style="list-style:none; padding:0; display:flex; gap:0.5rem; font-size:0.9rem;">
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            var org = Model[i];
+            if (i > 0)
+            {
+                <li style="color:#999;">›</li>
+            }
+            <li>
+                @if (i < Model.Count - 1)
+                {
+                    <a href="#" style="color:#1565c0; text-decoration:none;">@org.Name</a>
+                }
+                else
+                {
+                    <span style="font-weight:500;">@org.Name</span>
+                }
+            </li>
+        }
+    </ol>
+</nav>

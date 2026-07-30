@@ -1,5 +1,5 @@
 @page
-@model ScormUploadModel
+@model LibreLms.Host.Pages.Admin.ScormUploadModel
 @{
     ViewData["Title"] = "Upload SCORM Package";
 }
@@ -43,10 +43,10 @@
                 <option value="">— Select a course —</option>
                 @foreach (var course in Model.Courses)
                 {
-                    <option value="@course.Id">@course.Title</option>
+                    <option value="@course.Id">@course.Title <small>(@course.OrganizationName)</small></option>
                 }
             </select>
-            <small style="color: #999;">Select the course from the catalog to associate with this SCORM package.</small>
+            <small style="color: #999;">Select the course from the catalog to associate with this SCORM package. Organization shown in parentheses.</small>
         </div>
 
         <div style="margin-bottom: 1.5rem;">

@@ -6,5 +6,6 @@ public record CreateCourseRequest(
     string ShortDescription,
     string FullDescription,
     string Category,
-    string Duration
+    string Duration,
+    Guid? OrganizationId
 );

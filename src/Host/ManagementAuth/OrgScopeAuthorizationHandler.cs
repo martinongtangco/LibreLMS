@@ -21,30 +21,44 @@ public class OrgScopeAuthorizationHandler(IOrganizationLookup orgLookup) : Autho
 
         if (!Guid.TryParse(userOrgIdStr, out var userOrgId))
         {
-            return; // Cannot determine user's org scope — deny
+            // Cannot determine user's org scope — deny
+            return;
         }
 
-        // SuperUser has unrestricted access
+        // SuperUser has unrestricted access to everything
         if (role == RoleNames.SuperUser)
         {
             context.Succeed(requirement);
             return;
         }
 
-        // Learner cannot perform admin operations
+        // Learner cannot perform admin operations — always deny
         if (role == RoleNames.Learner)
         {
             return;
         }
 
         // OrgAdmin: check if target org is in their subtree
-        if (role == RoleNames.OrgAdmin && requirement.TargetOrgId.HasValue)
+        if (role == RoleNames.OrgAdmin)
         {
-            var ancestorIds = await orgLookup.GetAncestorOrgIdsAsync(requirement.TargetOrgId.Value);
+            if (!requirement.TargetOrgId.HasValue)
+            {
+                // No specific target org — grant access to user's own org scope
+                context.Succeed(requirement);
+                return;
+            }
 
-            // User has access if the target org is the user's org or a descendant
-            // i.e., the user's org is an ancestor of the target org
-            if (ancestorIds.Contains(userOrgId))
+            // Check if the target org is the user's org or a descendant
+            // by seeing if the user's org is an ancestor of the target org
+            var targetAncestorIds = await orgLookup.GetAncestorOrgIdsAsync(requirement.TargetOrgId.Value);
+            if (targetAncestorIds.Contains(userOrgId))
+            {
+                context.Succeed(requirement);
+                return;
+            }
+
+            // Also check if target is the user's own org
+            if (requirement.TargetOrgId.Value == userOrgId)
             {
                 context.Succeed(requirement);
                 return;

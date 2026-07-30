@@ -1,0 +1,71 @@
+@page
+@model LibreLms.Host.Pages.Admin.Learners.IndexModel
+@{
+    ViewData["Title"] = "Learner Management";
+}
+
+<h1>Learner Management</h1>
+
+<p>
+    <a asp-page="Create" class="btn btn-primary">Create Learner</a>
+</p>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+<form method="get" class="filters">
+    <input name="search" value="@Model.Search" placeholder="Search by name or email..." />
+    <select name="org" class="form-select" style="width:auto">
+        @foreach (var item in Model.OrgFilter?.ToList() ?? Enumerable.Empty<SelectListItem>())
+        {
+            <option value="@item.Value" selected="@(item.Selected)">@item.Text</option>
+        }
+    </select>
+    <select name="role" class="form-select" style="width:auto">
+        @foreach (var item in Model.RoleFilter?.ToList() ?? Enumerable.Empty<SelectListItem>())
+        {
+            <option value="@item.Value" selected="@(item.Selected)">@item.Text</option>
+        }
+    </select>
+    <button type="submit" class="btn btn-secondary">Filter</button>
+    <a asp-page="Index" class="btn btn-secondary">Clear</a>
+</form>
+
+@if (Model.Users.Count == 0)
+{
+    <div class="empty-state">No learners found.</div>
+}
+else
+{
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="background:#f5f5f5; text-align:left;">
+                    <th style="padding:0.75rem; border-bottom:2px solid #ddd;">Name</th>
+                    <th style="padding:0.75rem; border-bottom:2px solid #ddd;">Email</th>
+                    <th style="padding:0.75rem; border-bottom:2px solid #ddd;">Role</th>
+                    <th style="padding:0.75rem; border-bottom:2px solid #ddd;">Organization</th>
+                    <th style="padding:0.75rem; border-bottom:2px solid #ddd;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    <tr>
+                        <td style="padding:0.75rem; border-bottom:1px solid #eee;">@user.Name</td>
+                        <td style="padding:0.75rem; border-bottom:1px solid #eee;">@user.Email</td>
+                        <td style="padding:0.75rem; border-bottom:1px solid #eee;">
+                            <span class="badge @(user.Role == "SuperUser" ? "badge-category" : user.Role == "OrgAdmin" ? "badge-duration" : "badge-enrolled")">@user.Role</span>
+                        </td>
+                        <td style="padding:0.75rem; border-bottom:1px solid #eee;">@user.OrganizationName</td>
+                        <td style="padding:0.75rem; border-bottom:1px solid #eee;">
+                            <a asp-page="Edit" asp-route-id="@user.Id" class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.8rem;">Edit</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

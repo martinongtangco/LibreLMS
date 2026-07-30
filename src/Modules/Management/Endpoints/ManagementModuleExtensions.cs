@@ -13,6 +13,9 @@ public static class ManagementModuleExtensions
         services.AddScoped<IUserInfoLookup, UserInfoLookup>();
         services.AddScoped<OrganizationService>();
         services.AddScoped<UserService>();
+        services.AddScoped<CourseVisibilityService>();
+        services.AddScoped<DashboardService>();
+        services.AddScoped<AdminEnrollmentService>();
         return services;
     }
 }
