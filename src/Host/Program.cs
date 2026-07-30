@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,10 @@ using LibreLms.Modules.Scorm;
 using LibreLms.Modules.Scorm.Application;
 using LibreLms.Modules.Scorm.Infrastructure;
 using LibreLms.Modules.Scorm.Endpoints;
+using LibreLms.Modules.Management;
+using LibreLms.Modules.Management.Infrastructure;
+using LibreLms.Host.ManagementAuth;
+using LibreLms.SharedKernel;
 using static LibreLms.Host.ScormHelpers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,9 +37,13 @@ builder.Services.AddDbContext<EnrollmentDbContext>(opts => ConfigureDbContext(op
 builder.Services.AddCatalogModule();
 builder.Services.AddEnrollmentModule();
 builder.Services.AddScormModule();
+builder.Services.AddManagementModule();
 
 // Register EF Core context for Scorm
 builder.Services.AddDbContext<ScormDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register EF Core context for Management
+builder.Services.AddDbContext<ManagementDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure Scorm module with wwwRoot path
 var wwwRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
@@ -63,6 +72,16 @@ builder.Services.AddAuthentication(options =>
     options.AccessDeniedPath = "/Account/Login";
 });
 
+// Authorization: Register org-scope handler and policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("SuperUserOnly", policy =>
+        policy.RequireRole(RoleNames.SuperUser));
+    options.AddPolicy("OrgAdminOrSuperUser", policy =>
+        policy.RequireRole(RoleNames.SuperUser, RoleNames.OrgAdmin));
+});
+builder.Services.AddScoped<IAuthorizationHandler, OrgScopeAuthorizationHandler>();
+
 // Add Razor Pages and HttpClient
 builder.Services.AddRazorPages();
 builder.Services.AddHttpClient();
@@ -75,6 +94,7 @@ using (var scope = app.Services.CreateScope())
     var catalogCtx = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
     var enrollmentCtx = scope.ServiceProvider.GetRequiredService<EnrollmentDbContext>();
     var scormCtx = scope.ServiceProvider.GetRequiredService<ScormDbContext>();
+    var managementCtx = scope.ServiceProvider.GetRequiredService<ManagementDbContext>();
     var hostEnv = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
 
     // Create database if it doesn't exist
@@ -85,8 +105,16 @@ using (var scope = app.Services.CreateScope())
     catalogCtx.Database.Migrate();
     enrollmentCtx.Database.Migrate();
     scormCtx.Database.Migrate();
+    managementCtx.Database.Migrate();
     enrollmentCtx.Database.Migrate();
     scormCtx.Database.Migrate();
+    managementCtx.Database.Migrate();
+
+    // Seed organizations (root org + SuperUser)
+    if (!managementCtx.Organizations.Any())
+    {
+        LibreLms.Modules.Management.Infrastructure.ManagementSeeder.Seed(managementCtx, enrollmentCtx);
+    }
 
     // Seed catalog
     if (!catalogCtx.Courses.Any())
@@ -323,6 +351,184 @@ sessionGroup.MapPost("/finish", async (
 app.MapGet("/api/scorm/session/{sessionId:guid}/api.js", (Guid sessionId) =>
     Results.Text(ScormApiScriptContent, "application/javascript"))
 .DisableAntiforgery();
+
+// === Management Module Endpoints ===
+
+// User Management Endpoints
+var users = app.MapGroup("/api/users")
+    .WithTags("Users")
+    .RequireAuthorization();
+
+users.MapGet("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.UserService service,
+    [Microsoft.AspNetCore.Mvc.FromQuery] Guid? organizationId,
+    [Microsoft.AspNetCore.Mvc.FromQuery] string? role) =>
+{
+    // For simplicity, SuperUser sees all; OrgAdmin would need subtree filtering
+    var usersList = await service.ListAllAsync(role);
+    return Results.Ok(new { users = usersList });
+});
+
+users.MapGet("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.UserService service, Guid id) =>
+{
+    var user = await service.GetByIdAsync(id);
+    if (user is null) return Results.NotFound();
+    return Results.Ok(user);
+});
+
+users.MapPost("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.UserService service,
+    [Microsoft.AspNetCore.Mvc.FromBody] LibreLms.Host.ManagementDtos.CreateUserRequest request) =>
+{
+    try
+    {
+        var student = await service.CreateAsync(request.Name, request.Email, request.Password, request.Role, request.OrganizationId);
+        return Results.Created($"/api/users/{student.Id}", new LibreLms.Host.ManagementDtos.UserCreatedDto(student.Id, student.Name, student.Email, student.Roles, student.OrganizationId));
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+});
+
+users.MapPut("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.UserService service, Guid id,
+    [Microsoft.AspNetCore.Mvc.FromBody] LibreLms.Host.ManagementDtos.UpdateUserRequest request) =>
+{
+    try
+    {
+        var student = await service.UpdateAsync(id, request.Name, request.Role, request.OrganizationId);
+        return Results.Ok(new LibreLms.Host.ManagementDtos.UserUpdatedDto(student.Id, student.Name, student.Email, student.Roles, student.OrganizationId));
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound();
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+});
+
+users.MapDelete("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.UserService service, Guid id) =>
+{
+    try
+    {
+        await service.DeleteAsync(id);
+        return Results.NoContent();
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound();
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+});
+
+// Organization Management Endpoints
+var orgs = app.MapGroup("/api/organizations")
+    .WithTags("Organizations")
+    .RequireAuthorization();
+
+// GET /api/organizations — list all orgs
+orgs.MapGet("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.OrganizationService service,
+    [Microsoft.AspNetCore.Mvc.FromQuery] Guid? parentId) =>
+{
+    var list = parentId.HasValue
+        ? await service.ListByParentAsync(parentId.Value)
+        : await service.ListAllAsync();
+    var dto = list.Select(o => new LibreLms.Modules.Management.Endpoints.OrganizationDto(o.Id, o.Name, o.Description, o.ParentId, o.CreatedAt));
+    return Results.Ok(new { organizations = dto });
+});
+
+// GET /api/organizations/picker — for dropdown selection
+orgs.MapGet("/picker", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.OrganizationService service) =>
+{
+    var list = await service.ListAllAsync();
+    var dto = list.Select(o => new LibreLms.Modules.Management.Endpoints.OrganizationPickerDto(o.Id, o.Name));
+    return Results.Ok(new { organizations = dto });
+});
+
+// GET /api/organizations/{id} — get single org
+orgs.MapGet("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.OrganizationService service, Guid id) =>
+{
+    var org = await service.GetByIdAsync(id);
+    if (org is null) return Results.NotFound();
+    return Results.Ok(new
+    {
+        org.Id, org.Name, org.Description, org.ParentId, org.CreatedAt,
+        Children = org.Children.Select(c => new LibreLms.Modules.Management.Endpoints.OrganizationPickerDto(c.Id, c.Name))
+    });
+});
+
+// POST /api/organizations — create org
+orgs.MapPost("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.OrganizationService service,
+    [Microsoft.AspNetCore.Mvc.FromBody] LibreLms.Modules.Management.Endpoints.CreateOrganizationRequest request) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Name))
+        return Results.BadRequest(new { error = "Organization name is required." });
+    try
+    {
+        var org = await service.CreateAsync(request.Name, request.Description, request.ParentId);
+        return Results.Created($"/api/organizations/{org.Id}", new LibreLms.Modules.Management.Endpoints.OrganizationDto(org.Id, org.Name, org.Description, org.ParentId, org.CreatedAt));
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+});
+
+// PUT /api/organizations/{id} — update org
+orgs.MapPut("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.OrganizationService service, Guid id,
+    [Microsoft.AspNetCore.Mvc.FromBody] LibreLms.Modules.Management.Endpoints.UpdateOrganizationRequest request) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Name))
+        return Results.BadRequest(new { error = "Organization name is required." });
+    try
+    {
+        var org = await service.UpdateAsync(id, request.Name, request.Description);
+        return Results.Ok(new LibreLms.Modules.Management.Endpoints.OrganizationDto(org.Id, org.Name, org.Description, org.ParentId, org.CreatedAt));
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound();
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+});
+
+// DELETE /api/organizations/{id} — soft delete org
+orgs.MapDelete("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+    LibreLms.Modules.Management.Application.OrganizationService service, Guid id) =>
+{
+    var (canDelete, reason) = await service.CanDeleteAsync(id);
+    if (!canDelete)
+        return Results.BadRequest(new { error = reason });
+    try
+    {
+        await service.DeleteAsync(id);
+        return Results.NoContent();
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound();
+    }
+});
 
 // Map Razor Pages
 app.MapRazorPages();

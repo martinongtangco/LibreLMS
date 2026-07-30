@@ -1,0 +1,21 @@
+@page
+@model LibreLms.Host.Pages.Admin.Organizations.IndexModel
+@{
+    ViewData["Title"] = "Organizations";
+}
+
+<h1>Organization Management</h1>
+
+<p>
+    <a asp-page="Create" class="btn btn-primary">Create Organization</a>
+</p>
+
+@if (Model.Error != null)
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+@foreach (var node in Model.OrgTree)
+{
+    <partial name="_OrgNode" model="node" />
+}

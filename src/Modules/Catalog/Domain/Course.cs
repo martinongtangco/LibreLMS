@@ -10,6 +10,10 @@ public class Course : Entity<Guid>
     public string FullDescription { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
     public string Duration { get; set; } = string.Empty;
+
+    /// <summary>Organization that owns this course.</summary>
+    public Guid OrganizationId { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public Course()
