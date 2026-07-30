@@ -55,33 +55,6 @@ public class CourseDetailModel : PageModel
         IsEnrolled = enrolled;
     }
 
-    /// <summary>HTMX handler: return course detail partial for inline swap (US3).</summary>
-    public async Task<PartialViewResult> OnGetDetailAsync(Guid id)
-    {
-        var course = await _catalogService.GetByIdAsync(id);
-        if (course is null)
-        {
-            return Partial("_ErrorPartial", "Course not found");
-        }
-
-        var studentId = ScormHelpers.GetStudentId(HttpContext);
-        var enrolled = await _enrollmentLookup.IsEnrolledAsync(studentId, id);
-        var scormPkg = await _scormPackageService.GetPackageByCourseIdAsync(id);
-
-        var model = new CourseDetailItem(
-            Id: course.Id,
-            Title: course.Title,
-            ShortDescription: course.ShortDescription,
-            FullDescription: course.FullDescription,
-            Category: course.Category,
-            Duration: course.Duration,
-            IsEnrolled: enrolled,
-            IsScorm: scormPkg is not null,
-            ScormPackageId: scormPkg?.Id);
-
-        return Partial("_CourseDetail", model);
-    }
-
     /// <summary>HTMX handler: enroll in a course and return result partial (US2).</summary>
     [Authorize]
     [IgnoreAntiforgeryToken]
