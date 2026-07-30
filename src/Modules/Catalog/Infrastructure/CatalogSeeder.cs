@@ -1,6 +1,6 @@
-using LearningLms.Modules.Catalog.Domain;
+using LibreLms.Modules.Catalog.Domain;
 
-namespace LearningLms.Modules.Catalog.Infrastructure;
+namespace LibreLms.Modules.Catalog.Infrastructure;
 
 /// <summary>Seeds sample courses across multiple categories for demonstration.</summary>
 public static class CatalogSeeder

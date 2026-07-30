@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace LearningLms.Modules.Enrollment.Endpoints;
+namespace LibreLms.Modules.Enrollment.Endpoints;
 
 /// <summary>DTO for an enrollment in the "My Courses" listing.</summary>
 public record MyEnrollmentDto(

@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
-using LearningLms.Modules.Scorm.Application;
-using LearningLms.Modules.Scorm.Infrastructure;
+using LibreLms.Modules.Scorm.Application;
+using LibreLms.Modules.Scorm.Infrastructure;
 
-namespace LearningLms.Modules.Scorm.Endpoints;
+namespace LibreLms.Modules.Scorm.Endpoints;
 
 /// <summary>Registration extension for the Scorm module's DI services.</summary>
 public static class ScormModuleExtensions

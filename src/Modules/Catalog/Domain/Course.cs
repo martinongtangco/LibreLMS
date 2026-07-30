@@ -1,6 +1,6 @@
-using LearningLms.SharedKernel;
+using LibreLms.SharedKernel;
 
-namespace LearningLms.Modules.Catalog.Domain;
+namespace LibreLms.Modules.Catalog.Domain;
 
 /// <summary>A learnable unit of content in the catalog.</summary>
 public class Course : Entity<Guid>

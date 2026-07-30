@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using LearningLms.Modules.Enrollment.Application;
-using LearningLms.Modules.Scorm.Application;
+using LibreLms.Modules.Enrollment.Application;
+using LibreLms.Modules.Scorm.Application;
 
-namespace LearningLms.Host.Pages.MyCourses;
+namespace LibreLms.Host.Pages.MyCourses;
 
 public class MyCoursesModel : PageModel
 {

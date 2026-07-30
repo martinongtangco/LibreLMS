@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using LearningLms.Modules.Catalog.Domain;
-using LearningLms.Modules.Catalog.Infrastructure;
+using LibreLms.Modules.Catalog.Domain;
+using LibreLms.Modules.Catalog.Infrastructure;
 
-namespace LearningLms.Modules.Catalog.Application;
+namespace LibreLms.Modules.Catalog.Application;
 
 /// <summary>Application service for browsing, searching, and retrieving courses.</summary>
 public class CourseCatalogService(CatalogDbContext context)

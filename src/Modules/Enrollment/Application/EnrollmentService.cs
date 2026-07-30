@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using LearningLms.Contracts.Catalog;
-using LearningLms.Modules.Enrollment.Domain;
-using LearningLms.Modules.Enrollment.Infrastructure;
+using LibreLms.Contracts.Catalog;
+using LibreLms.Modules.Enrollment.Domain;
+using LibreLms.Modules.Enrollment.Infrastructure;
 
-namespace LearningLms.Modules.Enrollment.Application;
+namespace LibreLms.Modules.Enrollment.Application;
 
 /// <summary>Application service for enrollment operations.</summary>
 public class EnrollmentService
@@ -22,7 +22,7 @@ public class EnrollmentService
     /// Returns the created Enrollment on success, null on duplicate.
     /// Throws if the course doesn't exist.
     /// </summary>
-    public async Task<(LearningLms.Modules.Enrollment.Domain.Enrollment? Enrollment, bool IsDuplicate, bool CourseNotFound)> EnrollAsync(Guid studentId, Guid courseId)
+    public async Task<(LibreLms.Modules.Enrollment.Domain.Enrollment? Enrollment, bool IsDuplicate, bool CourseNotFound)> EnrollAsync(Guid studentId, Guid courseId)
     {
         // Validate course exists via cross-module contract
         var courseSummary = await _courseLookup.GetCourseAsync(courseId);
@@ -37,7 +37,7 @@ public class EnrollmentService
             return (null, true, false);
 
         // Create enrollment
-        var enrollment = new LearningLms.Modules.Enrollment.Domain.Enrollment
+        var enrollment = new LibreLms.Modules.Enrollment.Domain.Enrollment
         {
             Id = Guid.NewGuid(),
             StudentId = studentId,
@@ -52,14 +52,14 @@ public class EnrollmentService
     }
 
     /// <summary>Get all enrollments for a student with course titles.</summary>
-    public async Task<IEnumerable<(LearningLms.Modules.Enrollment.Domain.Enrollment Enrollment, string CourseTitle)>> GetMyEnrollmentsAsync(Guid studentId)
+    public async Task<IEnumerable<(LibreLms.Modules.Enrollment.Domain.Enrollment Enrollment, string CourseTitle)>> GetMyEnrollmentsAsync(Guid studentId)
     {
         var enrollments = await _context.Enrollments
             .Where(e => e.StudentId == studentId)
             .OrderByDescending(e => e.EnrolledAt)
             .ToListAsync();
 
-        var results = new List<(LearningLms.Modules.Enrollment.Domain.Enrollment, string)>();
+        var results = new List<(LibreLms.Modules.Enrollment.Domain.Enrollment, string)>();
         foreach (var enrollment in enrollments)
         {
             var summary = await _courseLookup.GetCourseAsync(enrollment.CourseId);

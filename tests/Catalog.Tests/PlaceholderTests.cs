@@ -8,29 +8,29 @@ public class PlaceholderTests
 {
     [Fact]
     public void Module_assembly_loads() =>
-        Assert.NotNull(typeof(LearningLms.Modules.Catalog.ModuleMarker));
+        Assert.NotNull(typeof(LibreLms.Modules.Catalog.ModuleMarker));
 
     [Fact]
     public void Course_entity_exists() =>
-        Assert.NotNull(typeof(LearningLms.Modules.Catalog.Domain.Course));
+        Assert.NotNull(typeof(LibreLms.Modules.Catalog.Domain.Course));
 
     [Fact]
     public void CourseCatalogService_exists() =>
-        Assert.NotNull(typeof(LearningLms.Modules.Catalog.Application.CourseCatalogService));
+        Assert.NotNull(typeof(LibreLms.Modules.Catalog.Application.CourseCatalogService));
 
     [Fact]
     public void CourseLookup_exists() =>
-        Assert.NotNull(typeof(LearningLms.Modules.Catalog.Application.CourseLookup));
+        Assert.NotNull(typeof(LibreLms.Modules.Catalog.Application.CourseLookup));
 
     [Fact]
     public void CatalogDbContext_exists() =>
-        Assert.NotNull(typeof(LearningLms.Modules.Catalog.Infrastructure.CatalogDbContext));
+        Assert.NotNull(typeof(LibreLms.Modules.Catalog.Infrastructure.CatalogDbContext));
 
     [Fact]
     public void CourseDto_exists() =>
-        Assert.NotNull(typeof(LearningLms.Modules.Catalog.Endpoints.CourseDto));
+        Assert.NotNull(typeof(LibreLms.Modules.Catalog.Endpoints.CourseDto));
 
     [Fact]
     public void ICourseLookup_contract_exists() =>
-        Assert.NotNull(typeof(LearningLms.Contracts.Catalog.ICourseLookup));
+        Assert.NotNull(typeof(LibreLms.Contracts.Catalog.ICourseLookup));
 }

@@ -1,4 +1,4 @@
-namespace LearningLms.Modules.Enrollment.Endpoints;
+namespace LibreLms.Modules.Enrollment.Endpoints;
 
 /// <summary>
 /// Marker for the Enrollment module's endpoint definitions.

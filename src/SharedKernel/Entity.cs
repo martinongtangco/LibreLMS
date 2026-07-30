@@ -1,4 +1,4 @@
-namespace LearningLms.SharedKernel;
+namespace LibreLms.SharedKernel;
 
 /// <summary>Base type for anything with a stable identity. Equality is by Id, not by value.</summary>
 public abstract class Entity<TId> where TId : notnull

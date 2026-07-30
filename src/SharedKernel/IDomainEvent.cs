@@ -1,4 +1,4 @@
-namespace LearningLms.SharedKernel;
+namespace LibreLms.SharedKernel;
 
 /// <summary>Marker for something that happened in a module's Domain layer. Modules publish
 /// these internally; nothing here implies a messaging framework — how they're dispatched is

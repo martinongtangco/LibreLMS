@@ -1,4 +1,4 @@
-# Learning LMS
+# Libre LMS
 
 A small Learning Management System (course catalog, SCORM launch, per-user completion) — built as
 a hands-on exercise in two things:
@@ -42,8 +42,8 @@ This also brings up `mssql` and `valkey` as sibling containers.
 ### 2. Build and test
 
 ```bash
-dotnet restore LearningLms.slnx
-dotnet build LearningLms.slnx
+dotnet restore LibreLms.slnx
+dotnet build LibreLms.slnx
 dotnet test tests/ArchitectureTests   # the module-boundary check
 ```
 

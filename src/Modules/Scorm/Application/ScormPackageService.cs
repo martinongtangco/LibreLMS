@@ -1,9 +1,9 @@
 using System.IO.Compression;
 using Microsoft.EntityFrameworkCore;
-using LearningLms.Modules.Scorm.Domain;
-using LearningLms.Modules.Scorm.Infrastructure;
+using LibreLms.Modules.Scorm.Domain;
+using LibreLms.Modules.Scorm.Infrastructure;
 
-namespace LearningLms.Modules.Scorm.Application;
+namespace LibreLms.Modules.Scorm.Application;
 
 /// <summary>
 /// Service for SCORM package operations: upload, manifest parsing, content extraction.

@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using LearningLms.Contracts.Enrollment;
-using LearningLms.Modules.Scorm.Domain;
-using LearningLms.Modules.Scorm.Infrastructure;
+using LibreLms.Contracts.Enrollment;
+using LibreLms.Modules.Scorm.Domain;
+using LibreLms.Modules.Scorm.Infrastructure;
 
-namespace LearningLms.Modules.Scorm.Application;
+namespace LibreLms.Modules.Scorm.Application;
 
 /// <summary>
 /// Manages the full SCORM session lifecycle: launch, setValue, getValue, commit, finish.

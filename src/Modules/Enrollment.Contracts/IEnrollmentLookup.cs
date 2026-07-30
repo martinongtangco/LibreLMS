@@ -1,4 +1,4 @@
-namespace LearningLms.Contracts.Enrollment;
+namespace LibreLms.Contracts.Enrollment;
 
 /// <summary>
 /// Cross-module contract for checking student enrollment.

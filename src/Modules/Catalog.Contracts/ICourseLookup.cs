@@ -1,4 +1,4 @@
-namespace LearningLms.Contracts.Catalog;
+namespace LibreLms.Contracts.Catalog;
 
 /// <summary>
 /// Cross-module contract for looking up course existence and metadata.
