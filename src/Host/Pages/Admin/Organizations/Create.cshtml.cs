@@ -46,7 +46,7 @@ public class CreateModel : PageModel
 
             Guid? parentId = null;
             if (!string.IsNullOrWhiteSpace(Input.ParentId))
-                Guid.TryParse(Input.ParentId, out var parsedParentId);
+                parentId = Guid.TryParse(Input.ParentId, out var parsedId) ? parsedId : null;
 
             var org = await _service.CreateAsync(Input.Name, Input.Description, parentId);
             SuccessMessage = $"Organization '{org.Name}' created successfully.";
