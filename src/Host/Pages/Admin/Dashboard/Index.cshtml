@@ -1,0 +1,73 @@
+@page
+@model LibreLms.Host.Pages.Admin.Dashboard.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h1>Dashboard</h1>
+
+@if (!string.IsNullOrEmpty(Model.OrganizationName))
+{
+    <p style="color:#666;">Viewing metrics for: <strong>@Model.OrganizationName</strong> (Org Admin scope)</p>
+}
+else
+{
+    <p style="color:#666;">System-wide metrics (SuperUser)</p>
+}
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+<!-- Metric Cards -->
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:2rem;">
+    <div class="card" style="text-align:center;">
+        <div style="font-size:2rem; font-weight:700; color:#1a1a2e;">@Model.TotalOrganizations</div>
+        <div style="color:#666;">Organizations</div>
+    </div>
+    <div class="card" style="text-align:center;">
+        <div style="font-size:2rem; font-weight:700; color:#1565c0;">@Model.TotalLearners</div>
+        <div style="color:#666;">Learners</div>
+    </div>
+    <div class="card" style="text-align:center;">
+        <div style="font-size:2rem; font-weight:700; color:#7b1fa2;">@Model.TotalCourses</div>
+        <div style="color:#666;">Courses</div>
+    </div>
+    <div class="card" style="text-align:center;">
+        <div style="font-size:2rem; font-weight:700; color:#2e7d32;">@Model.TotalEnrollments</div>
+        <div style="color:#666;">Enrollments</div>
+    </div>
+</div>
+
+<!-- Completion Rate -->
+<div class="card" style="margin-bottom:2rem;">
+    <h3>Completion Rate</h3>
+    <p style="font-size:1.5rem; font-weight:500;">@Model.CompletionRate</p>
+</div>
+
+<!-- Recent Activity -->
+<div class="card">
+    <h3>Recent Activity</h3>
+    @if (Model.RecentActivity.Count == 0)
+    {
+        <p style="color:#999;">No recent activity.</p>
+    }
+    else
+    {
+        <ul style="list-style:none; padding:0;">
+            @foreach (var activity in Model.RecentActivity)
+            {
+                <li style="padding:0.5rem 0; border-bottom:1px solid #eee;">
+                    <span class="badge @(activity.ActivityType == "enrollment" ? "badge-enrolled" : "badge-category")" style="margin-right:0.5rem;">
+                        @activity.ActivityType
+                    </span>
+                    <span>@activity.Description</span>
+                    <span style="color:#999; float:right; font-size:0.85rem;">
+                        @activity.OccurredAt.ToString("MMM dd, HH:mm")
+                    </span>
+                </li>
+            }
+        </ul>
+    }
+</div>

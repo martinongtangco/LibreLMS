@@ -39,8 +39,13 @@
         <div>
             <a asp-page="/Courses/Index">Browse Courses</a>
             <a asp-page="/MyCourses/Index">My Courses</a>
-            @if (User.IsInRole("Admin"))
+            @if (User.IsInRole("Admin") || User.IsInRole("SuperUser") || User.IsInRole("OrgAdmin"))
             {
+                <a asp-page="/Admin/Dashboard/Index">Dashboard</a>
+                <a asp-page="/Admin/Organizations/Index">Organizations</a>
+                <a asp-page="/Admin/Learners/Index">Learners</a>
+                <a asp-page="/Admin/Courses/Index">Courses</a>
+                <a asp-page="/Admin/Enrollments/Index">Enrollments</a>
                 <a asp-page="/Admin/Courses/Create">Create Course</a>
                 <a asp-page="/Admin/Upload">Upload SCORM</a>
             }

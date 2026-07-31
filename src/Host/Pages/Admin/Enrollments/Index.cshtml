@@ -1,0 +1,67 @@
+@page
+@model LibreLms.Host.Pages.Admin.Enrollments.IndexModel
+@{
+    ViewData["Title"] = "Enrollment Management";
+}
+
+<h1>Enrollment Management</h1>
+
+<p>
+    <a asp-page="BulkEnroll" class="btn btn-primary">Bulk Enroll</a>
+</p>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success">@Model.SuccessMessage</div>
+}
+
+<form method="get" class="filters">
+    <input name="student" value="@Model.SearchStudent" placeholder="Search by student name..." />
+    <input name="course" value="@Model.SearchCourse" placeholder="Search by course title..." />
+    <button type="submit" class="btn btn-secondary">Filter</button>
+    <a asp-page="Index" class="btn btn-secondary">Clear</a>
+</form>
+
+@if (Model.Enrollments.Count == 0)
+{
+    <div class="empty-state">No enrollments found.</div>
+}
+else
+{
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="background:#f5f5f5; text-align:left;">
+                    <th style="padding:0.75rem; border-bottom:2px solid #ddd;">Student</th>
+                    <th style="padding:0.75rem; border-bottom:2px solid #ddd;">Email</th>
+                    <th style="padding:0.75rem; border-bottom:2px solid #ddd;">Course</th>
+                    <th style="padding:0.75rem; border-bottom:2px solid #ddd;">Organization</th>
+                    <th style="padding:0.75rem; border-bottom:2px solid #ddd;">Enrolled</th>
+                    <th style="padding:0.75rem; border-bottom:2px solid #ddd;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var enrollment in Model.Enrollments)
+                {
+                    <tr>
+                        <td style="padding:0.75rem; border-bottom:1px solid #eee;">@enrollment.StudentName</td>
+                        <td style="padding:0.75rem; border-bottom:1px solid #eee;">@enrollment.StudentEmail</td>
+                        <td style="padding:0.75rem; border-bottom:1px solid #eee;">@enrollment.CourseTitle</td>
+                        <td style="padding:0.75rem; border-bottom:1px solid #eee;">@enrollment.OrganizationName</td>
+                        <td style="padding:0.75rem; border-bottom:1px solid #eee;">@enrollment.EnrolledAt.ToString("MMM dd, yyyy")</td>
+                        <td style="padding:0.75rem; border-bottom:1px solid #eee;">
+                            <form method="post" style="display:inline;" asp-page-handler="Cancel" asp-route-enrollmentId="@enrollment.EnrollmentId" onsubmit="return confirm('Cancel this enrollment?');">
+                                <button type="submit" class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.8rem; background:#c62828; color:white;">Cancel</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

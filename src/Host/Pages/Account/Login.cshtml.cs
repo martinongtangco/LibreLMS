@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using LibreLms.Host.ManagementAuth;
 using LibreLms.Modules.Enrollment.Domain;
 using LibreLms.Modules.Enrollment.Infrastructure;
 
@@ -62,7 +63,10 @@ public class LoginModel : PageModel
                 }
             }
 
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            // Add OrganizationId claim for org-scoped authorization (T043)
+            claims.Add(new Claim(OrgClaimTypes.OrganizationId, student.OrganizationId.ToString()));
+
+            var claimsIdentity = new ClaimsIdentity(claims, "Cookie");
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
             await HttpContext.SignInAsync(
