@@ -1,13 +1,22 @@
 <!--
   Sync Impact Report
   ==================
-  Version change: 1.3.0 → 1.4.0 (MINOR: enforcement checklist added)
+  Version change: 1.5.0 → 1.6.0 (MINOR: new principle added)
   Added sections:
-    - "⚠️ Before You Touch Code" pre-checklist (enforcement gate before any file edit)
-  Modified principles:
-    - X. No Ad-Hoc Fixes — removed "trivially small" exemption; all changes require branch + spec
+    - XII. Return to Master After Implementation — mandates switching back to `master`
+      after completing an implementation slice, so the session is on the integration
+      branch for the next planning cycle
+  Modified principles: none
   Removed sections: none
-  Templates updated: none
+  Templates updated:
+    - .pi/prompts/speckit.implement.md — ✅ no changes needed (the Completion Report
+      section and Done-When checklist already describe reporting completion; the new
+      constitution principle adds the explicit branch-switch mandate)
+    - .specify/templates/tasks-template.md — ✅ no changes needed
+    - .specify/templates/plan-template.md — ✅ no changes needed
+    - .specify/templates/spec-template.md — ✅ no changes needed
+    - README.md — ✅ no changes needed (references constitution as source of truth)
+    - AGENTS.md — ✅ no changes needed (references constitution as source of truth)
   Deferred items: none
 -->
 
@@ -145,6 +154,35 @@ The spec entry serves as the decision record — future interactions can review 
 and why. There is no "too small to document" exemption for code changes. Every edit — including
 typos, misnamed variables, and single-line fixes — requires a branch and a minimal spec.
 
+### XI. Parallel Implementation With Subagents
+When running `/speckit.implement`, the agent MUST use pi subagents to parallelize independent
+work items wherever possible. Tasks marked `[P]` in `tasks.md` MUST be dispatched as parallel
+subagent runs using the `tasks[]` parallel execution mode. Independent user stories, models
+operating on separate files, service implementations touching distinct modules, and test suites
+for different endpoints can all proceed concurrently. Chain workflows (`chain[]`) should be used
+for sequential dependencies within a single story or task group.
+
+The parent session retains final decision authority — it orchestrates the workflow, synthesizes
+subagent results, and applies any integration fixes. Never delegate the final merge step to a
+child; the parent is the sole writer for the shared `cwd`.
+
+Rationale: The SpecKit task list already identifies which work is parallelizable with `[P]`
+markers. Enforcing subagent parallelism turns that structural information into actual throughput
+gains, reducing wall-clock time for slice implementation without sacrificing the quality
+constraints enforced by the other principles.
+
+### XII. Return to Master After Implementation
+After an implementation slice completes — whether the branch is merged into `master` or opened
+as a PR — the agent MUST switch the working branch back to `master` (`git checkout master`).
+This is mandatory; the session MUST NOT remain on a `story/` or `bug/` branch after the
+implementation session ends.
+
+This closes the loop with Principle IX (Plan On Master Only): the agent returns to `master` so
+the next SpecKit command starts from the integration branch where the full project state is
+visible. An agent session that stays on a completed feature branch risks running the next
+`/speckit.specify` or `/speckit.plan` from the wrong context, or accidentally accumulating
+unrelated commits on a finished branch.
+
 ## Technology & Scope Constraints
 
 - **.NET 10 (GA/LTS)**, pinned via `global.json` to a released SDK band — never a preview band,
@@ -182,4 +220,4 @@ simplify the instruction, not to add more words explaining it. Amendments requir
 file, bumping the version below, and — if the amendment reverses a prior ADR — recording that
 reversal as a new ADR rather than editing the old one.
 
-**Version**: 1.4.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-07-31
+**Version**: 1.6.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-07-31
