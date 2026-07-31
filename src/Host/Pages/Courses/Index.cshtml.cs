@@ -1,7 +1,11 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using LibreLms.Contracts.Enrollment;
+using LibreLms.Host.ManagementAuth;
 using LibreLms.Modules.Catalog.Application;
+using LibreLms.Modules.Management.Application;
+using LibreLms.SharedKernel;
 
 namespace LibreLms.Host.Pages.Courses;
 
@@ -9,13 +13,16 @@ public class CourseIndexModel : PageModel
 {
     private readonly CourseCatalogService _catalogService;
     private readonly IEnrollmentLookup _enrollmentLookup;
+    private readonly CourseVisibilityService _visibilityService;
 
     public CourseIndexModel(
         CourseCatalogService catalogService,
-        IEnrollmentLookup enrollmentLookup)
+        IEnrollmentLookup enrollmentLookup,
+        CourseVisibilityService visibilityService)
     {
         _catalogService = catalogService;
         _enrollmentLookup = enrollmentLookup;
+        _visibilityService = visibilityService;
     }
 
     public List<CourseItem> Courses { get; set; } = new();
@@ -25,10 +32,7 @@ public class CourseIndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        try
-        {
-            var courses = await _catalogService.ListAsync(Search, Category);
-            var enrolledIds = await GetEnrolledCourseIds();
+        var (courses, enrolledIds) = await GetCoursesAndEnrollments();
 
             Courses = courses.Select(c => new CourseItem(
                 c.Id, c.Title, c.ShortDescription, c.Category, c.Duration,
@@ -44,10 +48,7 @@ public class CourseIndexModel : PageModel
     /// <summary>HTMX handler: return course list partial for inline swap.</summary>
     public async Task<PartialViewResult> OnGetCourseListAsync(string? search, string? category)
     {
-        try
-        {
-            var courses = await _catalogService.ListAsync(search, category);
-            var enrolledIds = await GetEnrolledCourseIds();
+        var (courses, enrolledIds) = await GetCoursesAndEnrollments(search, category);
 
             var model = courses.Select(c => new CourseItem(
                 c.Id, c.Title, c.ShortDescription, c.Category, c.Duration,
@@ -61,22 +62,46 @@ public class CourseIndexModel : PageModel
         }
     }
 
-    /// <summary>Fetch the set of course IDs the current student is enrolled in.</summary>
-    private async Task<HashSet<Guid>> GetEnrolledCourseIds()
+    /// <summary>Get org-scoped courses and enrolled course IDs.</summary>
+    private async Task<(IEnumerable<LibreLms.Modules.Catalog.Domain.Course>, HashSet<Guid>)> GetCoursesAndEnrollments(string? search = null, string? category = null)
     {
         var studentId = ScormHelpers.GetStudentId(HttpContext);
-        var ids = new HashSet<Guid>();
+        var enrolledIds = new HashSet<Guid>();
+        IEnumerable<LibreLms.Modules.Catalog.Domain.Course> courses;
 
-        var courses = await _catalogService.ListAsync();
+        // Check if user is authenticated with org context
+        var role = HttpContext.User.Identity?.IsAuthenticated == true
+            ? HttpContext.User.FindFirstValue(ClaimTypes.Role)
+            : null;
+        var orgId = role is not null
+            ? AuthHelpers.GetCurrentUserOrgId(HttpContext.User)
+            : null;
+
+        if (orgId.HasValue)
+        {
+            // Authenticated user with org — show org-visible courses
+            var visible = await _visibilityService.GetVisibleCoursesAsync(orgId.Value);
+            // Get full course details for visible courses
+            var visibleCourseIds = visible.ToDictionary(v => v.CourseId);
+            var allCourses = await _catalogService.ListAsync(search, category);
+            courses = allCourses.Where(c => visibleCourseIds.ContainsKey(c.Id));
+        }
+        else
+        {
+            // Unauthenticated or no org — show all courses
+            courses = await _catalogService.ListAsync(search, category);
+        }
+
+        // Check enrollment status
         foreach (var course in courses)
         {
             if (await _enrollmentLookup.IsEnrolledAsync(studentId, course.Id))
             {
-                ids.Add(course.Id);
+                enrolledIds.Add(course.Id);
             }
         }
 
-        return ids;
+        return (courses, enrolledIds);
     }
 }
 

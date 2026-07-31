@@ -22,7 +22,7 @@ namespace LibreLms.Host.Migrations.Catalog
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("LearningLms.Modules.Catalog.Domain.Course", b =>
+            modelBuilder.Entity("LibreLms.Modules.Catalog.Domain.Course", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -43,8 +43,11 @@ namespace LibreLms.Host.Migrations.Catalog
 
                     b.Property<string>("FullDescription")
                         .IsRequired()
-                        .HasMaxLength(5000)
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ShortDescription")
                         .IsRequired()
@@ -57,6 +60,9 @@ namespace LibreLms.Host.Migrations.Catalog
                         .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Title", "OrganizationId")
+                        .IsUnique();
 
                     b.ToTable("Courses", (string)null);
                 });

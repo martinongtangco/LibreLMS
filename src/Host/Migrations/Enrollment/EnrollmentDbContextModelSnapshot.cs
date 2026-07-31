@@ -22,7 +22,7 @@ namespace LibreLms.Host.Migrations.Enrollment
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("LearningLms.Modules.Enrollment.Domain.Enrollment", b =>
+            modelBuilder.Entity("LibreLms.Modules.Enrollment.Domain.Enrollment", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -45,7 +45,7 @@ namespace LibreLms.Host.Migrations.Enrollment
                     b.ToTable("Enrollments", (string)null);
                 });
 
-            modelBuilder.Entity("LearningLms.Modules.Enrollment.Domain.Student", b =>
+            modelBuilder.Entity("LibreLms.Modules.Enrollment.Domain.Student", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -63,6 +63,9 @@ namespace LibreLms.Host.Migrations.Enrollment
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()

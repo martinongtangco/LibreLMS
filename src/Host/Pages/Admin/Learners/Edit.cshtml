@@ -1,0 +1,46 @@
+@page
+@model LibreLms.Host.Pages.Admin.Learners.EditModel
+@{
+    ViewData["Title"] = "Edit Learner";
+}
+
+<h1>Edit Learner</h1>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success">@Model.SuccessMessage</div>
+}
+
+<form method="post">
+    <input type="hidden" asp-for="Input.Id" />
+
+    <div class="mb-3">
+        <label asp-for="Input.Name" class="form-label">Name</label>
+        <input asp-for="Input.Name" class="form-control" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="text" class="form-control" value="@Model.Input.Email" disabled />
+        <small class="text-muted">Email cannot be changed.</small>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.OrganizationId" class="form-label">Organization</label>
+        <select asp-for="Input.OrganizationId" asp-items="Model.Orgs" class="form-select" required>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.Role" class="form-label">Role</label>
+        <select asp-for="Input.Role" asp-items="Model.Roles" class="form-select"></select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update</button>
+    <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+</form>

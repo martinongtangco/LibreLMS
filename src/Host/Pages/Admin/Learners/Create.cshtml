@@ -1,0 +1,44 @@
+@page
+@model LibreLms.Host.Pages.Admin.Learners.CreateModel
+@{
+    ViewData["Title"] = "Create Learner";
+}
+
+<h1>Create Learner</h1>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="Input.Name" class="form-label">Name</label>
+        <input asp-for="Input.Name" class="form-control" required />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.Email" class="form-label">Email</label>
+        <input asp-for="Input.Email" type="email" class="form-control" required />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.Password" class="form-label">Password</label>
+        <input asp-for="Input.Password" type="password" class="form-control" required />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.OrganizationId" class="form-label">Organization</label>
+        <select asp-for="Input.OrganizationId" asp-items="Model.Orgs" class="form-select" required>
+            <option value="">-- Select Organization --</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.Role" class="form-label">Role</label>
+        <select asp-for="Input.Role" asp-items="Model.Roles" class="form-select"></select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+</form>

@@ -53,6 +53,7 @@ public class CourseCatalogService(CatalogDbContext context)
             FullDescription = request.FullDescription,
             Category = request.Category,
             Duration = request.Duration,
+            OrganizationId = request.OrganizationId ?? Guid.Empty,
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -60,5 +61,44 @@ public class CourseCatalogService(CatalogDbContext context)
         await context.SaveChangesAsync();
 
         return course;
+    }
+
+    /// <summary>Create a new course in the catalog, associated with an organization.</summary>
+    public async Task<Course> CreateAsync(string title, string shortDescription, string fullDescription, string category, string duration, Guid organizationId)
+    {
+        var course = new Domain.Course
+        {
+            Id = Guid.NewGuid(),
+            Title = title,
+            ShortDescription = shortDescription,
+            FullDescription = fullDescription,
+            Category = category,
+            Duration = duration,
+            OrganizationId = organizationId,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        context.Courses.Add(course);
+        await context.SaveChangesAsync();
+
+        return course;
+    }
+
+    /// <summary>List courses scoped to specific organization IDs (used for org-scoped queries).</summary>
+    public async Task<IEnumerable<Course>> ListByOrgIdsAsync(IList<Guid> orgIds)
+    {
+        return await context.Courses
+            .Where(c => orgIds.Contains(c.OrganizationId))
+            .OrderBy(c => c.Title)
+            .ToListAsync();
+    }
+
+    /// <summary>List courses owned by a specific organization.</summary>
+    public async Task<IEnumerable<Course>> ListByOrganizationAsync(Guid orgId)
+    {
+        return await context.Courses
+            .Where(c => c.OrganizationId == orgId)
+            .OrderBy(c => c.Title)
+            .ToListAsync();
     }
 }
