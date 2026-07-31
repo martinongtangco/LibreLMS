@@ -30,6 +30,13 @@ public class Organization : Entity<Guid>
     /// <summary>Soft delete flag.</summary>
     public bool IsDeleted { get; set; }
 
+    /// <summary>
+    /// Soft-disable flag. When true, the org and all descendants are inactive.
+    /// Distinct from IsDeleted — disabled orgs remain queryable but are visually distinct
+    /// in the UI. Root organizations cannot be disabled.
+    /// </summary>
+    public bool IsDisabled { get; set; }
+
     public Organization()
     {
         Id = Guid.NewGuid();
