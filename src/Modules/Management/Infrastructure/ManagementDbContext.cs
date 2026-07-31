@@ -32,6 +32,10 @@ public class ManagementDbContext(DbContextOptions<ManagementDbContext> options) 
                 .IsRequired()
                 .HasDefaultValue(false);
 
+            entity.Property(e => e.IsDisabled)
+                .IsRequired()
+                .HasDefaultValue(false);
+
             // Self-referencing relationship (parent-child)
             entity.HasOne(e => e.Parent)
                 .WithMany(e => e.Children)
