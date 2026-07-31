@@ -14,22 +14,27 @@ public class CourseDetailModel : PageModel
     private readonly ScormPackageService _scormPackageService;
     private readonly EnrollmentService _enrollmentService;
     private readonly IEnrollmentLookup _enrollmentLookup;
+    private readonly ScormAttemptService _scormAttemptService;
 
     public CourseDetailModel(
         CourseCatalogService catalogService,
         ScormPackageService scormPackageService,
         EnrollmentService enrollmentService,
-        IEnrollmentLookup enrollmentLookup)
+        IEnrollmentLookup enrollmentLookup,
+        ScormAttemptService scormAttemptService)
     {
         _catalogService = catalogService;
         _scormPackageService = scormPackageService;
         _enrollmentService = enrollmentService;
         _enrollmentLookup = enrollmentLookup;
+        _scormAttemptService = scormAttemptService;
     }
 
     [BindProperty(SupportsGet = true)] public Guid Id { get; set; }
     public CourseDetailItem? Course { get; set; }
     public bool IsEnrolled { get; set; }
+    public string? LatestStatus { get; set; }
+    public double? LatestScore { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -43,71 +48,34 @@ public class CourseDetailModel : PageModel
             var enrolled = await _enrollmentLookup.IsEnrolledAsync(studentId, Id);
             var scormPkg = await _scormPackageService.GetPackageByCourseIdAsync(Id);
 
-            Course = new CourseDetailItem(
-                Id: course.Id,
-                Title: course.Title,
-                ShortDescription: course.ShortDescription,
-                FullDescription: course.FullDescription,
-                Category: course.Category,
-                Duration: course.Duration,
-                IsEnrolled: enrolled,
-                IsScorm: scormPkg is not null,
-                ScormPackageId: scormPkg?.Id);
-
-            IsEnrolled = enrolled;
-        }
-        catch
+        // Fetch latest SCORM attempt status/score for enrolled students (T015)
+        string? latestStatus = null;
+        double? latestScore = null;
+        if (enrolled && studentId != Guid.Empty)
         {
-            var scormPkg = await _scormPackageService.GetPackageByCourseIdAsync(courseId);
-            return new EnrollmentResult(
-                false,
-                "You are already enrolled in this course.",
-                "warning",
-                courseId,
-                scormPkg is not null);
+            var attempts = await _scormAttemptService.GetMyAttemptsAsync(studentId);
+            var latestAttempt = attempts
+                .Where(a => a.CourseId == Id)
+                .OrderByDescending(a => a.AttemptNumber)
+                .FirstOrDefault();
+            latestStatus = latestAttempt?.Status;
+            latestScore = latestAttempt?.ScoreRaw;
         }
 
-        var scormPkg2 = await _scormPackageService.GetPackageByCourseIdAsync(courseId);
-        return new EnrollmentResult(
-            true,
-            "Successfully enrolled!",
-            "success",
-            courseId,
-            scormPkg2 is not null);
-    }
+        Course = new CourseDetailItem(
+            Id: course.Id,
+            Title: course.Title,
+            ShortDescription: course.ShortDescription,
+            FullDescription: course.FullDescription,
+            Category: course.Category,
+            Duration: course.Duration,
+            IsEnrolled: enrolled,
+            IsScorm: scormPkg is not null,
+            ScormPackageId: scormPkg?.Id);
 
-    /// <summary>HTMX handler: return course detail partial for inline swap (US3).</summary>
-    public async Task<PartialViewResult> OnGetDetailAsync(Guid id)
-    {
-        try
-        {
-            var course = await _catalogService.GetByIdAsync(id);
-            if (course is null)
-            {
-                return Partial("_ErrorPartial", "Course not found");
-            }
-
-            var studentId = ScormHelpers.GetStudentId(HttpContext);
-            var enrolled = await _enrollmentLookup.IsEnrolledAsync(studentId, id);
-            var scormPkg = await _scormPackageService.GetPackageByCourseIdAsync(id);
-
-            var model = new CourseDetailItem(
-                Id: course.Id,
-                Title: course.Title,
-                ShortDescription: course.ShortDescription,
-                FullDescription: course.FullDescription,
-                Category: course.Category,
-                Duration: course.Duration,
-                IsEnrolled: enrolled,
-                IsScorm: scormPkg is not null,
-                ScormPackageId: scormPkg?.Id);
-
-            return Partial("_CourseDetail", model);
-        }
-        catch
-        {
-            return Partial("_ErrorPartial", "Unable to load data. Please refresh.");
-        }
+        IsEnrolled = enrolled;
+        LatestStatus = latestStatus;
+        LatestScore = latestScore;
     }
 
     /// <summary>HTMX handler: enroll in a course and return result partial (US2).</summary>
@@ -168,7 +136,9 @@ public record CourseDetailItem(
     string Duration,
     bool IsEnrolled,
     bool IsScorm,
-    Guid? ScormPackageId);
+    Guid? ScormPackageId,
+    string? LatestStatus = null,
+    double? LatestScore = null);
 
 /// <summary>View model for enrollment result partial view (HTMX feedback).</summary>
 public record EnrollmentResult(

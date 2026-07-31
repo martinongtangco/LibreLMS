@@ -35,6 +35,15 @@ else
                 <span class="badge badge-enrolled" style="font-size: 1rem; padding: 0.4rem 1rem;">✓ Enrolled</span>
                 @if (Model.Course.IsScorm)
                 {
+                    var displayLabel = ScormHelpers.GetDisplayLabel(Model.LatestStatus);
+                    var (bgColor, textColor) = ScormHelpers.GetStatusBadgeColors(Model.LatestStatus);
+                    var displayPercentage = ScormHelpers.GetDisplayPercentage(Model.LatestScore);
+                    <span class="badge" style="background: @bgColor; color: @textColor; margin-left: 1rem;">
+                        @displayLabel
+                    </span>
+                    <span style="margin-left: 0.5rem; font-size: 0.85rem; color: #666; vertical-align: middle;">
+                        @displayPercentage
+                    </span>
                     <a asp-page="/Scorm/Launch" asp-route-courseId="@Model.Course.Id" class="btn btn-primary" style="margin-left: 1rem;">Launch SCORM Course</a>
                 }
             }

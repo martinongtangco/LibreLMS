@@ -1,5 +1,10 @@
 @using LearningLms.Host.Pages.MyCourses
 @model EnrollmentRow
+@{
+    var displayLabel = ScormHelpers.GetDisplayLabel(Model.LatestStatus);
+    var (bgColor, textColor) = ScormHelpers.GetStatusBadgeColors(Model.LatestStatus);
+    var displayPercentage = ScormHelpers.GetDisplayPercentage(Model.LatestScore);
+}
 
 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #eee;">
     <div>
@@ -9,37 +14,12 @@
         <div style="color: #999; font-size: 0.85rem;">Enrolled @Model.EnrolledAt.ToString("MMM d, yyyy")</div>
     </div>
     <div>
-        @if (!string.IsNullOrEmpty(Model.LatestStatus))
+        <span class="badge" style="background: @bgColor; color: @textColor;">
+            @displayLabel
+        </span>
+        @if (Model.LatestScore.HasValue)
         {
-            <span class="badge" style="background: @(Model.LatestStatus switch
-            {
-                "completed" => "#e8f5e9",
-                "passed" => "#e8f5e9",
-                "in-progress" => "#fff3e0",
-                _ => "#f5f5f5"
-            }); color: @(Model.LatestStatus switch
-            {
-                "completed" => "#2e7d32",
-                "passed" => "#2e7d32",
-                "in-progress" => "#e65100",
-                _ => "#666"
-            });">
-                @(Model.LatestStatus switch
-                {
-                    "completed" => "✓ Completed",
-                    "passed" => "✓ Passed",
-                    "in-progress" => "In Progress",
-                    _ => Model.LatestStatus
-                })
-            </span>
-            @if (Model.LatestScore.HasValue)
-            {
-                <span style="margin-left: 0.5rem; font-size: 0.85rem; color: #666;">Score: @Model.LatestScore.Value</span>
-            }
-        }
-        else
-        {
-            <span class="badge" style="background: #f5f5f5; color: #666;">Not Started</span>
+            <span style="margin-left: 0.5rem; font-size: 0.85rem; color: #666;">@displayPercentage</span>
         }
     </div>
 </div>

@@ -96,4 +96,70 @@ public static class ScormHelpers
         // Demo fallback: use first seeded student
         return Guid.Parse("550e8400-e29b-41d4-a716-446655440001");
     }
+
+    /// <summary>
+    /// Map raw SCORM 1.2 <c>cmi.core.lesson_status</c> values to human-readable display labels.
+    /// Also handles legacy custom values ("in-progress", "abandoned").
+    /// Unknown values pass through unchanged.
+    /// </summary>
+    public static string GetDisplayLabel(string? rawStatus)
+    {
+        if (string.IsNullOrEmpty(rawStatus))
+            return "Not Started";
+
+        return rawStatus.ToLowerInvariant() switch
+        {
+            "not attempted" => "Not Started",
+            "neutral"       => "Not Started",
+            "incomplete"    => "In Progress",
+            "in-progress"   => "In Progress",  // legacy custom value
+            "abandoned"     => "Abandoned",     // legacy custom value
+            "completed"     => "Completed",
+            "passed"        => "Passed",
+            "failed"        => "Failed",
+            "browsed"       => "Browsed",
+            _               => rawStatus        // defensive: pass through unknown values
+        };
+    }
+
+    /// <summary>
+    /// Format <c>ScoreRaw</c> (nullable double, 0–100) as a human-readable percentage string.
+    /// Returns "N/A" when scoreRaw is null.
+    /// </summary>
+    public static string GetDisplayPercentage(double? scoreRaw)
+    {
+        if (!scoreRaw.HasValue)
+            return "N/A";
+
+        return $"{(int)scoreRaw.Value}%";
+    }
+
+    /// <summary>
+    /// Return CSS background and text color hints for a status badge, based on SCORM lesson_status.
+    /// </summary>
+    /// <param name="rawStatus">Raw SCORM lesson_status value (or null).</param>
+    /// <returns>Tuple of (backgroundColor, textColor).</returns>
+    public static (string BackgroundColor, string TextColor) GetStatusBadgeColors(string? rawStatus)
+    {
+        if (string.IsNullOrEmpty(rawStatus))
+            return ("#f5f5f5", "#666"); // Neutral (Not Started)
+
+        return rawStatus.ToLowerInvariant() switch
+        {
+            // Success — green
+            "completed" => ("#e8f5e9", "#2e7d32"),
+            "passed"    => ("#e8f5e9", "#2e7d32"),
+
+            // Warning — orange
+            "incomplete" => ("#fff3e0", "#e65100"),
+            "in-progress" => ("#fff3e0", "#e65100"), // legacy
+            "abandoned"   => ("#fff3e0", "#e65100"),  // legacy (treated as warning, not error)
+
+            // Error — red
+            "failed" => ("#ffebee", "#c62828"),
+
+            // Neutral — gray (default for not-started, browsed, unknown)
+            _ => ("#f5f5f5", "#666")
+        };
+    }
 }
