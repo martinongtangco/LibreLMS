@@ -27,12 +27,12 @@ public class LoginModel : PageModel
         _enrollmentContext = enrollmentContext;
     }
 
-    public async Task OnPostAsync()
+    public async Task<IActionResult> OnPostAsync()
     {
         if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
         {
             ErrorMessage = "Please enter both email and password.";
-            return;
+            return Page();
         }
 
         try
@@ -43,7 +43,7 @@ public class LoginModel : PageModel
             if (student is null || !VerifyPassword(Password, student.PasswordHash))
             {
                 ErrorMessage = "Invalid email or password.";
-                return;
+                return Page();
             }
 
             // Build claims principal
@@ -70,7 +70,7 @@ public class LoginModel : PageModel
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
             await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
+                "Cookie",
                 claimsPrincipal,
                 new AuthenticationProperties
                 {
@@ -78,11 +78,12 @@ public class LoginModel : PageModel
                     ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
                 });
 
-            Response.Redirect("/");
+            return Redirect("/");
         }
         catch
         {
             ErrorMessage = "An error occurred during login. Please try again.";
+            return Page();
         }
     }
 
