@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using LibreLms.Contracts.Enrollment;
-using LibreLms.Modules.Catalog.Application;
+using LearningLms.Contracts.Enrollment;
+using LearningLms.Modules.Catalog.Application;
 
 namespace LibreLms.Host.Pages.Courses;
 
@@ -25,26 +25,40 @@ public class CourseIndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        var courses = await _catalogService.ListAsync(Search, Category);
-        var enrolledIds = await GetEnrolledCourseIds();
+        try
+        {
+            var courses = await _catalogService.ListAsync(Search, Category);
+            var enrolledIds = await GetEnrolledCourseIds();
 
-        Courses = courses.Select(c => new CourseItem(
-            c.Id, c.Title, c.ShortDescription, c.Category, c.Duration,
-            enrolledIds.Contains(c.Id))).ToList();
-        Categories = Courses.Select(c => c.Category).Distinct().OrderBy(c => c).ToList();
+            Courses = courses.Select(c => new CourseItem(
+                c.Id, c.Title, c.ShortDescription, c.Category, c.Duration,
+                enrolledIds.Contains(c.Id))).ToList();
+            Categories = Courses.Select(c => c.Category).Distinct().OrderBy(c => c).ToList();
+        }
+        catch
+        {
+            // If API call fails, show empty state
+        }
     }
 
     /// <summary>HTMX handler: return course list partial for inline swap.</summary>
     public async Task<PartialViewResult> OnGetCourseListAsync(string? search, string? category)
     {
-        var courses = await _catalogService.ListAsync(search, category);
-        var enrolledIds = await GetEnrolledCourseIds();
+        try
+        {
+            var courses = await _catalogService.ListAsync(search, category);
+            var enrolledIds = await GetEnrolledCourseIds();
 
-        var model = courses.Select(c => new CourseItem(
-            c.Id, c.Title, c.ShortDescription, c.Category, c.Duration,
-            enrolledIds.Contains(c.Id))).ToList();
+            var model = courses.Select(c => new CourseItem(
+                c.Id, c.Title, c.ShortDescription, c.Category, c.Duration,
+                enrolledIds.Contains(c.Id))).ToList();
 
-        return Partial("_CourseList", model);
+            return Partial("_CourseList", model);
+        }
+        catch
+        {
+            return Partial("_ErrorPartial", "Unable to load data. Please refresh.");
+        }
     }
 
     /// <summary>Fetch the set of course IDs the current student is enrolled in.</summary>

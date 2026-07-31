@@ -1,3 +1,4 @@
+@using LearningLms.Host.Pages.Courses
 @model EnrollmentResult
 
 @if (Model.Success)
@@ -20,7 +21,8 @@ else
 {
     <div>
         <span style="color: #c62828; font-weight: 500;">@Model.Message</span>
-        <form hx-post="/Courses/Detail/@Model.CourseId?handler=Enroll"
+        <form hx-post="/Courses/Detail?handler=Enroll"
+              hx-vals='{"courseId": "@Model.CourseId"}'
               hx-swap="outerHTML"
               hx-target="#enroll-region"
               style="display: inline;">
