@@ -20,7 +20,7 @@
 
 **Purpose**: Branch creation and project preparation
 
-- [ ] T001 Create branch `story/007-course-launch-status` from `main` per Constitution Principle VIII
+- [X] T001 Create branch `story/007-course-launch-status` from `main` per Constitution Principle VIII
 
 ---
 
@@ -30,9 +30,9 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T002 Add `GetDisplayLabel(string rawStatus)` method to `src/Host/ScormHelpers.cs` — maps SCORM 1.2 `cmi.core.lesson_status` values to human-readable labels: "not attempted" → "Not Started", "incomplete" → "In Progress", "completed" → "Completed", "passed" → "Passed", "failed" → "Failed", "browsed" → "Browsed", "neutral" → "Not Started", legacy "in-progress" → "In Progress", "abandoned" → "Abandoned"; unknown values pass through unchanged
-- [ ] T003 [P] Add `GetDisplayPercentage(double? scoreRaw)` method to `src/Host/ScormHelpers.cs` — returns "N/A" when scoreRaw is null, "{score}%" for values 0–100 (integer, no decimal places)
-- [ ] T004 [P] Add `GetStatusBadgeColors(string rawStatus)` method to `src/Host/ScormHelpers.cs` — returns CSS color hints (background + text color) per status category: success (green #e8f5e9/#2e7d32) for completed/passed, warning (orange #fff3e0/#e65100) for in-progress/incomplete/abandoned, error (red #ffebee/#c62828) for failed, neutral (gray #f5f5f5/#666) for not-started/browsed/neutral
+- [X] T002 Add `GetDisplayLabel(string rawStatus)` method to `src/Host/ScormHelpers.cs` — maps SCORM 1.2 `cmi.core.lesson_status` values to human-readable labels: "not attempted" → "Not Started", "incomplete" → "In Progress", "completed" → "Completed", "passed" → "Passed", "failed" → "Failed", "browsed" → "Browsed", "neutral" → "Not Started", legacy "in-progress" → "In Progress", "abandoned" → "Abandoned"; unknown values pass through unchanged
+- [X] T003 [P] Add `GetDisplayPercentage(double? scoreRaw)` method to `src/Host/ScormHelpers.cs` — returns "N/A" when scoreRaw is null, "{score}%" for values 0–100 (integer, no decimal places)
+- [X] T004 [P] Add `GetStatusBadgeColors(string rawStatus)` method to `src/Host/ScormHelpers.cs` — returns CSS color hints (background + text color) per status category: success (green #e8f5e9/#2e7d32) for completed/passed, warning (orange #fff3e0/#e65100) for in-progress/incomplete/abandoned, error (red #ffebee/#c62828) for failed, neutral (gray #f5f5f5/#666) for not-started/browsed/neutral
 
 **Checkpoint**: Foundation ready — status mapping, percentage formatting, and color utilities are available for all UI views.
 
@@ -46,10 +46,10 @@
 
 ### Implementation for US1 + US2
 
-- [ ] T005 [US1] [US2] Update `_MyCourseRow.cshtml` at `src/Host/Pages/Shared/_MyCourseRow.cshtml` — replace the inline switch expression with calls to `ScormHelpers.GetDisplayLabel()` and `ScormHelpers.GetStatusBadgeColors()`. Handle null `LatestStatus` as "Not Started". Show the display label badge with appropriate colors for all SCORM status values.
-- [ ] T006 [US1] Update `MyCourses/Index.cshtml.cs` at `src/Host/Pages/MyCourses/Index.cshtml.cs` — ensure the `EnrollmentRow` record passes through the raw `LatestStatus` and `LatestScore` values (no transformation needed; display mapping is handled by the partial view). Verify the HTMX refresh handler returns the updated partial with new status mapping.
-- [ ] T007 [US1] Verify launch status transition in `src/Modules/Scorm/Application/ScormSessionService.cs` — confirm that `LaunchAsync` creates `CourseAttempt` with `Status = "in-progress"`, which maps to "In Progress" display label. No code change needed if confirmed, but add a comment documenting the SCORM mapping intent.
-- [ ] T008 [US2] Update `MyCourses/Index.cshtml` at `src/Host/Pages/MyCourses/Index.cshtml` — no structural changes needed; verify HTMX refresh flow works with updated `_MyCourseRow.cshtml`.
+- [X] T005 [US1] [US2] Update `_MyCourseRow.cshtml` at `src/Host/Pages/Shared/_MyCourseRow.cshtml` — replace the inline switch expression with calls to `ScormHelpers.GetDisplayLabel()` and `ScormHelpers.GetStatusBadgeColors()`. Handle null `LatestStatus` as "Not Started". Show the display label badge with appropriate colors for all SCORM status values.
+- [X] T006 [US1] Update `MyCourses/Index.cshtml.cs` at `src/Host/Pages/MyCourses/Index.cshtml.cs` — ensure the `EnrollmentRow` record passes through the raw `LatestStatus` and `LatestScore` values (no transformation needed; display mapping is handled by the partial view). Verify the HTMX refresh handler returns the updated partial with new status mapping.
+- [X] T007 [US1] Verify launch status transition in `src/Modules/Scorm/Application/ScormSessionService.cs` — confirm that `LaunchAsync` creates `CourseAttempt` with `Status = "in-progress"`, which maps to "In Progress" display label. No code change needed if confirmed, but add a comment documenting the SCORM mapping intent.
+- [X] T008 [US2] Update `MyCourses/Index.cshtml` at `src/Host/Pages/MyCourses/Index.cshtml` — no structural changes needed; verify HTMX refresh flow works with updated `_MyCourseRow.cshtml`.
 
 **Checkpoint**: At this point, US1 and US2 are both functional. Students can launch courses and see all 6 SCORM status values with correct labels and colors on the enrolled courses page.
 
@@ -63,8 +63,8 @@
 
 ### Implementation for US3
 
-- [ ] T009 [US3] Update `_MyCourseRow.cshtml` at `src/Host/Pages/Shared/_MyCourseRow.cshtml` — add percentage completion display alongside the status badge using `ScormHelpers.GetDisplayPercentage(Model.LatestScore)`. Show "N/A" when LatestScore is null, "{score}%" for numeric values.
-- [ ] T010 [US3] Fix score=0 persistence bug in `src/Modules/Scorm/Application/ScormSessionService.cs` — in `CommitAsync()`, change `if (double.TryParse(sessionData.CmiScoreRaw, out var score) && score > 0)` to `if (double.TryParse(sessionData.CmiScoreRaw, out var score) && score >= 0)` so that a legitimate score of 0 is saved to `CourseAttempt.ScoreRaw`. Apply the same fix in `FinishAsync()`.
+- [X] T009 [US3] Update `_MyCourseRow.cshtml` at `src/Host/Pages/Shared/_MyCourseRow.cshtml` — add percentage completion display alongside the status badge using `ScormHelpers.GetDisplayPercentage(Model.LatestScore)`. Show "N/A" when LatestScore is null, "{score}%" for numeric values.
+- [X] T010 [US3] Fix score=0 persistence bug in `src/Modules/Scorm/Application/ScormSessionService.cs` — in `CommitAsync()`, change `if (double.TryParse(sessionData.CmiScoreRaw, out var score) && score > 0)` to `if (double.TryParse(sessionData.CmiScoreRaw, out var score) && score >= 0)` so that a legitimate score of 0 is saved to `CourseAttempt.ScoreRaw`. Apply the same fix in `FinishAsync()`.
 
 **Checkpoint**: At this point, US3 is functional. Students see percentage completion for all courses, including 0% for failed courses and "N/A" for courses without a score.
 
@@ -78,9 +78,9 @@
 
 ### Implementation for US4
 
-- [ ] T011 [US4] Verify `CommitAsync()` in `src/Modules/Scorm/Application/ScormSessionService.cs` — confirm that the method reads `CmiLessonStatus` from Valkey session and writes it directly to `CourseAttempt.Status`. This ensures SCORM standard values (not custom values) are persisted. No code change needed if confirmed; add a comment documenting the behavior.
-- [ ] T012 [US4] Verify `FinishAsync()` in `src/Modules/Scorm/Application/ScormSessionService.cs` — confirm same behavior: `CmiLessonStatus` and `CmiScoreRaw` from Valkey are written to `CourseAttempt`. The score=0 fix from T010 must be applied here too.
-- [ ] T013 [US4] Update `MyCourses/Index.cshtml.cs` at `src/Host/Pages/MyCourses/Index.cshtml.cs` — verify that the HTMX refresh handler (`OnGetEnrollmentsAsync`) re-queries `ScormAttemptService.GetMyAttemptsAsync()` to get the latest committed status after each session end. Confirm the latest attempt per course is selected (by `AttemptNumber` descending).
+- [X] T011 [US4] Verify `CommitAsync()` in `src/Modules/Scorm/Application/ScormSessionService.cs` — confirm that the method reads `CmiLessonStatus` from Valkey session and writes it directly to `CourseAttempt.Status`. This ensures SCORM standard values (not custom values) are persisted. No code change needed if confirmed; add a comment documenting the behavior.
+- [X] T012 [US4] Verify `FinishAsync()` in `src/Modules/Scorm/Application/ScormSessionService.cs` — confirm same behavior: `CmiLessonStatus` and `CmiScoreRaw` from Valkey are written to `CourseAttempt`. The score=0 fix from T010 must be applied here too.
+- [X] T013 [US4] Update `MyCourses/Index.cshtml.cs` at `src/Host/Pages/MyCourses/Index.cshtml.cs` — verify that the HTMX refresh handler (`OnGetEnrollmentsAsync`) re-queries `ScormAttemptService.GetMyAttemptsAsync()` to get the latest committed status after each session end. Confirm the latest attempt per course is selected (by `AttemptNumber` descending).
 
 **Checkpoint**: All user stories are now functional. Status updates persist correctly through commit/finish, and the enrolled courses page reflects the latest attempt status and score.
 
@@ -94,10 +94,10 @@
 
 ### Implementation for detail page
 
-- [ ] T014 Inject `ScormAttemptService` into `CourseDetailModel` at `src/Host/Pages/Courses/Detail.cshtml.cs` — add it as a constructor dependency alongside existing services.
-- [ ] T015 Update `CourseDetailModel.OnGetAsync()` at `src/Host/Pages/Courses/Detail.cshtml.cs` — when the student is enrolled, query `ScormAttemptService.GetMyAttemptsAsync(studentId)` for this course, select the latest attempt, and expose `LatestStatus` (string?) and `LatestScore` (double?) on the model.
-- [ ] T016 Update `CourseDetailItem` record at `src/Host/Pages/Courses/Detail.cshtml.cs` — add optional `LatestStatus` and `LatestScore` properties.
-- [ ] T017 Update `Courses/Detail.cshtml` at `src/Host/Pages/Courses/Detail.cshtml` — in the enrolled section (below the "✓ Enrolled" badge), display the course status using `ScormHelpers.GetDisplayLabel()` and percentage using `ScormHelpers.GetDisplayPercentage()`. Show the status badge and percentage alongside the Launch button.
+- [X] T014 Inject `ScormAttemptService` into `CourseDetailModel` at `src/Host/Pages/Courses/Detail.cshtml.cs` — add it as a constructor dependency alongside existing services.
+- [X] T015 Update `CourseDetailModel.OnGetAsync()` at `src/Host/Pages/Courses/Detail.cshtml.cs` — when the student is enrolled, query `ScormAttemptService.GetMyAttemptsAsync(studentId)` for this course, select the latest attempt, and expose `LatestStatus` (string?) and `LatestScore` (double?) on the model.
+- [X] T016 Update `CourseDetailItem` record at `src/Host/Pages/Courses/Detail.cshtml.cs` — add optional `LatestStatus` and `LatestScore` properties.
+- [X] T017 Update `Courses/Detail.cshtml` at `src/Host/Pages/Courses/Detail.cshtml` — in the enrolled section (below the "✓ Enrolled" badge), display the course status using `ScormHelpers.GetDisplayLabel()` and percentage using `ScormHelpers.GetDisplayPercentage()`. Show the status badge and percentage alongside the Launch button.
 
 ---
 
@@ -105,10 +105,10 @@
 
 **Purpose**: Final validation and consistency checks.
 
-- [ ] T018 Verify status display consistency between `MyCourses/Index.cshtml` and `Courses/Detail.cshtml` — both views must show identical status labels, colors, and percentages for the same enrollment/attempt data.
-- [ ] T019 [P] Run architecture tests to confirm no module boundary violations: `dotnet test tests/ArchitectureTests`
-- [ ] T020 [P] Run quickstart.md validation scenarios — walk through all 9 scenarios in `specs/007-course-launch-status/quickstart.md` to verify end-to-end correctness
-- [ ] T021 Build and verify: `dotnet build` with zero warnings
+- [X] T018 Verify status display consistency between `MyCourses/Index.cshtml` and `Courses/Detail.cshtml` — both views must show identical status labels, colors, and percentages for the same enrollment/attempt data.
+- [X] T019 [P] Run architecture tests to confirm no module boundary violations: `dotnet test tests/ArchitectureTests`
+- [X] T020 [P] Run quickstart.md validation scenarios — walk through all 9 scenarios in `specs/007-course-launch-status/quickstart.md` to verify end-to-end correctness
+- [X] T021 Build and verify: `dotnet build` with zero warnings
 
 ---
 

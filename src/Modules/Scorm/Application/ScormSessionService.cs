@@ -164,7 +164,8 @@ public class ScormSessionService
         // Update attempt from session state
         attempt.Status = sessionData.CmiLessonStatus;
 
-        if (double.TryParse(sessionData.CmiScoreRaw, out var score) && score > 0)
+        // Save score >= 0 (score of 0 is a legitimate SCORM score, e.g., for failed courses)
+        if (double.TryParse(sessionData.CmiScoreRaw, out var score) && score >= 0)
             attempt.ScoreRaw = score;
 
         attempt.SessionTime = sessionData.CmiSessionTime;
@@ -197,7 +198,8 @@ public class ScormSessionService
         attempt.CompletedAt = DateTimeOffset.UtcNow;
         attempt.LastCommitAt = DateTimeOffset.UtcNow;
 
-        if (double.TryParse(sessionData.CmiScoreRaw, out var score) && score > 0)
+        // Save score >= 0 (score of 0 is a legitimate SCORM score, e.g., for failed courses)
+        if (double.TryParse(sessionData.CmiScoreRaw, out var score) && score >= 0)
             attempt.ScoreRaw = score;
 
         attempt.SessionTime = sessionData.CmiSessionTime;
