@@ -1,21 +1,13 @@
 <!--
   Sync Impact Report
   ==================
-  Version change: 1.2.0 → 1.3.0 (MINOR: new principle added)
-  Added principles:
-    - IX. Plan On Master Only (new)
-  Modified principles: none
+  Version change: 1.3.0 → 1.4.0 (MINOR: enforcement checklist added)
+  Added sections:
+    - "⚠️ Before You Touch Code" pre-checklist (enforcement gate before any file edit)
+  Modified principles:
+    - X. No Ad-Hoc Fixes — removed "trivially small" exemption; all changes require branch + spec
   Removed sections: none
-  Number re-indexing:
-    - "No Ad-Hoc Fixes — Document Before You Code" renumbered IX → X
-  Templates updated:
-    - ✅ .specify/templates/plan-template.md (no changes needed)
-    - ✅ .specify/templates/spec-template.md (no changes needed)
-    - ✅ .specify/templates/tasks-template.md (no changes needed)
-    - ✅ .pi/prompts/speckit.specify.md (pre-execution branch gate added)
-    - ✅ .pi/prompts/speckit.plan.md (pre-execution branch gate added)
-    - ✅ .pi/prompts/speckit.tasks.md (pre-execution branch gate added)
-    - ⚠  README.md (update dev workflow section to note master-only planning rule)
+  Templates updated: none
   Deferred items: none
 -->
 
@@ -25,6 +17,19 @@ This project is a teaching exercise, not a product. Its purpose is to learn (a) 
 development with spec-kit and (b) how to sandbox and containerize code written by an AI coding
 agent. Every principle below exists to serve one or both of those goals — if a rule doesn't serve
 either, it doesn't belong here.
+
+## ⚠️ Before You Touch Code
+
+Before editing ANY file, you MUST do the following. No exceptions.
+
+1. **Check your branch**: Run `git branch --show-current`. You must be on a `bug/` or `story/` branch. If you are on `main`, `master`, or any other branch, STOP and create the correct branch first.
+2. **Check for a spec**: A spec must exist for this change. If it doesn't, create one via `/speckit.specify` on `master` before branching and coding.
+3. **Declare before editing**: Before every file edit, state:
+   - The branch you are on
+   - The spec or issue this change belongs to
+   - Which constitution principles apply
+
+If any step fails, STOP. Do not proceed to edit files.
 
 ## Core Principles
 
@@ -137,9 +142,8 @@ The required flow for an ad-hoc issue:
    proceeding to the SpecKit steps.
 
 The spec entry serves as the decision record — future interactions can review what was changed
-and why. If the issue is trivially small (e.g. a typo fix, a single misnamed variable), the
-agent MAY note it inline but MUST still branch and MUST still file a minimal spec capturing the
-change. There is no "too small to document" exemption for code changes.
+and why. There is no "too small to document" exemption for code changes. Every edit — including
+typos, misnamed variables, and single-line fixes — requires a branch and a minimal spec.
 
 ## Technology & Scope Constraints
 
@@ -178,4 +182,4 @@ simplify the instruction, not to add more words explaining it. Amendments requir
 file, bumping the version below, and — if the amendment reverses a prior ADR — recording that
 reversal as a new ADR rather than editing the old one.
 
-**Version**: 1.3.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-07-30
+**Version**: 1.4.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-07-31
