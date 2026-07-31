@@ -119,7 +119,7 @@ courses.MapGet("/", async (CourseCatalogService service, string? search, string?
 });
 
 // POST /api/courses — Admin-only course creation
-courses.MapPost("/", [Authorize(Roles = "Admin")] async (CourseCatalogService service, [FromBody] LibreLms.Modules.Catalog.Endpoints.CreateCourseRequest request) =>
+courses.MapPost("/", [Authorize(Roles = "Admin")] async (CourseCatalogService service, [FromBody] LearningLms.Modules.Catalog.Endpoints.CreateCourseRequest request) =>
 {
     var course = await service.CreateAsync(request);
     return Results.Created($"/api/courses/{course.Id}", new CourseDto(course.Id, course.Title, course.ShortDescription, course.Category, course.Duration));

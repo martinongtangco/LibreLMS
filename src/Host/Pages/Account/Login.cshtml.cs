@@ -1,3 +1,4 @@
+using System.Security.Authentication;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -6,33 +7,30 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using LibreLms.Modules.Enrollment.Domain;
-using LibreLms.Modules.Enrollment.Infrastructure;
+using LearningLms.Modules.Enrollment.Domain;
+using LearningLms.Modules.Enrollment.Infrastructure;
 
-namespace LibreLms.Host.Pages.Account;
+namespace LearningLms.Host.Pages.Account;
 
 public class LoginModel : PageModel
 {
     private readonly EnrollmentDbContext _enrollmentContext;
-    private readonly ILogger<LoginModel> _logger;
 
     [BindProperty] public string Email { get; set; } = string.Empty;
     [BindProperty] public string Password { get; set; } = string.Empty;
     public string? ErrorMessage { get; set; }
 
-    public LoginModel(EnrollmentDbContext enrollmentContext, ILogger<LoginModel> logger)
+    public LoginModel(EnrollmentDbContext enrollmentContext)
     {
         _enrollmentContext = enrollmentContext;
-        _logger = logger;
     }
 
-    public async Task<IActionResult> OnPostAsync()
+    public async Task OnPostAsync()
     {
         if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
         {
             ErrorMessage = "Please enter both email and password.";
-            return Page();
+            return;
         }
 
         try
@@ -43,7 +41,7 @@ public class LoginModel : PageModel
             if (student is null || !VerifyPassword(Password, student.PasswordHash))
             {
                 ErrorMessage = "Invalid email or password.";
-                return Page();
+                return;
             }
 
             // Build claims principal
@@ -63,11 +61,11 @@ public class LoginModel : PageModel
                 }
             }
 
-            var claimsIdentity = new ClaimsIdentity(claims, "Cookie");
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
             await HttpContext.SignInAsync(
-                "Cookie",
+                CookieAuthenticationDefaults.AuthenticationScheme,
                 claimsPrincipal,
                 new AuthenticationProperties
                 {
@@ -75,13 +73,11 @@ public class LoginModel : PageModel
                     ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
                 });
 
-            return Redirect("/");
+            Response.Redirect("/");
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError(ex, "Login failed for email={Email}", Email);
             ErrorMessage = "An error occurred during login. Please try again.";
-            return Page();
         }
     }
 
