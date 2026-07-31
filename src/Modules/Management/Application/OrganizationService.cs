@@ -1,14 +1,21 @@
 using Microsoft.EntityFrameworkCore;
+using LibreLms.Modules.Catalog.Infrastructure;
+using LibreLms.Modules.Enrollment.Infrastructure;
 using LibreLms.Modules.Management.Domain;
+using LibreLms.Modules.Management.Endpoints;
 using LibreLms.Modules.Management.Infrastructure;
 
 namespace LibreLms.Modules.Management.Application;
 
 /// <summary>
 /// Service for managing organization hierarchy operations.
-/// Handles CRUD, subtree traversal, and deletion safety checks.
+/// Handles CRUD, subtree traversal, deletion safety checks, and chart data generation.
 /// </summary>
-public class OrganizationService(ManagementDbContext context)
+public class OrganizationService(
+    ManagementDbContext context,
+    EnrollmentDbContext enrollmentCtx,
+    CatalogDbContext catalogCtx,
+    TreeLayoutService layoutService)
 {
     /// <summary>Create a new organization.</summary>
     public async Task<Organization> CreateAsync(string name, string? description, Guid? parentId)
@@ -148,5 +155,202 @@ public class OrganizationService(ManagementDbContext context)
             .Where(o => !o.IsDeleted)
             .OrderBy(o => o.CreatedAt)
             .ToListAsync();
+    }
+
+    /// <summary>
+    /// Get the complete organization chart data with layout positions and summary counts.
+    /// If rootOrgId is provided, only returns that subtree (for OrgAdmin scoping).
+    /// </summary>
+    public async Task<IList<OrgChartNodeDto>> GetChartTreeAsync(Guid? rootOrgId = null)
+    {
+        // Fetch organizations (all or scoped subtree)
+        var orgs = rootOrgId.HasValue
+            ? await FetchSubtreeAsync(rootOrgId.Value)
+            : await context.Organizations
+                .Where(o => !o.IsDeleted)
+                .Include(o => o.Children)
+                .ToListAsync();
+
+        if (orgs.Count == 0)
+            return Array.Empty<OrgChartNodeDto>();
+
+        // Build a flat list with children populated for layout
+        var orgMap = orgs.ToDictionary(o => o.Id);
+        foreach (var org in orgs)
+        {
+            org.Children = org.Children.Where(c => orgMap.ContainsKey(c.Id)).ToList();
+        }
+
+        // Compute layout positions using the tree layout algorithm
+        var layoutResults = layoutService.ComputeLayout(orgs);
+
+        // Compute user and course counts per organization
+        var orgIds = orgs.Select(o => o.Id).ToList();
+
+        // User counts: Students.OrganizationId → count
+        var userCounts = await enrollmentCtx.Students
+            .Where(s => orgIds.Contains(s.OrganizationId))
+            .GroupBy(s => s.OrganizationId)
+            .Select(g => new { OrganizationId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(k => k.OrganizationId, v => v.Count);
+
+        // Course counts: Courses.OrganizationId → count
+        var courseCounts = await catalogCtx.Courses
+            .Where(c => orgIds.Contains(c.OrganizationId))
+            .GroupBy(c => c.OrganizationId)
+            .Select(g => new { OrganizationId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(k => k.OrganizationId, v => v.Count);
+
+        // Build DTOs from layout results
+        return layoutResults
+            .Select(lr =>
+            {
+                userCounts.TryGetValue(lr.Org.Id, out var userCount);
+                courseCounts.TryGetValue(lr.Org.Id, out var courseCount);
+
+                return new OrgChartNodeDto(
+                    Id: lr.Org.Id,
+                    Name: lr.Org.Name,
+                    Description: lr.Org.Description,
+                    Depth: lr.Depth,
+                    X: lr.X,
+                    Y: lr.Y,
+                    IsDisabled: lr.Org.IsDisabled,
+                    IsRoot: !lr.Org.ParentId.HasValue,
+                    UserCount: userCount,
+                    CourseCount: courseCount,
+                    HasChildren: lr.Org.Children.Any(),
+                    ParentId: lr.Org.ParentId
+                );
+            })
+            .ToList();
+    }
+
+    /// <summary>
+    /// Disable an organization and all its descendants.
+    /// Root organizations cannot be disabled.
+    /// </summary>
+    public async Task DisableAsync(Guid id)
+    {
+        var org = await context.Organizations.FindAsync(id);
+        if (org is null || org.IsDeleted)
+            throw new KeyNotFoundException("Organization not found.");
+
+        // Prevent disabling root
+        if (!org.ParentId.HasValue)
+            throw new InvalidOperationException("Cannot disable the root organization.");
+
+        // Cascade to all descendants
+        var descendants = await GetDescendantIdsAsync(id);
+        descendants.Add(id);
+
+        foreach (var descId in descendants)
+        {
+            var desc = await context.Organizations.FindAsync(descId);
+            if (desc is not null && !desc.IsDeleted)
+                desc.IsDisabled = true;
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Enable an organization and all its descendants.
+    /// </summary>
+    public async Task EnableAsync(Guid id)
+    {
+        var org = await context.Organizations.FindAsync(id);
+        if (org is null || org.IsDeleted)
+            throw new KeyNotFoundException("Organization not found.");
+
+        // Cascade to all descendants
+        var descendants = await GetDescendantIdsAsync(id);
+        descendants.Add(id);
+
+        foreach (var descId in descendants)
+        {
+            var desc = await context.Organizations.FindAsync(descId);
+            if (desc is not null && !desc.IsDeleted)
+                desc.IsDisabled = false;
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Get an organization with its current user and course counts.
+    /// Used by the edit dialog to show summary data.
+    /// </summary>
+    public async Task<(Organization Org, int UserCount, int CourseCount)> GetByIdWithStatusAsync(Guid id)
+    {
+        var org = await context.Organizations
+            .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
+
+        if (org is null)
+            throw new KeyNotFoundException("Organization not found.");
+
+        var userCount = await enrollmentCtx.Students
+            .CountAsync(s => s.OrganizationId == id);
+
+        var courseCount = await catalogCtx.Courses
+            .CountAsync(c => c.OrganizationId == id);
+
+        return (org, userCount, courseCount);
+    }
+
+    private async Task<IList<Organization>> FetchSubtreeAsync(Guid rootId)
+    {
+        var all = new List<Organization>();
+        var queue = new Queue<Organization>();
+
+        var root = await context.Organizations
+            .Include(o => o.Children)
+            .FirstOrDefaultAsync(o => o.Id == rootId && !o.IsDeleted);
+
+        if (root is null)
+            return all;
+
+        queue.Enqueue(root);
+        all.Add(root);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            var children = await context.Organizations
+                .Where(o => o.ParentId == current.Id && !o.IsDeleted)
+                .ToListAsync();
+
+            current.Children = children;
+            foreach (var child in children)
+            {
+                all.Add(child);
+                queue.Enqueue(child);
+            }
+        }
+
+        return all;
+    }
+
+    private async Task<HashSet<Guid>> GetDescendantIdsAsync(Guid orgId)
+    {
+        var ids = new HashSet<Guid>();
+        var queue = new Queue<Guid>(new[] { orgId });
+
+        while (queue.Count > 0)
+        {
+            var currentId = queue.Dequeue();
+            var children = await context.Organizations
+                .Where(o => o.ParentId == currentId && !o.IsDeleted)
+                .Select(o => o.Id)
+                .ToListAsync();
+
+            foreach (var childId in children)
+            {
+                ids.Add(childId);
+                queue.Enqueue(childId);
+            }
+        }
+
+        return ids;
     }
 }

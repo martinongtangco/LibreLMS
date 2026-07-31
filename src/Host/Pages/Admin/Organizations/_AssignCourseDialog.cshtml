@@ -1,0 +1,25 @@
+@model LibreLms.Host.Pages.Admin.Organizations.ChartModel.AssignCourseViewModel
+
+<div class="modal-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999;">
+    <div class="card" style="max-width:500px;width:90%;margin:0;">
+        <h3>Assign Course</h3>
+        <p style="color:#666;font-size:0.9rem;">Organization: <strong>@Model.OrgName</strong></p>
+
+        <form hx-post="@($"Admin/Organizations/Chart/AssignCourse?orgId={Model.OrgId}")"
+              hx-target="#chart-content"
+              hx-swap="innerHTML"
+              hx-on::after-request="if(event.detail.successful) document.getElementById('modal-container').innerHTML=''">
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;margin-bottom:0.3rem;font-weight:500;">Select Course</label>
+                <div style="max-height:200px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;">
+                    <div style="padding:1rem;text-align:center;color:#999;">
+                        Course list will appear here. (Course assignment integration pending)
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-container').innerHTML=''">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,40 @@
+@model LibreLms.Host.Pages.Admin.Organizations.ChartModel.EditOrgViewModel
+
+<div class="modal-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999;">
+    <div class="card" style="max-width:500px;width:90%;margin:0;">
+        <h3>Edit Organization</h3>
+        @if (Model.UserCount > 0 || Model.CourseCount > 0)
+        {
+            <p style="color:#666;font-size:0.9rem;">
+                @(Model.UserCount) user(s), @(Model.CourseCount) course(s)
+                @if (Model.IsDisabled) { <span style="color:#c62828;">— Disabled</span> }
+            </p>
+        }
+
+        <form hx-post="@($"Admin/Organizations/Chart/Update?id={Model.Id}")"
+              hx-target="#chart-content"
+              hx-swap="innerHTML"
+              hx-on::after-request="if(event.detail.successful) document.getElementById('modal-container').innerHTML=''">
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;margin-bottom:0.3rem;font-weight:500;">Name *</label>
+                <input type="text" name="Form.Name" value="@Model.Name" required maxlength="200"
+                       style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:4px;" />
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;margin-bottom:0.3rem;font-weight:500;">Description</label>
+                <textarea name="Form.Description" maxlength="2000" rows="3"
+                          style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:4px;resize:vertical;">@Model.Description</textarea>
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                    <input type="checkbox" name="Form.IsDisabled" @(Model.IsDisabled ? "checked" : "") />
+                    <span>Disable this organization (and all descendants)</span>
+                </label>
+            </div>
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-container').innerHTML=''">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
