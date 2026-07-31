@@ -32,8 +32,8 @@ void ConfigureDbContext(DbContextOptionsBuilder opts, string? connStr)
     opts.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 }
 
-builder.Services.AddDbContext<CatalogDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddDbContext<EnrollmentDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<CatalogDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("Sql")));
+builder.Services.AddDbContext<EnrollmentDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("Sql")));
 
 // Register module services
 builder.Services.AddCatalogModule();
@@ -42,10 +42,10 @@ builder.Services.AddScormModule();
 builder.Services.AddManagementModule();
 
 // Register EF Core context for Scorm
-builder.Services.AddDbContext<ScormDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<ScormDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("Sql")));
 
 // Register EF Core context for Management
-builder.Services.AddDbContext<ManagementDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<ManagementDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("Sql")));
 
 // Configure Scorm module with wwwRoot path
 var wwwRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
@@ -130,8 +130,9 @@ using (var scope = app.Services.CreateScope())
         LibreLms.Modules.Catalog.Infrastructure.CatalogSeeder.Seed(catalogCtx);
     }
 
-    // Seed students
-    if (!enrollmentCtx.Students.Any())
+    // Seed students (check for a specific seeded email, not just Any(),
+    // since ManagementSeeder also creates a Student in this context)
+    if (!enrollmentCtx.Students.Any(s => s.Email == "alice@example.com"))
     {
         LibreLms.Modules.Enrollment.Infrastructure.EnrollmentSeeder.Seed(enrollmentCtx);
     }
