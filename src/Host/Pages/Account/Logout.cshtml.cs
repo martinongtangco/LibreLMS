@@ -7,15 +7,15 @@ namespace LibreLms.Host.Pages.Account;
 
 public class LogoutModel : PageModel
 {
-    public async Task OnPostAsync()
+    public async Task<IActionResult> OnPostAsync()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        Response.Redirect("/Account/Login");
+        return Redirect("/Account/Login");
     }
 
-    public void OnGet()
+    public async Task<IActionResult> OnGetAsync()
     {
-        HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        Response.Redirect("/Account/Login");
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return Redirect("/Account/Login");
     }
 }
