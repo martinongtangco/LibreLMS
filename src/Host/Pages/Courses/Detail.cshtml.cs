@@ -38,15 +38,13 @@ public class CourseDetailModel : PageModel
 
     public async Task OnGetAsync()
     {
-        try
-        {
-            var course = await _catalogService.GetByIdAsync(Id);
-            if (course is null)
-                return;
+        var course = await _catalogService.GetByIdAsync(Id);
+        if (course is null)
+            return; // Course is null → "Course Not Found" view renders
 
-            var studentId = ScormHelpers.GetStudentId(HttpContext);
-            var enrolled = await _enrollmentLookup.IsEnrolledAsync(studentId, Id);
-            var scormPkg = await _scormPackageService.GetPackageByCourseIdAsync(Id);
+        var studentId = ScormHelpers.GetStudentId(HttpContext);
+        var enrolled = await _enrollmentLookup.IsEnrolledAsync(studentId, Id);
+        var scormPkg = await _scormPackageService.GetPackageByCourseIdAsync(Id);
 
         // Fetch latest SCORM attempt status/score for enrolled students (T015)
         string? latestStatus = null;
@@ -79,23 +77,22 @@ public class CourseDetailModel : PageModel
     }
 
     /// <summary>HTMX handler: enroll in a course and return result partial (US2).</summary>
-    public async Task<PartialViewResult> OnPostEnrollAsync(Guid courseId)
+    [Authorize]
+    [IgnoreAntiforgeryToken]
+    public async Task<PartialViewResult> OnPostEnrollAsync()
     {
-        try
-        {
-            var result = await TryEnrollAsync(courseId);
-            return Partial("_EnrollmentResult", result);
-        }
-        catch
-        {
-            return Partial("_ErrorPartial", "Unable to process enrollment. Please try again.");
-        }
+        // Use the route-bound Id (from @page "{id:guid}") as the course ID
+        var result = await TryEnrollAsync(Id);
+        return Partial("_EnrollmentResult", result);
     }
 
     /// <summary>Attempt to enroll the current student in a course.</summary>
     private async Task<EnrollmentResult> TryEnrollAsync(Guid courseId)
     {
         var studentId = ScormHelpers.GetStudentId(HttpContext);
+        if (studentId == Guid.Empty)
+            return new EnrollmentResult(false, "Please log in to enroll in courses.", "error", courseId);
+
         var (enrollment, isDuplicate, courseNotFound) = await _enrollmentService.EnrollAsync(studentId, courseId);
 
         if (courseNotFound)
