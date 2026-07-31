@@ -34,15 +34,10 @@ public class CourseIndexModel : PageModel
     {
         var (courses, enrolledIds) = await GetCoursesAndEnrollments();
 
-            Courses = courses.Select(c => new CourseItem(
-                c.Id, c.Title, c.ShortDescription, c.Category, c.Duration,
-                enrolledIds.Contains(c.Id))).ToList();
-            Categories = Courses.Select(c => c.Category).Distinct().OrderBy(c => c).ToList();
-        }
-        catch
-        {
-            // If API call fails, show empty state
-        }
+        Courses = courses.Select(c => new CourseItem(
+            c.Id, c.Title, c.ShortDescription, c.Category, c.Duration,
+            enrolledIds.Contains(c.Id))).ToList();
+        Categories = Courses.Select(c => c.Category).Distinct().OrderBy(c => c).ToList();
     }
 
     /// <summary>HTMX handler: return course list partial for inline swap.</summary>
@@ -50,16 +45,11 @@ public class CourseIndexModel : PageModel
     {
         var (courses, enrolledIds) = await GetCoursesAndEnrollments(search, category);
 
-            var model = courses.Select(c => new CourseItem(
-                c.Id, c.Title, c.ShortDescription, c.Category, c.Duration,
-                enrolledIds.Contains(c.Id))).ToList();
+        var model = courses.Select(c => new CourseItem(
+            c.Id, c.Title, c.ShortDescription, c.Category, c.Duration,
+            enrolledIds.Contains(c.Id))).ToList();
 
-            return Partial("_CourseList", model);
-        }
-        catch
-        {
-            return Partial("_ErrorPartial", "Unable to load data. Please refresh.");
-        }
+        return Partial("_CourseList", model);
     }
 
     /// <summary>Get org-scoped courses and enrolled course IDs.</summary>
