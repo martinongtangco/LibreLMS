@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using LearningLms.Contracts.Enrollment;
-using LearningLms.Modules.Catalog.Application;
+using LibreLms.Contracts.Enrollment;
+using LibreLms.Modules.Catalog.Application;
 
 namespace LibreLms.Host.Pages.Courses;
 

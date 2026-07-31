@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 
-namespace LearningLms.Host;
+namespace LibreLms.Host;
 
 /// <summary>DTOs and constants used by Scorm endpoints in Program.cs.</summary>
 public static class ScormHelpers
