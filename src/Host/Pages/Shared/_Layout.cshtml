@@ -9,20 +9,20 @@
 <body>
     <nav class="navbar">
         <span class="brand">Libre LMS</span>
-        <button class="hamburger-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">&#9776;</button>
+        <button class="hamburger-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
         <div class="nav-links" id="nav-links">
-            <a asp-page="/Courses/Index">Browse Courses</a>
-            <a asp-page="/MyCourses/Index">My Courses</a>
+            <a asp-page="/Courses/Index"><span class="nav-icon">&#128218;</span> Browse Courses</a>
+            <a asp-page="/MyCourses/Index"><span class="nav-icon">&#127891;</span> My Courses</a>
             @if (User.IsInRole("Admin") || User.IsInRole("SuperUser") || User.IsInRole("OrgAdmin"))
             {
-                <a asp-page="/Admin/Dashboard/Index">Dashboard</a>
-                <a asp-page="/Admin/Organizations/Index">Organizations</a>
-                <a asp-page="/Admin/Organizations/Chart">Org Chart</a>
-                <a asp-page="/Admin/Learners/Index">Learners</a>
-                <a asp-page="/Admin/Courses/Index">Courses</a>
-                <a asp-page="/Admin/Enrollments/Index">Enrollments</a>
-                <a asp-page="/Admin/Courses/Create">Create Course</a>
-                <a asp-page="/Admin/Upload">Upload SCORM</a>
+                <a asp-page="/Admin/Dashboard/Index"><span class="nav-icon">&#128202;</span> Dashboard</a>
+                <a asp-page="/Admin/Organizations/Index"><span class="nav-icon">&#127971;</span> Organizations</a>
+                <a asp-page="/Admin/Organizations/Chart"><span class="nav-icon">&#127795;</span> Org Chart</a>
+                <a asp-page="/Admin/Learners/Index"><span class="nav-icon">&#128101;</span> Learners</a>
+                <a asp-page="/Admin/Courses/Index"><span class="nav-icon">&#128203;</span> Courses</a>
+                <a asp-page="/Admin/Enrollments/Index"><span class="nav-icon">&#9997;</span> Enrollments</a>
+                <a asp-page="/Admin/Courses/Create"><span class="nav-icon">&#10133;</span> Create Course</a>
+                <a asp-page="/Admin/Upload"><span class="nav-icon">&#128237;</span> Upload SCORM</a>
             }
             @if (User.Identity?.IsAuthenticated == true)
             {
@@ -35,7 +35,7 @@
             }
             else
             {
-                <a asp-page="/Account/Login">Login</a>
+                <a asp-page="/Account/Login"><span class="nav-icon">&#128273;</span> Login</a>
             }
         </div>
     </nav>
@@ -45,7 +45,7 @@
     <div class="footer">&copy; 2025 Libre LMS</div>
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js"></script>
     <script>
-        // Hamburger menu toggle
+        // Hamburger menu toggle with icon state
         (function() {
             var toggle = document.getElementById('nav-toggle');
             var nav = document.getElementById('nav-links');
@@ -53,6 +53,9 @@
                 toggle.addEventListener('click', function() {
                     var isOpen = nav.classList.toggle('is-open');
                     toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                    toggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
+                    // Toggle icon: hamburger (9776) <-> close (10006)
+                    toggle.innerHTML = isOpen ? '&#10006;' : '&#9776;';
                 });
             }
         })();
