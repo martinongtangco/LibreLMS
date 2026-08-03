@@ -123,9 +123,8 @@ body {
   text-decoration: underline;
 }
 
-/* Nav item icons — hidden on desktop, shown on mobile */
+/* Nav item icons */
 .nav-icon {
-  display: none;
   margin-right: var(--spacing-sm);
   font-size: 1.1rem;
   text-decoration: none;
@@ -746,11 +745,6 @@ hr.separator {
 
   .navbar .nav-links.is-open {
     display: flex;
-  }
-
-  /* Show nav icons on mobile */
-  .nav-icon {
-    display: inline;
   }
 
   .navbar .nav-links a {
