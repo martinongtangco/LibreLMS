@@ -190,11 +190,69 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(255, 255, 255, 0.15);
 }
 
-/* Nav item icons */
+/* Nav item icons (Lucide SVG) */
 .nav-icon {
   margin-right: var(--spacing-sm);
-  font-size: 1.1rem;
-  text-decoration: none;
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: middle;
+  stroke-width: 2.75;
+}
+
+/* Lucide icon base */
+.lucide-icon {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Profile dropdown icons */
+.dropdown-icon {
+  margin-right: var(--spacing-sm);
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+}
+
+/* Dropdown arrow rotation */
+.nav-profile .dropdown-arrow {
+  transition: transform 0.15s ease;
+}
+
+.nav-profile.is-open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* ── Role Switcher (Organic pill segmented control) ──────────────────── */
+.nav-role-switcher {
+  display: inline-flex;
+  background: rgba(255, 255, 255, var(--alpha-surface, 0.2));
+  border-radius: var(--radius-pill);
+  padding: var(--spacing-xs);
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.nav-role-switcher .role-segment {
+  background: transparent;
+  color: rgba(255, 255, 255, var(--alpha-muted, 0.75));
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  font-family: var(--font-body);
+  cursor: pointer;
+  min-height: var(--touch-target-min);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-role-switcher .role-segment:hover {
+  background: rgba(255, 255, 255, var(--alpha-surface, 0.1));
+}
+
+.nav-role-switcher .role-segment.active {
+  background: var(--color-surface);
+  color: var(--color-brand);
 }
 
 /* Hamburger toggle button — hidden on desktop */
@@ -1150,9 +1208,9 @@ hr.separator {
 }
 
 /* ==========================================================================
-   Media Query — Mobile Only (≤ 480px) — hamburger nav
+   Media Query — Mobile Nav (≤ 760px) — hamburger nav collapse
    ========================================================================== */
-@media (max-width: 480px) {
+@media (max-width: 760px) {
   .navbar {
     flex-wrap: wrap;
     padding: var(--spacing-md);
@@ -1194,6 +1252,15 @@ hr.separator {
     margin-top: var(--spacing-sm);
   }
 
+  /* Role switcher in mobile dropdown */
+  .navbar .nav-links .nav-role-switcher {
+    width: 100%;
+    margin-bottom: var(--spacing-sm);
+    justify-content: center;
+    padding: var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
   /* Profile control stays visible outside hamburger on mobile (research §6) */
   .nav-profile {
     margin-left: 0;
@@ -1202,7 +1269,12 @@ hr.separator {
   .nav-profile .profile-name {
     display: none;
   }
+}
 
+/* ==========================================================================
+   Media Query — Page Mobile (≤ 480px) — page layout adjustments
+   ========================================================================== */
+@media (max-width: 480px) {
   .container {
     margin: var(--spacing-md) auto;
     padding: 0 var(--spacing-md);
@@ -1305,9 +1377,9 @@ hr.separator {
 }
 
 /* ==========================================================================
-   Media Query — Desktop (≥ 1024px) — restore full desktop layout
+   Media Query — Desktop Nav (≥ 761px) — restore desktop nav layout
    ========================================================================== */
-@media (min-width: 1024px) {
+@media (min-width: 761px) {
   .navbar {
     flex-wrap: nowrap;
   }
@@ -1317,6 +1389,7 @@ hr.separator {
     flex-direction: row !important;
     width: auto !important;
     padding-top: 0 !important;
+    align-items: center !important;
   }
 
   .navbar .nav-links a {
@@ -1334,6 +1407,26 @@ hr.separator {
     margin-top: 0 !important;
   }
 
+  /* Role switcher — compact pill in desktop nav */
+  .navbar .nav-links .nav-role-switcher {
+    width: auto !important;
+    margin: 0 !important;
+    margin-left: var(--spacing-sm) !important;
+    justify-content: flex-start !important;
+    padding: var(--spacing-xs) !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .navbar .nav-links .nav-role-switcher .role-segment {
+    padding: var(--spacing-xs) var(--spacing-sm) !important;
+    font-size: var(--font-size-sm) !important;
+  }
+}
+
+/* ==========================================================================
+   Media Query — Desktop (≥ 1024px) — restore full desktop layout
+   ========================================================================== */
+@media (min-width: 1024px) {
   .container {
     max-width: var(--container-max-width);
     margin: var(--spacing-xl) auto;
