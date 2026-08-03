@@ -5,34 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Libre LMS</title>
     <link href="/css/site.css" rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
     <nav class="navbar">
         <span class="brand">Libre LMS</span>
-        <button class="hamburger-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">&#9776;</button>
+        <button class="hamburger-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+            <i data-lucide="menu" class="lucide-icon lucide-hamburger-open"></i>
+            <i data-lucide="x" class="lucide-icon lucide-hamburger-close" hidden></i>
+        </button>
         <div class="nav-links" id="nav-links">
-            <a asp-page="/Courses/Index"><span class="nav-icon">&#128218;</span> Browse Courses</a>
-            <a asp-page="/MyCourses/Index"><span class="nav-icon">&#127891;</span> My Courses</a>
+            @* Role switcher — inside nav-links for mobile hamburger integration *@
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="nav-role-switcher" id="role-switcher" data-role="learner">
+                    <button type="button" class="role-segment active" data-value="learner">Learner</button>
+                    <button type="button" class="role-segment" data-value="admin">Admin</button>
+                </div>
+            }
+            <a asp-page="/Courses/Index"><i data-lucide="book-open" class="nav-icon"></i> Browse Courses</a>
+            <a asp-page="/MyCourses/Index"><i data-lucide="graduation-cap" class="nav-icon"></i> My Courses</a>
             @if (User.IsInRole("Admin") || User.IsInRole("SuperUser") || User.IsInRole("OrgAdmin"))
             {
-                <a asp-page="/Admin/Dashboard/Index"><span class="nav-icon">&#128202;</span> Dashboard</a>
-                <a asp-page="/Admin/Organizations/Index"><span class="nav-icon">&#127971;</span> Organizations</a>
-                <a asp-page="/Admin/Organizations/Chart"><span class="nav-icon">&#127795;</span> Org Chart</a>
-                <a asp-page="/Admin/Learners/Index"><span class="nav-icon">&#128101;</span> Learners</a>
-                <a asp-page="/Admin/Courses/Index"><span class="nav-icon">&#128203;</span> Courses</a>
-                <a asp-page="/Admin/Enrollments/Index"><span class="nav-icon">&#9997;</span> Enrollments</a>
-                <a asp-page="/Admin/Courses/Create"><span class="nav-icon">&#10133;</span> Create Course</a>
-                <a asp-page="/Admin/Upload"><span class="nav-icon">&#128237;</span> Upload SCORM</a>
+                <a asp-page="/Admin/Dashboard/Index" class="admin-link"><i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard</a>
+                <a asp-page="/Admin/Organizations/Index" class="admin-link"><i data-lucide="building-2" class="nav-icon"></i> Organizations</a>
+                <a asp-page="/Admin/Organizations/Chart" class="admin-link"><i data-lucide="network" class="nav-icon"></i> Org Chart</a>
+                <a asp-page="/Admin/Learners/Index" class="admin-link"><i data-lucide="users" class="nav-icon"></i> Learners</a>
+                <a asp-page="/Admin/Courses/Index" class="admin-link"><i data-lucide="book" class="nav-icon"></i> Courses</a>
+                <a asp-page="/Admin/Enrollments/Index" class="admin-link"><i data-lucide="clipboard-list" class="nav-icon"></i> Enrollments</a>
+                <a asp-page="/Admin/Courses/Create" class="admin-link"><i data-lucide="plus-circle" class="nav-icon"></i> Create Course</a>
+                <a asp-page="/Admin/Upload" class="admin-link"><i data-lucide="upload" class="nav-icon"></i> Upload SCORM</a>
             }
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <div class="nav-user">
-                    <a asp-page="/Account/Logout" style="color: #aaa; text-decoration: none;">Logout</a>
-                </div>
+                @* Logout removed from top nav — lives in Settings page per spec 018 *@
             }
             else
             {
-                <a asp-page="/Account/Login"><span class="nav-icon">&#128273;</span> Login</a>
+                <a asp-page="/Account/Login"><i data-lucide="log-in" class="nav-icon"></i> Login</a>
             }
         </div>
         @if (User.Identity?.IsAuthenticated == true)
@@ -52,10 +62,10 @@
             <div class="nav-profile" id="profile-toggle" role="button" tabindex="0" aria-label="Profile menu" aria-expanded="false">
                 <span class="avatar">@initials</span>
                 <span class="profile-name">@userName</span>
-                <span class="dropdown-arrow">&#9660;</span>
+                <i data-lucide="chevron-down" class="dropdown-arrow"></i>
                 <div class="profile-dropdown" id="profile-dropdown">
-                    <a asp-page="/Account/Profile">View Profile</a>
-                    <a asp-page="/Account/Settings">Settings</a>
+                    <a asp-page="/Account/Profile"><i data-lucide="user" class="dropdown-icon"></i> View Profile</a>
+                    <a asp-page="/Account/Settings"><i data-lucide="settings" class="dropdown-icon"></i> Settings</a>
                 </div>
             </div>
         }
@@ -66,16 +76,26 @@
     <div class="footer">&copy; 2025 Libre LMS</div>
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js"></script>
     <script>
-        // Hamburger menu toggle with icon state
+        // Initialize Lucide icons
+        (function() {
+            lucide.createIcons({ attributes: { 'stroke-width': 2.75 } });
+        })();
+
+        // Hamburger menu toggle with Lucide icon state
         (function() {
             var toggle = document.getElementById('nav-toggle');
             var nav = document.getElementById('nav-links');
+            var openIcon = toggle?.querySelector('.lucide-hamburger-open');
+            var closeIcon = toggle?.querySelector('.lucide-hamburger-close');
             if (toggle && nav) {
                 toggle.addEventListener('click', function() {
                     var isOpen = nav.classList.toggle('is-open');
                     toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
                     toggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
-                    toggle.innerHTML = isOpen ? '&#10006;' : '&#9776;';
+                    if (openIcon && closeIcon) {
+                        openIcon.hidden = isOpen;
+                        closeIcon.hidden = !isOpen;
+                    }
                 });
             }
         })();
@@ -108,8 +128,43 @@
                         e.preventDefault();
                         toggleDropdown();
                     }
+                    // Escape to close
+                    if (e.key === 'Escape') {
+                        dropdown.classList.remove('is-open');
+                        toggle.classList.remove('is-open');
+                        toggle.setAttribute('aria-expanded', 'false');
+                    }
                 });
             }
+        })();
+
+        // Role switcher — client-side nav link visibility toggle
+        (function() {
+            var switcher = document.getElementById('role-switcher');
+            var segments = switcher?.querySelectorAll('.role-segment');
+            var adminLinks = document.querySelectorAll('.admin-link');
+            if (!switcher || !segments.length) return;
+
+            function setRole(role) {
+                switcher.setAttribute('data-role', role);
+                segments.forEach(function(seg) {
+                    seg.classList.toggle('active', seg.getAttribute('data-value') === role);
+                });
+                adminLinks.forEach(function(link) {
+                    link.style.display = role === 'admin' ? '' : 'none';
+                });
+                localStorage.setItem('nav-role-view', role);
+            }
+
+            // Initialize from localStorage or default to learner
+            var saved = localStorage.getItem('nav-role-view') || 'learner';
+            setRole(saved);
+
+            segments.forEach(function(seg) {
+                seg.addEventListener('click', function() {
+                    setRole(seg.getAttribute('data-value'));
+                });
+            });
         })();
     </script>
 </body>
