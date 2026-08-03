@@ -43,6 +43,15 @@ public class EnrollmentDbContext(DbContextOptions<EnrollmentDbContext> options) 
 
             entity.Property(e => e.CreatedAt)
                 .IsRequired();
+
+            entity.Property(e => e.EmailNotificationsEnabled)
+                .IsRequired()
+                .HasDefaultValue(true);
+
+            entity.Property(e => e.ThemePreference)
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasDefaultValue("System");
         });
 
         builder.Entity<LibreLms.Modules.Enrollment.Domain.Enrollment>(entity =>

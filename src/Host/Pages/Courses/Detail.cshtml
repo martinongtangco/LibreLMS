@@ -15,16 +15,16 @@
 else
 {
     <div class="back-link mb-md">
-        <a asp-page="Index" class="link-muted">&larr; Back to Catalog</a>
+        <a asp-page="Index" class="link-muted">&larr; Back to courses</a>
     </div>
 
     <div class="card">
-        <h1>@Model.Course.Title</h1>
-        <div class="course-card-badges">
-            <span class="badge badge-category">@Model.Course.Category</span>
-            <span class="badge badge-duration">@Model.Course.Duration</span>
+        <div class="course-card-badges mb-md">
+            <span class="tag tag-neutral">@Model.Course.Category</span>
+            <span class="tag tag-outline">@Model.Course.Duration</span>
         </div>
-        <p class="mb-md">@Model.Course.ShortDescription</p>
+        <h1>@Model.Course.Title</h1>
+        <p class="text-muted mb-md">@Model.Course.ShortDescription</p>
         <hr class="separator" />
         <h3>Full Description</h3>
         <p class="mt-sm" style="white-space: pre-wrap;">@Model.Course.FullDescription</p>
@@ -32,17 +32,13 @@ else
         <div id="enroll-region" class="enroll-region">
             @if (Model.Course.IsEnrolled)
             {
-                <span class="badge badge-enrolled">✓ Enrolled</span>
+                <button class="btn btn-secondary" disabled>✓ Enrolled</button>
                 @if (Model.Course.IsScorm)
                 {
                     var displayLabel = ScormHelpers.GetDisplayLabel(Model.LatestStatus);
-                    var (bgColor, textColor) = ScormHelpers.GetStatusBadgeColors(Model.LatestStatus);
-                    var displayPercentage = ScormHelpers.GetDisplayPercentage(Model.LatestScore);
-                    <span class="badge" style="background: @bgColor; color: @textColor;">
-                        @displayLabel
-                    </span>
+                    <span class="tag tag-accent-2">@displayLabel</span>
                     <span class="text-muted" style="font-size: 0.85rem; vertical-align: middle;">
-                        @displayPercentage
+                        @ScormHelpers.GetDisplayPercentage(Model.LatestScore)
                     </span>
                     <a asp-page="/Scorm/Launch" asp-route-courseId="@Model.Course.Id" class="btn btn-primary">Launch SCORM Course</a>
                 }
@@ -53,7 +49,7 @@ else
                       hx-vals='{"courseId": "@Model.Course.Id"}'
                       hx-swap="outerHTML"
                       hx-target="#enroll-region">
-                    <button type="submit" class="btn btn-primary">Enroll in This Course</button>
+                    <button type="submit" class="btn btn-primary">Enroll now</button>
                 </form>
             }
         </div>

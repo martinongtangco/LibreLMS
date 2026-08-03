@@ -1,0 +1,22 @@
+@page
+@model ProfileModel
+@{
+    ViewData["Title"] = "View Profile";
+}
+
+<h1>View Profile</h1>
+
+<div class="card profile-card">
+    <div class="profile-row">
+        <span class="profile-row-label">Name</span>
+        <span class="profile-row-value">@Model.Name</span>
+    </div>
+    <div class="profile-row">
+        <span class="profile-row-label">Role</span>
+        <span class="profile-row-value">@Model.RoleLabel</span>
+    </div>
+    <div class="profile-row">
+        <span class="profile-row-label">Email</span>
+        <span class="profile-row-value">@Model.Email</span>
+    </div>
+</div>

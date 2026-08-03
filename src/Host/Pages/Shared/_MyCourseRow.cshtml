@@ -1,25 +1,21 @@
 @using LibreLms.Host.Pages.MyCourses
 @model EnrollmentRow
-@{
-    var displayLabel = ScormHelpers.GetDisplayLabel(Model.LatestStatus);
-    var (bgColor, textColor) = ScormHelpers.GetStatusBadgeColors(Model.LatestStatus);
-    var displayPercentage = ScormHelpers.GetDisplayPercentage(Model.LatestScore);
-}
 
 <div class="my-course-row">
     <div class="course-info">
         <strong>
             <a asp-page="/Courses/Detail" asp-route-id="@Model.CourseId">@Model.CourseTitle</a>
         </strong>
-        <div class="text-faint" style="font-size: 0.85rem;">Enrolled @Model.EnrolledAt.ToString("MMM d, yyyy")</div>
+        <div class="enrollment-meta">
+            Enrolled @Model.EnrolledAt.ToString("MMM d, yyyy") · @Model.ProgressPercent% complete
+        </div>
+        <div class="progress-track mt-sm" style="max-width: 200px;">
+            <div class="progress-fill" style="width: @Model.ProgressPercent%;"></div>
+        </div>
     </div>
     <div class="course-status">
-        <span class="badge" style="background: @bgColor; color: @textColor;">
-            @displayLabel
+        <span class="tag @Model.StatusTagClass">
+            @Model.StatusLabel
         </span>
-        @if (Model.LatestScore.HasValue)
-        {
-            <span class="text-muted" style="font-size: 0.85rem;">@displayPercentage</span>
-        }
     </div>
 </div>

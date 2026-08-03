@@ -4,7 +4,7 @@
 @if (Model.Success)
 {
     <div>
-        <span class="badge badge-enrolled">✓ Enrolled</span>
+        <span class="tag tag-accent-2">✓ Enrolled</span>
         @if (Model.IsScorm == true)
         {
             <a asp-page="/Scorm/Launch" asp-route-courseId="@Model.CourseId" class="btn btn-primary">Launch SCORM Course</a>
@@ -14,13 +14,13 @@
 else if (Model.MessageType == "warning")
 {
     <div>
-        <span style="color: #f57c00; font-weight: 500;">@Model.Message</span>
+        <span class="text-muted" style="font-weight: 500;">@Model.Message</span>
     </div>
 }
 else
 {
     <div>
-        <span style="color: #c62828; font-weight: 500;">@Model.Message</span>
+        <div class="alert alert-danger mb-md">@Model.Message</div>
         <form hx-post="/Courses/Detail?handler=Enroll"
               hx-vals='{"courseId": "@Model.CourseId"}'
               hx-swap="outerHTML"

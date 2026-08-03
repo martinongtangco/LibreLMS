@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using LibreLms.Host.ManagementAuth;
 using LibreLms.Modules.Management.Application;
+using LibreLms.Modules.Enrollment.Application;
 using LibreLms.SharedKernel;
 
 namespace LibreLms.Host.Pages.Admin.Dashboard;
@@ -13,11 +14,19 @@ public class IndexModel : PageModel
 {
     private readonly DashboardService _dashboardService;
     private readonly OrganizationService _orgService;
+    private readonly EnrollmentService _enrollmentService;
+    private readonly CourseVisibilityService _visibilityService;
 
-    public IndexModel(DashboardService dashboardService, OrganizationService orgService)
+    public IndexModel(
+        DashboardService dashboardService,
+        OrganizationService orgService,
+        EnrollmentService enrollmentService,
+        CourseVisibilityService visibilityService)
     {
         _dashboardService = dashboardService;
         _orgService = orgService;
+        _enrollmentService = enrollmentService;
+        _visibilityService = visibilityService;
     }
 
     public string Role { get; set; } = string.Empty;
@@ -29,6 +38,9 @@ public class IndexModel : PageModel
     public string? CompletionRate { get; set; }
     public List<RecentActivityDto> RecentActivity { get; set; } = new();
     public string? Error { get; set; }
+    public List<CourseRow> AllCourses { get; set; } = new();
+
+    public record CourseRow(string Title, string Category, int EnrollmentCount);
 
     public async Task OnGetAsync(ClaimsPrincipal user)
     {
@@ -61,6 +73,20 @@ public class IndexModel : PageModel
             }
 
             RecentActivity = (await _dashboardService.GetRecentActivityAsync(10)).Cast<RecentActivityDto>().ToList();
+
+            // Load all visible courses with enrollment counts
+            var visibleCourses = AuthHelpers.IsSuperUser(user)
+                ? await _visibilityService.GetAllCoursesAsync()
+                : await _visibilityService.GetVisibleCoursesAsync(AuthHelpers.GetCurrentUserOrgId(user).Value);
+
+            var courseIds = visibleCourses.Select(c => c.CourseId).ToList();
+            var enrollmentCounts = await _enrollmentService.GetEnrollmentCountsByCourseAsync(courseIds);
+
+            AllCourses = visibleCourses.Select(c => new CourseRow(
+                c.Title,
+                c.Category,
+                enrollmentCounts.TryGetValue(c.CourseId, out var count) ? count : 0
+            )).ToList();
         }
         catch (Exception ex)
         {

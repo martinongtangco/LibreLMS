@@ -5,7 +5,7 @@
 }
 
 <div id="main-content">
-    <h1 class="mb-md">Browse Courses</h1>
+    <h1>Browse Courses</h1>
 
     <form class="filters">
         <input type="text"
@@ -28,7 +28,7 @@
                 <option value="@cat" selected="@(Model.Category == cat ? "selected" : null)">@cat</option>
             }
         </select>
-        <a asp-page="Index" class="btn btn-secondary"
+        <a asp-page="Index" class="btn btn-ghost"
            hx-get="/Courses/Index?handler=CourseList"
            hx-target="#course-list">Clear</a>
     </form>
