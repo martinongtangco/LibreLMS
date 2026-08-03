@@ -1,17 +1,17 @@
 @model LibreLms.Host.Pages.Admin.Organizations.OrgTreeNode
 
-<div class="card mb-2" style="margin-left: @(Model.ParentId.HasValue ? "20px" : "0");">
-    <div class="card-body py-2">
+<div class="card org-node" style="margin-left: @(Model.ParentId.HasValue ? "20px" : "0");">
+    <div class="card" style="padding: var(--spacing-sm) var(--spacing-md);">
         <strong>@Model.Name</strong>
         @if (!string.IsNullOrEmpty(Model.Description))
         {
             <span class="text-muted"> — @Model.Description</span>
         }
-        <div class="mt-1">
-            <a asp-page="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+        <div class="mt-sm">
+            <a asp-page="Edit" asp-route-id="@Model.Id" class="btn btn-secondary">Edit</a>
             @if (!Model.ParentId.HasValue)
             {
-                <span class="badge bg-secondary">Root</span>
+                <span class="badge badge-duration">Root</span>
             }
         </div>
     </div>

@@ -8,11 +8,11 @@
 
 @if (!string.IsNullOrEmpty(Model.OrganizationName))
 {
-    <p style="color:#666;">Viewing metrics for: <strong>@Model.OrganizationName</strong> (Org Admin scope)</p>
+    <p class="text-muted">Viewing metrics for: <strong>@Model.OrganizationName</strong> (Org Admin scope)</p>
 }
 else
 {
-    <p style="color:#666;">System-wide metrics (SuperUser)</p>
+    <p class="text-muted">System-wide metrics (SuperUser)</p>
 }
 
 @if (!string.IsNullOrEmpty(Model.Error))
@@ -21,27 +21,27 @@ else
 }
 
 <!-- Metric Cards -->
-<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:2rem;">
-    <div class="card" style="text-align:center;">
-        <div style="font-size:2rem; font-weight:700; color:#1a1a2e;">@Model.TotalOrganizations</div>
-        <div style="color:#666;">Organizations</div>
+<div class="metric-cards">
+    <div class="card metric-card">
+        <div class="metric-value" style="color: #1a1a2e;">@Model.TotalOrganizations</div>
+        <div class="metric-label">Organizations</div>
     </div>
-    <div class="card" style="text-align:center;">
-        <div style="font-size:2rem; font-weight:700; color:#1565c0;">@Model.TotalLearners</div>
-        <div style="color:#666;">Learners</div>
+    <div class="card metric-card">
+        <div class="metric-value" style="color: #1565c0;">@Model.TotalLearners</div>
+        <div class="metric-label">Learners</div>
     </div>
-    <div class="card" style="text-align:center;">
-        <div style="font-size:2rem; font-weight:700; color:#7b1fa2;">@Model.TotalCourses</div>
-        <div style="color:#666;">Courses</div>
+    <div class="card metric-card">
+        <div class="metric-value" style="color: #7b1fa2;">@Model.TotalCourses</div>
+        <div class="metric-label">Courses</div>
     </div>
-    <div class="card" style="text-align:center;">
-        <div style="font-size:2rem; font-weight:700; color:#2e7d32;">@Model.TotalEnrollments</div>
-        <div style="color:#666;">Enrollments</div>
+    <div class="card metric-card">
+        <div class="metric-value" style="color: #2e7d32;">@Model.TotalEnrollments</div>
+        <div class="metric-label">Enrollments</div>
     </div>
 </div>
 
 <!-- Completion Rate -->
-<div class="card" style="margin-bottom:2rem;">
+<div class="card mb-xl">
     <h3>Completion Rate</h3>
     <p style="font-size:1.5rem; font-weight:500;">@Model.CompletionRate</p>
 </div>
@@ -51,19 +51,19 @@ else
     <h3>Recent Activity</h3>
     @if (Model.RecentActivity.Count == 0)
     {
-        <p style="color:#999;">No recent activity.</p>
+        <p class="text-faint">No recent activity.</p>
     }
     else
     {
-        <ul style="list-style:none; padding:0;">
+        <ul class="activity-list">
             @foreach (var activity in Model.RecentActivity)
             {
-                <li style="padding:0.5rem 0; border-bottom:1px solid #eee;">
-                    <span class="badge @(activity.ActivityType == "enrollment" ? "badge-enrolled" : "badge-category")" style="margin-right:0.5rem;">
+                <li>
+                    <span class="badge @(activity.ActivityType == "enrollment" ? "badge-enrolled" : "badge-category")">
                         @activity.ActivityType
                     </span>
                     <span>@activity.Description</span>
-                    <span style="color:#999; float:right; font-size:0.85rem;">
+                    <span class="activity-time" style="float:right;">
                         @activity.OccurredAt.ToString("MMM dd, HH:mm")
                     </span>
                 </li>

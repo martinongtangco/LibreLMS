@@ -4,10 +4,10 @@
 @if (Model.Success)
 {
     <div>
-        <span class="badge badge-enrolled" style="font-size: 1rem; padding: 0.4rem 1rem;">✓ Enrolled</span>
+        <span class="badge badge-enrolled">✓ Enrolled</span>
         @if (Model.IsScorm == true)
         {
-            <a asp-page="/Scorm/Launch" asp-route-courseId="@Model.CourseId" class="btn btn-primary" style="margin-left: 1rem;">Launch SCORM Course</a>
+            <a asp-page="/Scorm/Launch" asp-route-courseId="@Model.CourseId" class="btn btn-primary">Launch SCORM Course</a>
         }
     </div>
 }
@@ -25,8 +25,8 @@ else
               hx-vals='{"courseId": "@Model.CourseId"}'
               hx-swap="outerHTML"
               hx-target="#enroll-region"
-              style="display: inline;">
-            <button type="submit" class="btn btn-primary" style="margin-left: 0.5rem;">Retry</button>
+              >
+            <button type="submit" class="btn btn-primary">Retry</button>
         </form>
     </div>
 }

@@ -26,10 +26,10 @@
 
     <div class="mb-3">
         <label class="form-label">Learners (hold Ctrl/Cmd to select multiple)</label>
-        <select name="studentIds" asp-items="Model.Students" class="form-select" multiple
-                style="height: 200px;" required>
+        <select name="studentIds" asp-items="Model.Students" class="form-select form-select-multiple" multiple
+                required>
         </select>
-        <small style="color:#999;">Select one or more learners to enroll.</small>
+        <small class="form-hint">Select one or more learners to enroll.</small>
     </div>
 
     <button type="submit" class="btn btn-primary">Enroll Selected</button>

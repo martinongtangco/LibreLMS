@@ -18,7 +18,7 @@
         <button id="zoom-reset-btn" class="btn btn-secondary" title="Reset View">Reset</button>
     </div>
 
-    <div id="chart-viewport" style="overflow: hidden; border: 1px solid #ddd; border-radius: 4px; background: #fafafa;">
+    <div class="chart-viewport">
         <svg id="org-chart-svg" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 600px; cursor: grab;">
             <g id="chart-content">
                 @if (Model.Nodes != null && Model.Nodes.Any())
@@ -37,6 +37,6 @@
 <div id="notification-area"></div>
 <div id="modal-container"></div>
 
-<div id="org-context-menu" class="org-context-menu" style="display: none; position: fixed; background: white; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000;"></div>
+<div id="org-context-menu" class="org-context-menu" style="display: none;"></div>
 
 <script src="/js/org-chart.js"></script>

@@ -1,25 +1,25 @@
 @model LibreLms.Host.Pages.Admin.Organizations.ChartModel.CreateChildViewModel
 
-<div class="modal-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999;">
-    <div class="card" style="max-width:500px;width:90%;margin:0;">
+<div class="modal-overlay">
+    <div class="card">
         <h3>Create Child Organization</h3>
-        <p style="color:#666;font-size:0.9rem;">Parent: <strong>@Model.ParentName</strong></p>
+        <p class="text-muted">Parent: <strong>@Model.ParentName</strong></p>
 
         <form hx-post="@($"Admin/Organizations/Chart/CreateChild?parentId={Model.ParentId}")"
               hx-target="#chart-content"
               hx-swap="innerHTML"
               hx-on::after-request="if(event.detail.successful) document.getElementById('modal-container').innerHTML=''">
-            <div style="margin-bottom:1rem;">
-                <label style="display:block;margin-bottom:0.3rem;font-weight:500;">Name *</label>
+            <div class="form-group">
+                <label class="form-label">Name *</label>
                 <input type="text" name="Form.Name" required maxlength="200"
-                       style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:4px;" />
+                       class="form-control" />
             </div>
-            <div style="margin-bottom:1rem;">
-                <label style="display:block;margin-bottom:0.3rem;font-weight:500;">Description</label>
+            <div class="form-group">
+                <label class="form-label">Description</label>
                 <textarea name="Form.Description" maxlength="2000" rows="3"
-                          style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:4px;resize:vertical;"></textarea>
+                          class="form-textarea"></textarea>
             </div>
-            <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+            <div class="btn-group">
                 <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-container').innerHTML=''">Cancel</button>
                 <button type="submit" class="btn btn-primary">Create</button>
             </div>

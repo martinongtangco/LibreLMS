@@ -5,7 +5,7 @@
 }
 
 <div id="main-content">
-    <h1 style="margin-bottom: 1rem;">Browse Courses</h1>
+    <h1 class="mb-md">Browse Courses</h1>
 
     <form class="filters">
         <input type="text"
@@ -34,7 +34,7 @@
     </form>
 
     <div id="course-list" hx-on::htmx:after-request="if(event.detail.failed) { document.getElementById('course-list').innerHTML = `<div class='error-message'><strong>Error:</strong> Request failed. Please try again.</div>`; }">
-        <div class="htmx-indicator" style="display: none; text-align: center; padding: 1rem; color: #666;">⏳ Loading...</div>
+        <div class="htmx-indicator text-center text-muted" style="padding: 1rem;">⏳ Loading...</div>
         @await Html.PartialAsync("_CourseList", Model.Courses)
     </div>
 </div>
