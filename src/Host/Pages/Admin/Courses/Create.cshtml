@@ -4,15 +4,15 @@
     ViewData["Title"] = "Create Course";
 }
 
-<h1 style="margin-bottom: 1.5rem;">Create New Course</h1>
+<h1 class="mb-lg">Create New Course</h1>
 
 @if (!string.IsNullOrEmpty(Model.SuccessMessage))
 {
-    <div class="card" style="border-left: 4px solid #2e7d32;">
-        <h3 style="color: #2e7d32;">@Model.SuccessMessage</h3>
+    <div class="card card-success">
+        <h3>@Model.SuccessMessage</h3>
         @if (Model.CreatedCourseId.HasValue)
         {
-            <p style="margin-top: 0.5rem;">
+            <p class="mt-sm">
                 <a asp-page="/Courses/Detail" asp-route-id="@Model.CreatedCourseId" class="btn btn-primary">View Course</a>
             </p>
         }
@@ -21,42 +21,42 @@
 
 @if (!string.IsNullOrEmpty(Model.Error))
 {
-    <div class="card" style="border-left: 4px solid #c62828;">
-        <h3 style="color: #c62828;">Error</h3>
+    <div class="card card-error">
+        <h3>Error</h3>
         <p>@Model.Error</p>
     </div>
 }
 
 <div class="card">
     <form method="post">
-        <div style="margin-bottom: 1rem;">
-            <label asp-for="Title" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Title *</label>
-            <input asp-for="Title" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;" />
+        <div class="form-group">
+            <label asp-for="Title" class="form-label">Title *</label>
+            <input asp-for="Title" class="form-control" />
         </div>
 
-        <div style="margin-bottom: 1rem;">
-            <label asp-for="ShortDescription" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Short Description *</label>
-            <input asp-for="ShortDescription" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;" />
+        <div class="form-group">
+            <label asp-for="ShortDescription" class="form-label">Short Description *</label>
+            <input asp-for="ShortDescription" class="form-control" />
         </div>
 
-        <div style="margin-bottom: 1rem;">
-            <label asp-for="FullDescription" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Full Description *</label>
-            <textarea asp-for="FullDescription" rows="5" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; resize: vertical;"></textarea>
+        <div class="form-group">
+            <label asp-for="FullDescription" class="form-label">Full Description *</label>
+            <textarea asp-for="FullDescription" rows="5" class="form-textarea"></textarea>
         </div>
 
-        <div style="margin-bottom: 1rem;">
-            <label asp-for="Category" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Category *</label>
-            <input asp-for="Category" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;" />
-            <small style="color: #999;">e.g., Programming, Design, Database, Tools</small>
+        <div class="form-group">
+            <label asp-for="Category" class="form-label">Category *</label>
+            <input asp-for="Category" class="form-control" />
+            <small class="form-hint">e.g., Programming, Design, Database, Tools</small>
         </div>
 
-        <div style="margin-bottom: 1.5rem;">
-            <label asp-for="Duration" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Duration *</label>
-            <input asp-for="Duration" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;" />
-            <small style="color: #999;">e.g., 3 hours, 2 days</small>
+        <div class="form-group mb-lg">
+            <label asp-for="Duration" class="form-label">Duration *</label>
+            <input asp-for="Duration" class="form-control" />
+            <small class="form-hint">e.g., 3 hours, 2 days</small>
         </div>
 
         <button type="submit" class="btn btn-primary">Create Course</button>
-        <a asp-page="/Courses/Index" class="btn btn-secondary" style="margin-left: 0.5rem;">Cancel</a>
+        <a asp-page="/Courses/Index" class="btn btn-secondary">Cancel</a>
     </form>
 </div>

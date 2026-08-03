@@ -14,37 +14,37 @@
 }
 else
 {
-    <div style="margin-bottom: 1rem;">
-        <a asp-page="Index" style="color: #666; text-decoration: none;">&larr; Back to Catalog</a>
+    <div class="back-link mb-md">
+        <a asp-page="Index" class="link-muted">&larr; Back to Catalog</a>
     </div>
 
     <div class="card">
         <h1>@Model.Course.Title</h1>
-        <div style="display: flex; gap: 0.5rem; margin: 0.75rem 0;">
+        <div class="course-card-badges">
             <span class="badge badge-category">@Model.Course.Category</span>
             <span class="badge badge-duration">@Model.Course.Duration</span>
         </div>
-        <p style="font-size: 1.1rem; margin-bottom: 1rem;">@Model.Course.ShortDescription</p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 1.5rem 0;" />
+        <p class="mb-md">@Model.Course.ShortDescription</p>
+        <hr class="separator" />
         <h3>Full Description</h3>
-        <p style="white-space: pre-wrap; margin-top: 0.5rem;">@Model.Course.FullDescription</p>
+        <p class="mt-sm" style="white-space: pre-wrap;">@Model.Course.FullDescription</p>
 
-        <div id="enroll-region" style="margin-top: 1.5rem;">
+        <div id="enroll-region" class="enroll-region">
             @if (Model.Course.IsEnrolled)
             {
-                <span class="badge badge-enrolled" style="font-size: 1rem; padding: 0.4rem 1rem;">✓ Enrolled</span>
+                <span class="badge badge-enrolled">✓ Enrolled</span>
                 @if (Model.Course.IsScorm)
                 {
                     var displayLabel = ScormHelpers.GetDisplayLabel(Model.LatestStatus);
                     var (bgColor, textColor) = ScormHelpers.GetStatusBadgeColors(Model.LatestStatus);
                     var displayPercentage = ScormHelpers.GetDisplayPercentage(Model.LatestScore);
-                    <span class="badge" style="background: @bgColor; color: @textColor; margin-left: 1rem;">
+                    <span class="badge" style="background: @bgColor; color: @textColor;">
                         @displayLabel
                     </span>
-                    <span style="margin-left: 0.5rem; font-size: 0.85rem; color: #666; vertical-align: middle;">
+                    <span class="text-muted" style="font-size: 0.85rem; vertical-align: middle;">
                         @displayPercentage
                     </span>
-                    <a asp-page="/Scorm/Launch" asp-route-courseId="@Model.Course.Id" class="btn btn-primary" style="margin-left: 1rem;">Launch SCORM Course</a>
+                    <a asp-page="/Scorm/Launch" asp-route-courseId="@Model.Course.Id" class="btn btn-primary">Launch SCORM Course</a>
                 }
             }
             else

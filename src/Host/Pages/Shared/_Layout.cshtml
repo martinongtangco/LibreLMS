@@ -4,39 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Libre LMS</title>
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background: #f5f5f5; }
-        .navbar { background: #1a1a2e; color: white; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
-        .navbar a { color: white; text-decoration: none; margin-left: 1.5rem; font-weight: 500; }
-        .navbar a:hover { text-decoration: underline; }
-        .navbar .brand { font-size: 1.3rem; font-weight: 700; }
-        .container { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
-        .card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 1rem; }
-        .card h3 { margin-bottom: 0.5rem; }
-        .card p { color: #666; margin-bottom: 0.5rem; }
-        .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: 500; }
-        .badge-category { background: #e3f2fd; color: #1565c0; }
-        .badge-duration { background: #f3e5f5; color: #7b1fa2; }
-        .badge-enrolled { background: #e8f5e9; color: #2e7d32; }
-        .btn { display: inline-block; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-weight: 500; cursor: pointer; border: none; font-size: 0.9rem; }
-        .btn-primary { background: #1a1a2e; color: white; }
-        .btn-primary:hover { background: #16213e; }
-        .btn-secondary { background: #e0e0e0; color: #333; }
-        .filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-        .filters input, .filters select { padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; }
-        .filters input { flex: 1; min-width: 200px; }
-        .empty-state { text-align: center; padding: 3rem; color: #999; }
-        .footer { text-align: center; padding: 2rem; color: #999; font-size: 0.85rem; }
-        .htmx-indicator { display: none; }
-        .htmx-request .htmx-indicator { display: inline; }
-        .error-message { background: #fdecea; border-left: 4px solid #c62828; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
-    </style>
+    <link href="/css/site.css" rel="stylesheet" />
 </head>
 <body>
     <nav class="navbar">
         <span class="brand">Libre LMS</span>
-        <div>
+        <button class="hamburger-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">&#9776;</button>
+        <div class="nav-links" id="nav-links">
             <a asp-page="/Courses/Index">Browse Courses</a>
             <a asp-page="/MyCourses/Index">My Courses</a>
             @if (User.IsInRole("Admin") || User.IsInRole("SuperUser") || User.IsInRole("OrgAdmin"))
@@ -52,10 +26,12 @@
             }
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <span style="color: #aaa; margin-left: 1rem;">@User.Identity.Name</span>
-                <form method="post" asp-page="/Account/Logout" style="display: inline; margin-left: 0.5rem;">
-                    <button type="submit" style="background: none; border: none; color: white; cursor: pointer; font-size: inherit; text-decoration: none; font-weight: 500;">Logout</button>
-                </form>
+                <div class="nav-user">
+                    <span style="color: #aaa;">@User.Identity.Name</span>
+                    <form method="post" asp-page="/Account/Logout" style="display: inline;">
+                        <button type="submit" class="btn" style="background: none; border: none; color: white; cursor: pointer; font-size: inherit; text-decoration: none; font-weight: 500; padding: var(--spacing-sm) 0; min-height: auto;">Logout</button>
+                    </form>
+                </div>
             }
             else
             {
@@ -68,5 +44,18 @@
     </div>
     <div class="footer">&copy; 2025 Libre LMS</div>
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js"></script>
+    <script>
+        // Hamburger menu toggle
+        (function() {
+            var toggle = document.getElementById('nav-toggle');
+            var nav = document.getElementById('nav-links');
+            if (toggle && nav) {
+                toggle.addEventListener('click', function() {
+                    var isOpen = nav.classList.toggle('is-open');
+                    toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                });
+            }
+        })();
+    </script>
 </body>
 </html>

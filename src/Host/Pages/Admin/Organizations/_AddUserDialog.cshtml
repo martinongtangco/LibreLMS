@@ -1,38 +1,38 @@
 @model LibreLms.Host.Pages.Admin.Organizations.ChartModel.AddUserViewModel
 
-<div class="modal-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999;">
-    <div class="card" style="max-width:500px;width:90%;margin:0;">
+<div class="modal-overlay">
+    <div class="card">
         <h3>Add New User</h3>
-        <p style="color:#666;font-size:0.9rem;">Organization: <strong>@Model.OrgName</strong></p>
+        <p class="text-muted">Organization: <strong>@Model.OrgName</strong></p>
 
         <form hx-post="@($"Admin/Organizations/Chart/CreateUser?orgId={Model.OrgId}")"
               hx-target="#chart-content"
               hx-swap="innerHTML"
               hx-on::after-request="if(event.detail.successful) document.getElementById('modal-container').innerHTML=''">
-            <div style="margin-bottom:1rem;">
-                <label style="display:block;margin-bottom:0.3rem;font-weight:500;">Name *</label>
+            <div class="form-group">
+                <label class="form-label">Name *</label>
                 <input type="text" name="Form.Name" required maxlength="200"
-                       style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:4px;" />
+                       class="form-control" />
             </div>
-            <div style="margin-bottom:1rem;">
-                <label style="display:block;margin-bottom:0.3rem;font-weight:500;">Email *</label>
+            <div class="form-group">
+                <label class="form-label">Email *</label>
                 <input type="email" name="Form.Email" required maxlength="320"
-                       style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:4px;" />
+                       class="form-control" />
             </div>
-            <div style="margin-bottom:1rem;">
-                <label style="display:block;margin-bottom:0.3rem;font-weight:500;">Password *</label>
+            <div class="form-group">
+                <label class="form-label">Password *</label>
                 <input type="password" name="Form.Password" required minlength="6"
-                       style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:4px;" />
+                       class="form-control" />
             </div>
-            <div style="margin-bottom:1rem;">
-                <label style="display:block;margin-bottom:0.3rem;font-weight:500;">Role</label>
-                <select name="Form.Role" style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:4px;">
+            <div class="form-group">
+                <label class="form-label">Role</label>
+                <select name="Form.Role" class="form-select">
                     <option value="Learner">Learner</option>
                     <option value="OrgAdmin">Org Admin</option>
                     <option value="SuperUser">Super User</option>
                 </select>
             </div>
-            <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+            <div class="btn-group">
                 <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-container').innerHTML=''">Cancel</button>
                 <button type="submit" class="btn btn-primary">Create User</button>
             </div>

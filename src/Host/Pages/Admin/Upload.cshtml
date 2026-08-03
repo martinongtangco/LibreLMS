@@ -4,15 +4,15 @@
     ViewData["Title"] = "Upload SCORM Package";
 }
 
-<h1 style="margin-bottom: 1.5rem;">Upload SCORM Package</h1>
+<h1 class="mb-lg">Upload SCORM Package</h1>
 
 @if (Model.SuccessMessage is not null)
 {
-    <div class="card" style="border-left: 4px solid #2e7d32;">
-        <h3 style="color: #2e7d32;">@Model.SuccessMessage</h3>
+    <div class="card card-success">
+        <h3>@Model.SuccessMessage</h3>
         @if (Model.UploadedCourseId.HasValue)
         {
-            <p style="margin-top: 0.5rem;">
+            <p class="mt-sm">
                 <a asp-page="/Courses/Detail" asp-route-id="@Model.UploadedCourseId" class="btn btn-primary">View Course</a>
             </p>
         }
@@ -21,8 +21,8 @@
 
 @if (Model.Error is not null)
 {
-    <div class="card" style="border-left: 4px solid #c62828;">
-        <h3 style="color: #c62828;">Error</h3>
+    <div class="card card-error">
+        <h3>Error</h3>
         <p>@Model.Error</p>
     </div>
 }
@@ -36,27 +36,25 @@
           hx-encoding="multipart/form-data"
           hx-target="#upload-result"
           hx-indicator=".htmx-indicator">
-        <div style="margin-bottom: 1rem;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Course</label>
-            <select name="courseId"
-                    style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+        <div class="form-group">
+            <label class="form-label">Course</label>
+            <select name="courseId" class="form-select">
                 <option value="">— Select a course —</option>
                 @foreach (var course in Model.Courses)
                 {
                     <option value="@course.Id">@course.Title <small>(@course.OrganizationName)</small></option>
                 }
             </select>
-            <small style="color: #999;">Select the course from the catalog to associate with this SCORM package. Organization shown in parentheses.</small>
+            <small class="form-hint">Select the course from the catalog to associate with this SCORM package. Organization shown in parentheses.</small>
         </div>
 
-        <div style="margin-bottom: 1.5rem;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">SCORM Package (.zip)</label>
-            <input type="file" name="package" accept=".zip"
-                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;" />
-            <small style="color: #999;">Upload a SCORM 1.2 ZIP package containing imsmanifest.xml.</small>
+        <div class="form-group mb-lg">
+            <label class="form-label">SCORM Package (.zip)</label>
+            <input type="file" name="package" accept=".zip" class="form-file" />
+            <small class="form-hint">Upload a SCORM 1.2 ZIP package containing imsmanifest.xml.</small>
         </div>
 
         <button type="submit" class="btn btn-primary">Upload Package</button>
-        <div class="htmx-indicator" style="display: none; margin-left: 1rem; color: #666;">⏳ Uploading...</div>
+        <div class="htmx-indicator text-muted">⏳ Uploading...</div>
     </form>
 </div>

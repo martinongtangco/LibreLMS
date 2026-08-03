@@ -6,20 +6,20 @@
     var displayPercentage = ScormHelpers.GetDisplayPercentage(Model.LatestScore);
 }
 
-<div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #eee;">
-    <div>
+<div class="my-course-row">
+    <div class="course-info">
         <strong>
-            <a asp-page="/Courses/Detail" asp-route-id="@Model.CourseId" style="color: #333; text-decoration: none;">@Model.CourseTitle</a>
+            <a asp-page="/Courses/Detail" asp-route-id="@Model.CourseId">@Model.CourseTitle</a>
         </strong>
-        <div style="color: #999; font-size: 0.85rem;">Enrolled @Model.EnrolledAt.ToString("MMM d, yyyy")</div>
+        <div class="text-faint" style="font-size: 0.85rem;">Enrolled @Model.EnrolledAt.ToString("MMM d, yyyy")</div>
     </div>
-    <div>
+    <div class="course-status">
         <span class="badge" style="background: @bgColor; color: @textColor;">
             @displayLabel
         </span>
         @if (Model.LatestScore.HasValue)
         {
-            <span style="margin-left: 0.5rem; font-size: 0.85rem; color: #666;">@displayPercentage</span>
+            <span class="text-muted" style="font-size: 0.85rem;">@displayPercentage</span>
         }
     </div>
 </div>

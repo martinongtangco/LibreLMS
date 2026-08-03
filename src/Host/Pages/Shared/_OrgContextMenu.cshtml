@@ -5,10 +5,10 @@
 *@
 @model dynamic
 
-<div class="org-context-menu" style="position: fixed; background: white; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; padding: 4px 0;">
-    <ul style="list-style: none; margin: 0; padding: 0; min-width: 200px;">
+<div class="org-context-menu">
+    <ul>
         <li>
-            <a href="#" class="menu-item" style="display: block; padding: 8px 16px; text-decoration: none; color: #333;" 
+            <a href="#" class="menu-item"
                hx-get="@($"Admin/Organizations/Chart/EditDialog?id={Model?.OrgId}")"
                hx-target="#modal-container">
                 Edit Organization
@@ -17,7 +17,7 @@
         @if (Model?.IsDisabled == false && Model?.IsRoot == false)
         {
             <li>
-                <a href="#" class="menu-item" style="display: block; padding: 8px 16px; text-decoration: none; color: #c62828;"
+                <a href="#" class="menu-item" style="color: #c62828;"
                    hx-post="@($"Admin/Organizations/Chart/Disable?id={Model?.OrgId}")"
                    hx-confirm="Disable this org and all its descendants?"
                    hx-swap="outerHTML">
@@ -28,7 +28,7 @@
         @if (Model?.IsDisabled == true)
         {
             <li>
-                <a href="#" class="menu-item" style="display: block; padding: 8px 16px; text-decoration: none; color: #2e7d32;"
+                <a href="#" class="menu-item" style="color: #2e7d32;"
                    hx-post="@($"Admin/Organizations/Chart/Enable?id={Model?.OrgId}")"
                    hx-swap="outerHTML">
                     Enable Organization
@@ -36,28 +36,28 @@
             </li>
         }
         <li>
-            <a href="#" class="menu-item" style="display: block; padding: 8px 16px; text-decoration: none; color: #333;"
+            <a href="#" class="menu-item"
                hx-get="@($"Admin/Organizations/Chart/CreateChildDialog?parentId={Model?.OrgId}")"
                hx-target="#modal-container">
                 Add Child Organization
             </a>
         </li>
         <li>
-            <a href="#" class="menu-item" style="display: block; padding: 8px 16px; text-decoration: none; color: #333;"
+            <a href="#" class="menu-item"
                hx-get="@($"Admin/Organizations/Chart/AddUserDialog?orgId={Model?.OrgId}")"
                hx-target="#modal-container">
                 Add New User
             </a>
         </li>
         <li>
-            <a href="#" class="menu-item" style="display: block; padding: 8px 16px; text-decoration: none; color: #333;"
+            <a href="#" class="menu-item"
                hx-get="@($"Admin/Organizations/Chart/AssignUserDialog?orgId={Model?.OrgId}")"
                hx-target="#modal-container">
                 Assign Existing User
             </a>
         </li>
         <li>
-            <a href="#" class="menu-item" style="display: block; padding: 8px 16px; text-decoration: none; color: #333;"
+            <a href="#" class="menu-item"
                hx-get="@($"Admin/Organizations/Chart/AssignCourseDialog?orgId={Model?.OrgId}")"
                hx-target="#modal-container">
                 Assign Course
