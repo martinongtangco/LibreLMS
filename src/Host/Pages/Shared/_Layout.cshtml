@@ -15,10 +15,10 @@
             <i data-lucide="x" class="lucide-icon lucide-hamburger-close" hidden></i>
         </button>
         <div class="nav-links" id="nav-links">
-            @* Role switcher — inside nav-links for mobile hamburger integration *@
-            @if (User.Identity?.IsAuthenticated == true)
+            @* Role switcher — inside nav-links for mobile hamburger integration; admin-only *@
+            @if (User.IsInRole("Admin") || User.IsInRole("SuperUser") || User.IsInRole("OrgAdmin"))
             {
-                <div class="nav-role-switcher" id="role-switcher" data-role="learner">
+                <div class="nav-role-switcher" id="role-switcher" data-role="admin">
                     <button type="button" class="role-segment active" data-value="learner">Learner</button>
                     <button type="button" class="role-segment" data-value="admin">Admin</button>
                 </div>
