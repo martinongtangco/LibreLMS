@@ -67,14 +67,35 @@ public class MyCoursesModel : PageModel
         return enrollments.Select(e =>
         {
             var attempt = attemptByCourse.TryGetValue(e.Enrollment.CourseId, out var a) ? a : null;
+            var status = attempt?.Status;
+            var score = attempt?.ScoreRaw;
+            var displayLabel = ScormHelpers.GetDisplayLabel(status);
+            var progressPercent = ComputeProgressPercent(status, score);
+            var statusTagClass = string.IsNullOrEmpty(status) ? "tag-neutral" : "tag-accent-2";
             return new EnrollmentRow(
                 EnrollmentId: e.Enrollment.Id,
                 CourseId: e.Enrollment.CourseId,
                 CourseTitle: e.CourseTitle,
                 EnrolledAt: e.Enrollment.EnrolledAt,
-                LatestStatus: attempt?.Status,
-                LatestScore: attempt?.ScoreRaw);
+                LatestStatus: status,
+                LatestScore: score,
+                StatusLabel: displayLabel,
+                StatusTagClass: statusTagClass,
+                ProgressPercent: progressPercent);
         }).ToList();
+    }
+
+    /// <summary>Derive a 0–100 progress percentage from SCORM status/score.</summary>
+    private static int ComputeProgressPercent(string? status, double? score)
+    {
+        if (string.IsNullOrEmpty(status))
+            return 0; // Not Started
+        if (score.HasValue)
+            return (int)score.Value;
+        var lower = status.ToLowerInvariant();
+        if (lower == "completed" || lower == "passed")
+            return 100;
+        return 0;
     }
 }
 
@@ -85,4 +106,7 @@ public record EnrollmentRow(
     string CourseTitle,
     DateTimeOffset EnrolledAt,
     string? LatestStatus,
-    double? LatestScore);
+    double? LatestScore,
+    string StatusLabel = "",
+    string StatusTagClass = "",
+    int ProgressPercent = 0);

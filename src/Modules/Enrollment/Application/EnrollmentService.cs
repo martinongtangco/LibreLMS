@@ -68,4 +68,39 @@ public class EnrollmentService
 
         return results;
     }
+
+    /// <summary>
+    /// Get enrollment counts grouped by course ID.
+    /// Returns only courses that have at least one enrollment.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<Guid, int>> GetEnrollmentCountsByCourseAsync(IEnumerable<Guid> courseIds)
+    {
+        var counts = await _context.Enrollments
+            .Where(e => courseIds.Contains(e.CourseId))
+            .GroupBy(e => e.CourseId)
+            .Select(g => new { CourseId = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        return counts.ToDictionary(c => c.CourseId, c => c.Count);
+    }
+
+    /// <summary>Get the two Settings preferences for a student.</summary>
+    public async Task<(bool EmailNotificationsEnabled, string ThemePreference)> GetPreferencesAsync(Guid studentId)
+    {
+        var student = await _context.Students.FindAsync(studentId);
+        if (student is null)
+            return (true, "System");
+        return (student.EmailNotificationsEnabled, student.ThemePreference);
+    }
+
+    /// <summary>Update the two Settings preferences for a student.</summary>
+    public async Task UpdatePreferencesAsync(Guid studentId, bool emailNotificationsEnabled, string themePreference)
+    {
+        var student = await _context.Students.FindAsync(studentId);
+        if (student is null)
+            return;
+        student.EmailNotificationsEnabled = emailNotificationsEnabled;
+        student.ThemePreference = themePreference;
+        await _context.SaveChangesAsync();
+    }
 }

@@ -23,8 +23,8 @@ Single ASP.NET Core modular-monolith project — paths are relative to repo root
 
 **Purpose**: Assets every later phase depends on
 
-- [ ] T001 [P] Add self-hosted Caprasimo webfont file(s) under `src/Host/wwwroot/fonts/caprasimo/` (per research.md §2)
-- [ ] T002 [P] Add self-hosted Figtree webfont file(s) under `src/Host/wwwroot/fonts/figtree/` (per research.md §2)
+^- [X] T001 [P] Add self-hosted Caprasimo webfont file(s) under `src/Host/wwwroot/fonts/caprasimo/` (per research.md §2)
+^- [X] T002 [P] Add self-hosted Figtree webfont file(s) under `src/Host/wwwroot/fonts/figtree/` (per research.md §2)
 
 ---
 
@@ -34,11 +34,11 @@ Single ASP.NET Core modular-monolith project — paths are relative to repo root
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete — every restyled page (US1–US4) reads these tokens/classes
 
-- [ ] T003 Add Organic color/typography/radius/shadow tokens to the `:root` block in `src/Host/wwwroot/css/site.css` (`--color-accent`, `--color-accent-2`, `--font-heading`, `--font-body`, `--radius-lg`, pill radius), retargeting existing token names per research.md §1 (depends on T001, T002 for font references)
-- [ ] T004 Add `@font-face` declarations for Caprasimo/Figtree in `src/Host/wwwroot/css/site.css` referencing the files from T001/T002, with the existing system-font stack as fallback (depends on T003)
-- [ ] T005 Add shared Organic component classes to `src/Host/wwwroot/css/site.css` — `.card`, `.tag`/`.tag-neutral`/`.tag-accent-2`/`.tag-outline`, `.btn`/`.btn-primary`/`.btn-secondary`/`.btn-ghost`, `.progress-track`/`.progress-fill` — replacing the current ad-hoc inline-styled badges/metric-cards (depends on T003)
-- [ ] T006 Restyle the nav bar chrome (brand wordmark, page links, hamburger toggle) in `src/Host/Pages/Shared/_Layout.cshtml` to the Organic token/class set from T003–T005 — page link set and role-gating unchanged per spec Assumptions; the avatar/profile control is added later in US3 (depends on T005)
-- [ ] T007 Verify the existing ≤760px hamburger collapse behavior (spec 015/016) still functions after T006's markup/class changes (depends on T006)
+^- [X] T003 Add Organic color/typography/radius/shadow tokens to the `:root` block in `src/Host/wwwroot/css/site.css` (`--color-accent`, `--color-accent-2`, `--font-heading`, `--font-body`, `--radius-lg`, pill radius), retargeting existing token names per research.md §1 (depends on T001, T002 for font references)
+^- [X] T004 Add `@font-face` declarations for Caprasimo/Figtree in `src/Host/wwwroot/css/site.css` referencing the files from T001/T002, with the existing system-font stack as fallback (depends on T003)
+^- [X] T005 Add shared Organic component classes to `src/Host/wwwroot/css/site.css` — `.card`, `.tag`/`.tag-neutral`/`.tag-accent-2`/`.tag-outline`, `.btn`/`.btn-primary`/`.btn-secondary`/`.btn-ghost`, `.progress-track`/`.progress-fill` — replacing the current ad-hoc inline-styled badges/metric-cards (depends on T003)
+^- [X] T006 Restyle the nav bar chrome (brand wordmark, page links, hamburger toggle) in `src/Host/Pages/Shared/_Layout.cshtml` to the Organic token/class set from T003–T005 — page link set and role-gating unchanged per spec Assumptions; the avatar/profile control is added later in US3 (depends on T005)
+^- [X] T007 Verify the existing ≤760px hamburger collapse behavior (spec 015/016) still functions after T006's markup/class changes (depends on T006)
 
 **Checkpoint**: Design tokens and nav chrome are in place — user story implementation can now begin
 
@@ -52,11 +52,11 @@ Single ASP.NET Core modular-monolith project — paths are relative to repo root
 
 ### Implementation for User Story 1
 
-- [ ] T008 [P] [US1] Restyle My Courses cards and empty state in `src/Host/Pages/MyCourses/Index.cshtml` and `src/Host/Pages/Shared/_EnrollmentList.cshtml` (category kicker, title, description, status tag, hours tag, pill progress bar, "Enrolled {date} · {pct}% complete" line; centered empty-state card + primary button to Browse Courses) per data-model.md's course-card mapping
-- [ ] T009 [US1] Add `StatusTagClass`/`ProgressPercent` view-model fields to `src/Host/Pages/MyCourses/Index.cshtml.cs`, reusing `ScormHelpers.GetDisplayLabel` and mapping `LatestScore`/status to a 0–100 percentage per research.md §3 (depends on T008 for the tag-class names it populates)
-- [ ] T010 [P] [US1] Restyle Browse Courses toolbar, card grid, and no-results state in `src/Host/Pages/Courses/Index.cshtml` (search input, category select, Clear button; category/hours/"✓ Enrolled" tags + "View Details" button; "No courses match your search." message)
-- [ ] T011 [P] [US1] Restyle Course Detail hero and enroll CTA in `src/Host/Pages/Courses/Detail.cshtml` ("Back to courses" control, tag row, title, description, primary "Enroll now" / disabled "✓ Enrolled" button)
-- [ ] T012 [US1] Run quickstart.md scenarios 1–2 (My Courses, Browse Courses search/filter/enroll) and confirm no functional regressions
+^- [X] T008 [P] [US1] Restyle My Courses cards and empty state in `src/Host/Pages/MyCourses/Index.cshtml` and `src/Host/Pages/Shared/_EnrollmentList.cshtml` (category kicker, title, description, status tag, hours tag, pill progress bar, "Enrolled {date} · {pct}% complete" line; centered empty-state card + primary button to Browse Courses) per data-model.md's course-card mapping
+^- [X] T009 [US1] Add `StatusTagClass`/`ProgressPercent` view-model fields to `src/Host/Pages/MyCourses/Index.cshtml.cs`, reusing `ScormHelpers.GetDisplayLabel` and mapping `LatestScore`/status to a 0–100 percentage per research.md §3 (depends on T008 for the tag-class names it populates)
+^- [X] T010 [P] [US1] Restyle Browse Courses toolbar, card grid, and no-results state in `src/Host/Pages/Courses/Index.cshtml` (search input, category select, Clear button; category/hours/"✓ Enrolled" tags + "View Details" button; "No courses match your search." message)
+^- [X] T011 [P] [US1] Restyle Course Detail hero and enroll CTA in `src/Host/Pages/Courses/Detail.cshtml` ("Back to courses" control, tag row, title, description, primary "Enroll now" / disabled "✓ Enrolled" button)
+^- [X] T012 [US1] Run quickstart.md scenarios 1–2 (My Courses, Browse Courses search/filter/enroll) and confirm no functional regressions
 
 **Checkpoint**: User Story 1 is fully functional and independently testable/demoable — this is the MVP slice
 
@@ -70,11 +70,11 @@ Single ASP.NET Core modular-monolith project — paths are relative to repo root
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Add `GetEnrollmentCountsByCourseAsync(IEnumerable<Guid> courseIds)` to `src/Modules/Enrollment/Application/EnrollmentService.cs` — single grouped `COUNT(*)` query, per data-model.md
-- [ ] T014 [P] [US2] Unit tests for `GetEnrollmentCountsByCourseAsync` in `tests/Enrollment.Tests` (multiple courses, a zero-enrollment course, empty input) (depends on T013)
-- [ ] T015 [US2] Extend `src/Host/Pages/Admin/Dashboard/Index.cshtml.cs` to call `CourseVisibilityService.GetAllCoursesAsync` (Management) and the new `GetEnrollmentCountsByCourseAsync` (Enrollment), zipping them into an `AllCourses` row list (title, category, hours, enrollment count) (depends on T013)
-- [ ] T016 [US2] Restyle `src/Host/Pages/Admin/Dashboard/Index.cshtml` — stat tiles (kicker label + large accent-700 number) and the new "All Courses" table (depends on T015)
-- [ ] T017 [US2] Run quickstart.md scenario 3 (Dashboard stat tiles + course table) and spot-check one course's enrollment count against `/Admin/Enrollments`
+^- [X] T013 [US2] Add `GetEnrollmentCountsByCourseAsync(IEnumerable<Guid> courseIds)` to `src/Modules/Enrollment/Application/EnrollmentService.cs` — single grouped `COUNT(*)` query, per data-model.md
+^- [X] T014 [P] [US2] Unit tests for `GetEnrollmentCountsByCourseAsync` in `tests/Enrollment.Tests` (multiple courses, a zero-enrollment course, empty input) (depends on T013)
+^- [X] T015 [US2] Extend `src/Host/Pages/Admin/Dashboard/Index.cshtml.cs` to call `CourseVisibilityService.GetAllCoursesAsync` (Management) and the new `GetEnrollmentCountsByCourseAsync` (Enrollment), zipping them into an `AllCourses` row list (title, category, hours, enrollment count) (depends on T013)
+^- [X] T016 [US2] Restyle `src/Host/Pages/Admin/Dashboard/Index.cshtml` — stat tiles (kicker label + large accent-700 number) and the new "All Courses" table (depends on T015)
+^- [X] T017 [US2] Run quickstart.md scenario 3 (Dashboard stat tiles + course table) and spot-check one course's enrollment count against `/Admin/Enrollments`
 
 **Checkpoint**: User Stories 1 and 2 both work independently
 
@@ -88,15 +88,15 @@ Single ASP.NET Core modular-monolith project — paths are relative to repo root
 
 ### Implementation for User Story 3
 
-- [ ] T018 [US3] Add `EmailNotificationsEnabled` (`bool`, default `true`) and `ThemePreference` (`string`, default `"System"`) to `src/Modules/Enrollment/Domain/Student.cs`
-- [ ] T019 [US3] Configure the two new columns (not-null + defaults) in `src/Modules/Enrollment/Infrastructure/EnrollmentDbContext.cs` (depends on T018)
-- [ ] T020 [US3] Add an EF Core migration under `src/Host/Migrations/` for the two new `Students` columns (depends on T019)
-- [ ] T021 [P] [US3] Add `GetPreferencesAsync`/`UpdatePreferencesAsync` to `src/Modules/Enrollment/Application/EnrollmentService.cs` (depends on T018)
-- [ ] T022 [P] [US3] Unit tests for `GetPreferencesAsync`/`UpdatePreferencesAsync` in `tests/Enrollment.Tests` (depends on T021)
-- [ ] T023 [P] [US3] Create `src/Host/Pages/Account/Profile.cshtml` + `Profile.cshtml.cs` — name/role/email read from the current `ClaimsPrincipal`, in a bordered-row card, per contracts/page-routes.md
-- [ ] T024 [US3] Create `src/Host/Pages/Account/Settings.cshtml` + `Settings.cshtml.cs` — `OnGetAsync`/`OnPostAsync` using T021's methods; email-notifications toggle + theme row + "Logout" row posting to the existing `/Account/Logout` handler (depends on T021)
-- [ ] T025 [US3] Add the avatar+name profile control and its View Profile/Settings dropdown to `src/Host/Pages/Shared/_Layout.cshtml`, replacing the current inline username-and-Logout text (depends on T006, T023, T024)
-- [ ] T026 [US3] Run quickstart.md scenario 4 (profile menu, view profile, settings persistence across reload, logout)
+^- [X] T018 [US3] Add `EmailNotificationsEnabled` (`bool`, default `true`) and `ThemePreference` (`string`, default `"System"`) to `src/Modules/Enrollment/Domain/Student.cs`
+^- [X] T019 [US3] Configure the two new columns (not-null + defaults) in `src/Modules/Enrollment/Infrastructure/EnrollmentDbContext.cs` (depends on T018)
+^- [X] T020 [US3] Add an EF Core migration under `src/Host/Migrations/` for the two new `Students` columns (depends on T019)
+^- [X] T021 [P] [US3] Add `GetPreferencesAsync`/`UpdatePreferencesAsync` to `src/Modules/Enrollment/Application/EnrollmentService.cs` (depends on T018)
+^- [X] T022 [P] [US3] Unit tests for `GetPreferencesAsync`/`UpdatePreferencesAsync` in `tests/Enrollment.Tests` (depends on T021)
+^- [X] T023 [P] [US3] Create `src/Host/Pages/Account/Profile.cshtml` + `Profile.cshtml.cs` — name/role/email read from the current `ClaimsPrincipal`, in a bordered-row card, per contracts/page-routes.md
+^- [X] T024 [US3] Create `src/Host/Pages/Account/Settings.cshtml` + `Settings.cshtml.cs` — `OnGetAsync`/`OnPostAsync` using T021's methods; email-notifications toggle + theme row + "Logout" row posting to the existing `/Account/Logout` handler (depends on T021)
+^- [X] T025 [US3] Add the avatar+name profile control and its View Profile/Settings dropdown to `src/Host/Pages/Shared/_Layout.cshtml`, replacing the current inline username-and-Logout text (depends on T006, T023, T024)
+^- [X] T026 [US3] Run quickstart.md scenario 4 (profile menu, view profile, settings persistence across reload, logout)
 
 **Checkpoint**: User Stories 1, 2, and 3 all work independently
 
@@ -110,9 +110,9 @@ Single ASP.NET Core modular-monolith project — paths are relative to repo root
 
 ### Implementation for User Story 4
 
-- [ ] T027 [US4] Verify/adjust ≤760px responsive rules in `src/Host/wwwroot/css/site.css` for the six redesigned screens (heading size, toolbar/hero stacking) now that T008–T024's markup is in place (depends on T011, T016, T024)
-- [ ] T028 [US4] Confirm the avatar/profile control (T025) remains visible outside the hamburger at ≤760px per research.md §6, adjusting `_Layout.cshtml` mobile CSS if needed (depends on T025, T027)
-- [ ] T029 [US4] Run quickstart.md scenario 5 at 375px across all six redesigned screens
+^- [X] T027 [US4] Verify/adjust ≤760px responsive rules in `src/Host/wwwroot/css/site.css` for the six redesigned screens (heading size, toolbar/hero stacking) now that T008–T024's markup is in place (depends on T011, T016, T024)
+^- [X] T028 [US4] Confirm the avatar/profile control (T025) remains visible outside the hamburger at ≤760px per research.md §6, adjusting `_Layout.cshtml` mobile CSS if needed (depends on T025, T027)
+^- [X] T029 [US4] Run quickstart.md scenario 5 at 375px across all six redesigned screens
 
 **Checkpoint**: All four user stories are independently functional, including on mobile
 
@@ -122,10 +122,10 @@ Single ASP.NET Core modular-monolith project — paths are relative to repo root
 
 **Purpose**: Regression safety and cleanup across all stories
 
-- [ ] T030 [P] Run `dotnet test tests/ArchitectureTests` to confirm no module-boundary violations were introduced (Constitution Principle III)
-- [ ] T031 [P] Run `dotnet test tests/Catalog.Tests tests/Enrollment.Tests tests/Scorm.Tests` to confirm no functional regressions (SC-005)
-- [ ] T032 Remove now-superseded inline hex-color styles (e.g., the old Dashboard `metric-card`/badge inline colors, `ScormHelpers.GetStatusBadgeColors` call sites in views replaced by Organic tag classes) across touched files
-- [ ] T033 Run the full quickstart.md validation end-to-end and record results
+^- [X] T030 [P] Run `dotnet test tests/ArchitectureTests` to confirm no module-boundary violations were introduced (Constitution Principle III)
+^- [X] T031 [P] Run `dotnet test tests/Catalog.Tests tests/Enrollment.Tests tests/Scorm.Tests` to confirm no functional regressions (SC-005)
+^- [X] T032 Remove now-superseded inline hex-color styles (e.g., the old Dashboard `metric-card`/badge inline colors, `ScormHelpers.GetStatusBadgeColors` call sites in views replaced by Organic tag classes) across touched files
+^- [X] T033 Run the full quickstart.md validation end-to-end and record results
 
 ---
 

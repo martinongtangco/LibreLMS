@@ -9,31 +9,36 @@
      min-1024px = desktop
    ========================================================================== */
 
-/* ── Design Tokens ─────────────────────────────────────────────────────── */
+/* ── Design Tokens (Organic Design System) ─────────────────────────────── */
 :root {
-  /* Colors */
-  --color-bg:          #f5f5f5;
+  /* Colors — Organic palette */
+  --color-bg:          #faf8f4;
   --color-surface:     #ffffff;
-  --color-text:        #333333;
-  --color-text-muted:  #666666;
-  --color-text-faint:  #999999;
-  --color-brand:       #1a1a2e;
-  --color-brand-hover: #16213e;
-  --color-border:      #eeeeee;
-  --color-border-strong: #dddddd;
+  --color-text:        #2c2c2c;
+  --color-text-muted:  #6b6b6b;
+  --color-text-faint:  #9e9e9e;
+  --color-brand:       #c45d3e;
+  --color-brand-hover: #a84d33;
+  --color-accent:      #c45d3e;
+  --color-accent-2:    #7a9e7e;
+  --color-accent-700:  #b54a2f;
+  --color-border:      #e8e4de;
+  --color-border-strong: #d4cfc8;
 
   /* Semantic colors */
-  --color-category-bg:   #e3f2fd;
-  --color-category-text: #1565c0;
-  --color-duration-bg:   #f3e5f5;
-  --color-duration-text: #7b1fa2;
-  --color-success-bg:    #e8f5e9;
-  --color-success-text:  #2e7d32;
+  --color-category-bg:   #f0e4da;
+  --color-category-text: #8b5e3c;
+  --color-duration-bg:   #e4ecd5;
+  --color-duration-text: #5a7a3e;
+  --color-success-bg:    #e4ecd5;
+  --color-success-text:  #5a7a3e;
   --color-error-bg:      #fdecea;
   --color-error-border:  #c62828;
 
-  /* Typography */
-  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Typography — Organic type scale */
+  --font-heading: 'Caprasimo', Georgia, 'Times New Roman', serif;
+  --font-body: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family: var(--font-body);
   --font-size-sm:  0.8rem;
   --font-size-base: 0.9rem;
   --font-size-lg:  1.1rem;
@@ -49,16 +54,67 @@
   /* Layout */
   --container-max-width: 960px;
   --container-padding: 1rem;
-  --border-radius: 8px;
-  --border-radius-sm: 4px;
+  --border-radius: 12px;
+  --border-radius-sm: 6px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
   --touch-target-min: 44px;
 
   /* Shadows */
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   /* Hamburger */
   --hamburger-z-index: 1050;
   --mobile-nav-z-index: 1040;
+}
+
+/* ── Web Fonts — Caprasimo & Figtree (self-hosted) ─────────────────────── */
+@font-face {
+  font-family: 'Caprasimo';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/caprasimo/Caprasimo-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/figtree/Figtree-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/figtree/Figtree-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/figtree/Figtree-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/figtree/Figtree-SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/figtree/Figtree-Bold.ttf') format('truetype');
 }
 
 /* ── Reset & Base ──────────────────────────────────────────────────────── */
@@ -69,10 +125,15 @@
 }
 
 body {
-  font-family: var(--font-family);
+  font-family: var(--font-body);
   line-height: 1.6;
   color: var(--color-text);
   background: var(--color-bg);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 400;
 }
 
 /* ── Container ─────────────────────────────────────────────────────────── */
@@ -82,11 +143,11 @@ body {
   padding: 0 var(--container-padding);
 }
 
-/* ── Navigation Bar ────────────────────────────────────────────────────── */
+/* ── Navigation Bar (Organic) ──────────────────────────────────────────── */
 .navbar {
   background: var(--color-brand);
   color: white;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-lg);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -95,8 +156,9 @@ body {
 }
 
 .navbar .brand {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 400;
   white-space: nowrap;
 }
 
@@ -112,15 +174,20 @@ body {
   text-decoration: none;
   margin-left: var(--spacing-lg);
   font-weight: 500;
+  font-size: var(--font-size-base);
   min-height: var(--touch-target-min);
   min-width: var(--touch-target-min);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border-radius: var(--radius-pill);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  transition: background-color 0.15s ease;
 }
 
 .navbar a:hover {
-  text-decoration: underline;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* Nav item icons */
@@ -144,13 +211,108 @@ body {
   line-height: 1;
 }
 
-/* ── Cards ─────────────────────────────────────────────────────────────── */
+/* ── Avatar / Profile Control (Organic) ────────────────────────────────── */
+.nav-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-pill);
+  transition: background-color 0.15s ease;
+  position: relative;
+  margin-left: var(--spacing-sm);
+  user-select: none;
+}
+
+.nav-profile:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-profile .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.nav-profile .profile-name {
+  color: white;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-profile .dropdown-arrow {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.7rem;
+  transition: transform 0.15s ease;
+}
+
+.nav-profile.is-open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Profile dropdown menu */
+.profile-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  min-width: 160px;
+  padding: var(--spacing-xs) 0;
+  margin-top: var(--spacing-xs);
+}
+
+.profile-dropdown.is-open {
+  display: block;
+}
+
+.profile-dropdown a,
+.profile-dropdown button {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-decoration: none;
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  min-height: var(--touch-target-min);
+}
+
+.profile-dropdown a:hover,
+.profile-dropdown button:hover {
+  background: var(--color-bg);
+}
+
+/* ── Cards (Organic) ──────────────────────────────────────────────────── */
 .card {
   background: var(--color-surface);
-  border-radius: var(--border-radius);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-md);
+  border: 1px solid var(--color-border);
 }
 
 .card h3 {
@@ -162,49 +324,84 @@ body {
   margin-bottom: var(--spacing-sm);
 }
 
-/* ── Badges ────────────────────────────────────────────────────────────── */
-.badge {
+/* ── Tags (Organic pill badges) ────────────────────────────────────────── */
+.tag {
   display: inline-block;
-  padding: var(--spacing-xs) 0.6rem;
-  border-radius: var(--border-radius-sm);
+  padding: 0.15em 0.7em;
+  border-radius: var(--radius-pill);
   font-size: var(--font-size-sm);
   font-weight: 500;
+  line-height: 1.6;
+}
+
+.tag-neutral {
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}
+
+.tag-accent-2 {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.tag-outline {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+/* Legacy badge classes (kept for backward compat, aliased to tags) */
+.badge {
+  display: inline-block;
+  padding: 0.15em 0.7em;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  line-height: 1.6;
 }
 
 .badge-category {
   background: var(--color-category-bg);
   color: var(--color-category-text);
+  border-radius: var(--radius-pill);
 }
 
 .badge-duration {
   background: var(--color-duration-bg);
   color: var(--color-duration-text);
+  border-radius: var(--radius-pill);
 }
 
 .badge-enrolled {
   background: var(--color-success-bg);
   color: var(--color-success-text);
+  border-radius: var(--radius-pill);
 }
 
-/* ── Buttons ───────────────────────────────────────────────────────────── */
+/* ── Buttons (Organic) ─────────────────────────────────────────────────── */
 .btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--radius-pill);
   text-decoration: none;
   font-weight: 500;
+  font-family: var(--font-body);
   cursor: pointer;
   border: none;
   font-size: var(--font-size-base);
   min-height: var(--touch-target-min);
   min-width: var(--touch-target-min);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
 }
 
 .btn-primary {
-  background: var(--color-brand);
+  background: var(--color-accent);
   color: white;
 }
 
@@ -212,12 +409,50 @@ body {
   background: var(--color-brand-hover);
 }
 
-.btn-secondary {
-  background: #e0e0e0;
-  color: var(--color-text);
+.btn-primary:disabled,
+.btn-primary[disabled] {
+  background: var(--color-border);
+  color: var(--color-text-faint);
+  cursor: not-allowed;
 }
 
-/* ── Filters / Search ──────────────────────────────────────────────────── */
+.btn-secondary {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+  background: var(--color-border);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-accent);
+  border: 1px solid transparent;
+}
+
+.btn-ghost:hover {
+  background: var(--color-bg);
+}
+
+/* ── Progress Bar (Organic pill) ───────────────────────────────────────── */
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background: var(--color-bg);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-accent-2);
+  border-radius: var(--radius-pill);
+  transition: width 0.3s ease;
+}
+
+/* ── Filters / Search (Organic) ────────────────────────────────────────── */
 .filters {
   display: flex;
   gap: var(--spacing-md);
@@ -227,11 +462,20 @@ body {
 
 .filters input,
 .filters select {
-  padding: var(--spacing-sm);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
   font-size: var(--font-size-base);
   min-height: var(--touch-target-min);
+  background: var(--color-surface);
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease;
+}
+
+.filters input:focus,
+.filters select:focus {
+  outline: none;
+  border-color: var(--color-accent);
 }
 
 .filters input {
@@ -239,7 +483,7 @@ body {
   min-width: 200px;
 }
 
-/* ── Empty State ───────────────────────────────────────────────────────── */
+/* ── Empty State (Organic) ─────────────────────────────────────────────── */
 .empty-state {
   text-align: center;
   padding: var(--spacing-xl) var(--spacing-md);
@@ -291,7 +535,7 @@ body {
   color: var(--color-success-text);
 }
 
-/* ── Forms ─────────────────────────────────────────────────────────────── */
+/* ── Forms (Organic) ───────────────────────────────────────────────────── */
 .form-group {
   margin-bottom: var(--spacing-md);
 }
@@ -300,6 +544,7 @@ body {
   display: block;
   margin-bottom: var(--spacing-sm);
   font-weight: 500;
+  font-family: var(--font-body);
 }
 
 .form-input,
@@ -307,11 +552,22 @@ body {
 .form-select,
 .form-textarea {
   width: 100%;
-  padding: var(--spacing-sm);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
   font-size: var(--font-size-base);
   min-height: var(--touch-target-min);
+  font-family: var(--font-body);
+  background: var(--color-surface);
+  transition: border-color 0.15s ease;
+}
+
+.form-input:focus,
+.form-control:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
 }
 
 .form-textarea {
@@ -323,10 +579,81 @@ body {
   font-size: var(--font-size-sm);
 }
 
-/* ── Data Tables ───────────────────────────────────────────────────────── */
+/* ── Settings Row (Organic) ────────────────────────────────────────────── */
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-row .settings-label {
+  font-weight: 500;
+}
+
+.settings-row .settings-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-top: var(--spacing-xs);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  transition: background-color 0.2s ease;
+}
+
+.toggle-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.toggle-switch input:checked + .slider {
+  background: var(--color-accent-2);
+}
+
+.toggle-switch input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+/* ── Data Tables (Organic) ─────────────────────────────────────────────── */
 .table-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  border-radius: var(--border-radius);
 }
 
 .data-table {
@@ -347,20 +674,37 @@ body {
 }
 
 .data-table thead th {
-  border-bottom: 2px solid var(--color-border-strong);
+  border-bottom: 2px solid var(--color-border);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-/* ── Headings ──────────────────────────────────────────────────────────── */
+/* ── Headings (Organic) ────────────────────────────────────────────────── */
 h1 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 2rem;
   margin-bottom: var(--spacing-md);
+  color: var(--color-text);
 }
 
 h2 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 1.5rem;
   margin-bottom: var(--spacing-md);
+  color: var(--color-text);
 }
 
 h3 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 1.15rem;
   margin-bottom: var(--spacing-sm);
+  color: var(--color-text);
 }
 
 /* ── Separators ────────────────────────────────────────────────────────── */
@@ -414,7 +758,7 @@ hr.separator {
   text-decoration: none;
 }
 
-/* ── Course Card Utilities ─────────────────────────────────────────────── */
+/* ── Course Card Utilities (Organic) ───────────────────────────────────── */
 .course-card-badges {
   display: flex;
   gap: var(--spacing-sm);
@@ -426,20 +770,35 @@ hr.separator {
   margin-top: var(--spacing-sm);
 }
 
-/* ── My Course Row ─────────────────────────────────────────────────────── */
+/* ── My Course Row (Organic) ───────────────────────────────────────────── */
 .my-course-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-sm) 0;
+  padding: var(--spacing-md) 0;
   border-bottom: 1px solid var(--color-border);
   flex-wrap: wrap;
   gap: var(--spacing-sm);
 }
 
+.my-course-row:last-child {
+  border-bottom: none;
+}
+
 .my-course-row .course-info {
   flex: 1;
   min-width: 0;
+}
+
+.my-course-row .course-info strong a {
+  color: var(--color-text);
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+}
+
+.my-course-row .course-info strong a:hover {
+  color: var(--color-accent);
 }
 
 .my-course-row .course-status {
@@ -453,7 +812,14 @@ hr.separator {
   text-decoration: none;
 }
 
-/* ── Dashboard Metric Cards ────────────────────────────────────────────── */
+/* ── Enrollment Meta Line ──────────────────────────────────────────────── */
+.enrollment-meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-faint);
+  margin-top: var(--spacing-xs);
+}
+
+/* ── Dashboard Metric Cards (Organic Stat Tiles) ───────────────────────── */
 .metric-cards {
   display: grid;
   grid-template-columns: 1fr;
@@ -463,15 +829,47 @@ hr.separator {
 
 .metric-card {
   text-align: center;
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
 }
 
 .metric-card .metric-value {
-  font-size: 2rem;
-  font-weight: 700;
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 400;
+  color: var(--color-accent-700);
 }
 
 .metric-card .metric-label {
   color: var(--color-text-muted);
+  font-size: var(--font-size-base);
+  margin-top: var(--spacing-xs);
+}
+
+/* ── All Courses Table (Organic) ───────────────────────────────────────── */
+.courses-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--spacing-md);
+}
+
+.courses-table th,
+.courses-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.courses-table thead th {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.courses-table tbody tr:hover {
+  background: var(--color-bg);
 }
 
 /* ── Modal Overlay ─────────────────────────────────────────────────────── */
@@ -662,6 +1060,36 @@ hr.separator {
   border-left: 4px solid var(--color-error-border);
 }
 
+/* ── Profile Card (Organic) ────────────────────────────────────────────── */
+.profile-card {
+  max-width: 500px;
+}
+
+.profile-card .profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: var(--spacing-md) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile-card .profile-row:last-child {
+  border-bottom: none;
+}
+
+.profile-card .profile-row-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+.profile-card .profile-row-value {
+  font-size: var(--font-size-lg);
+  color: var(--color-text);
+}
+
 /* ── Button Group ──────────────────────────────────────────────────────── */
 .btn-group {
   display: flex;
@@ -752,6 +1180,7 @@ hr.separator {
     width: 100%;
     padding: var(--spacing-sm) 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0;
   }
 
   .navbar .nav-links .nav-user {
@@ -765,9 +1194,26 @@ hr.separator {
     margin-top: var(--spacing-sm);
   }
 
+  /* Profile control stays visible outside hamburger on mobile (research §6) */
+  .nav-profile {
+    margin-left: 0;
+  }
+
+  .nav-profile .profile-name {
+    display: none;
+  }
+
   .container {
     margin: var(--spacing-md) auto;
     padding: 0 var(--spacing-md);
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.2rem;
   }
 
   .filters {

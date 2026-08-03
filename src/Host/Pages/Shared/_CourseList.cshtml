@@ -3,15 +3,16 @@
 
 @if (!Model.Any())
 {
-    <div class="card empty-state">
-        <h2>No courses found</h2>
-        <p>Try adjusting your search or filter criteria.</p>
+    <div class="card empty-state" style="padding: 2rem;">
+        <p class="text-muted">No courses match your search.</p>
     </div>
 }
 else
 {
-    @foreach (var course in Model)
-    {
-        @await Html.PartialAsync("_CourseCard", course)
-    }
+    <div class="metric-cards">
+        @foreach (var course in Model)
+        {
+            @await Html.PartialAsync("_CourseCard", course)
+        }
+    </div>
 }

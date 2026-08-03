@@ -2,6 +2,14 @@
 @model CourseItem
 
 <div class="card">
+    <div class="mb-sm">
+        <span class="tag tag-neutral">@Model.Category</span>
+        <span class="tag tag-outline">@Model.Duration</span>
+        @if (Model.IsEnrolled)
+        {
+            <span class="tag tag-accent-2">✓ Enrolled</span>
+        }
+    </div>
     <h3>
         <a asp-page="/Courses/Detail" asp-route-id="@Model.Id"
            hx-get="/Courses/Detail?id=@Model.Id&handler=Detail"
@@ -9,15 +17,7 @@
            hx-push-url="true"
            class="link-inherit">@Model.Title</a>
     </h3>
-    <p>@Model.ShortDescription</p>
-    <div class="course-card-badges">
-        <span class="badge badge-category">@Model.Category</span>
-        <span class="badge badge-duration">@Model.Duration</span>
-        @if (Model.IsEnrolled)
-        {
-            <span class="badge badge-enrolled">✓ Enrolled</span>
-        }
-    </div>
+    <p class="text-muted">@Model.ShortDescription</p>
     <div class="course-card-actions">
         <a asp-page="/Courses/Detail" asp-route-id="@Model.Id"
            hx-get="/Courses/Detail?id=@Model.Id&handler=Detail"

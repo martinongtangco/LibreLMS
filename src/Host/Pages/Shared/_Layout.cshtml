@@ -27,10 +27,7 @@
             @if (User.Identity?.IsAuthenticated == true)
             {
                 <div class="nav-user">
-                    <span style="color: #aaa;">@User.Identity.Name</span>
-                    <form method="post" asp-page="/Account/Logout" style="display: inline;">
-                        <button type="submit" class="btn" style="background: none; border: none; color: white; cursor: pointer; font-size: inherit; text-decoration: none; font-weight: 500; padding: var(--spacing-sm) 0; min-height: auto;">Logout</button>
-                    </form>
+                    <a asp-page="/Account/Logout" style="color: #aaa; text-decoration: none;">Logout</a>
                 </div>
             }
             else
@@ -38,6 +35,30 @@
                 <a asp-page="/Account/Login"><span class="nav-icon">&#128273;</span> Login</a>
             }
         </div>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            @* Avatar / Profile control (Organic) — visible outside hamburger on mobile *@
+            var userName = User.Identity.Name ?? "?";
+            var initials = "?";
+            var nameParts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (nameParts.Length >= 2)
+            {
+                initials = $"{nameParts[0][0]}{nameParts[1][0]}".ToUpperInvariant();
+            }
+            else if (nameParts.Length == 1 && nameParts[0].Length > 0)
+            {
+                initials = $"{nameParts[0][0]}".ToUpperInvariant();
+            }
+            <div class="nav-profile" id="profile-toggle" role="button" tabindex="0" aria-label="Profile menu" aria-expanded="false">
+                <span class="avatar">@initials</span>
+                <span class="profile-name">@userName</span>
+                <span class="dropdown-arrow">&#9660;</span>
+                <div class="profile-dropdown" id="profile-dropdown">
+                    <a asp-page="/Account/Profile">View Profile</a>
+                    <a asp-page="/Account/Settings">Settings</a>
+                </div>
+            </div>
+        }
     </nav>
     <div class="container">
         @RenderBody()
@@ -54,8 +75,39 @@
                     var isOpen = nav.classList.toggle('is-open');
                     toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
                     toggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
-                    // Toggle icon: hamburger (9776) <-> close (10006)
                     toggle.innerHTML = isOpen ? '&#10006;' : '&#9776;';
+                });
+            }
+        })();
+
+        // Profile dropdown toggle
+        (function() {
+            var toggle = document.getElementById('profile-toggle');
+            var dropdown = document.getElementById('profile-dropdown');
+            if (toggle && dropdown) {
+                function toggleDropdown() {
+                    var isOpen = dropdown.classList.toggle('is-open');
+                    toggle.classList.toggle('is-open');
+                    toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                }
+                toggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleDropdown();
+                });
+                // Close when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!toggle.contains(e.target)) {
+                        dropdown.classList.remove('is-open');
+                        toggle.classList.remove('is-open');
+                        toggle.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                // Keyboard support
+                toggle.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleDropdown();
+                    }
                 });
             }
         })();

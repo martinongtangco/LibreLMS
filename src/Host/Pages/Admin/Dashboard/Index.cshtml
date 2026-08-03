@@ -20,23 +20,23 @@ else
     <div class="alert alert-danger">@Model.Error</div>
 }
 
-<!-- Metric Cards -->
+<!-- Metric Cards (Organic stat tiles) -->
 <div class="metric-cards">
     <div class="card metric-card">
-        <div class="metric-value" style="color: #1a1a2e;">@Model.TotalOrganizations</div>
         <div class="metric-label">Organizations</div>
+        <div class="metric-value">@Model.TotalOrganizations</div>
     </div>
     <div class="card metric-card">
-        <div class="metric-value" style="color: #1565c0;">@Model.TotalLearners</div>
         <div class="metric-label">Learners</div>
+        <div class="metric-value">@Model.TotalLearners</div>
     </div>
     <div class="card metric-card">
-        <div class="metric-value" style="color: #7b1fa2;">@Model.TotalCourses</div>
         <div class="metric-label">Courses</div>
+        <div class="metric-value">@Model.TotalCourses</div>
     </div>
     <div class="card metric-card">
-        <div class="metric-value" style="color: #2e7d32;">@Model.TotalEnrollments</div>
         <div class="metric-label">Enrollments</div>
+        <div class="metric-value">@Model.TotalEnrollments</div>
     </div>
 </div>
 
@@ -44,6 +44,39 @@ else
 <div class="card mb-xl">
     <h3>Completion Rate</h3>
     <p style="font-size:1.5rem; font-weight:500;">@Model.CompletionRate</p>
+</div>
+
+<!-- All Courses Table -->
+<div class="card">
+    <h3>All Courses</h3>
+    @if (Model.AllCourses.Count == 0)
+    {
+        <p class="text-faint">No courses available.</p>
+    }
+    else
+    {
+        <div class="table-wrapper">
+            <table class="courses-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Enrollments</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var course in Model.AllCourses)
+                    {
+                        <tr>
+                            <td>@course.Title</td>
+                            <td><span class="tag tag-outline">@course.Category</span></td>
+                            <td>@course.EnrollmentCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>
 
 <!-- Recent Activity -->
@@ -59,7 +92,7 @@ else
             @foreach (var activity in Model.RecentActivity)
             {
                 <li>
-                    <span class="badge @(activity.ActivityType == "enrollment" ? "badge-enrolled" : "badge-category")">
+                    <span class="tag @(activity.ActivityType == "enrollment" ? "tag-accent-2" : "tag-neutral")">
                         @activity.ActivityType
                     </span>
                     <span>@activity.Description</span>
