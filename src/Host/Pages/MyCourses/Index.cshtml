@@ -9,14 +9,12 @@
 
 <div class="mb-md">
     <button type="button"
-            data-refresh-enrollments
             class="btn btn-ghost"
             hx-get="/MyCourses?handler=Enrollments"
-            hx-target="#enrollment-list">↻ Refresh</button>
+            hx-target="#enrollment-list"
+            hx-trigger="click">↻ Refresh</button>
 </div>
 
-<div id="enrollment-list"
-     hx-get="/MyCourses?handler=Enrollments"
-     hx-trigger="from:[data-refresh-enrollments]">
+<div id="enrollment-list">
     @await Html.PartialAsync("_EnrollmentList", Model.EnrollmentRows)
 </div>
