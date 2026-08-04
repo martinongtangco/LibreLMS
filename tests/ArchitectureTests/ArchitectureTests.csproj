@@ -28,6 +28,14 @@
     <ProjectReference Include="..\..\src\Modules\Scorm.Contracts\Scorm.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Modules\Management\Management.csproj" />
     <ProjectReference Include="..\..\src\Modules\Management.Contracts\Management.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Host\Host.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\src\Host\Pages\**\*.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Pages\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
   </ItemGroup>
 
 </Project>
