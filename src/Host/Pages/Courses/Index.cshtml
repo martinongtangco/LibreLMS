@@ -28,9 +28,7 @@
                 <option value="@cat" selected="@(Model.Category == cat ? "selected" : null)">@cat</option>
             }
         </select>
-        <a asp-page="Index" class="btn btn-ghost"
-           hx-get="/Courses/Index?handler=CourseList"
-           hx-target="#course-list">Clear</a>
+        <a asp-page="Index" class="btn btn-ghost">Clear</a>
     </form>
 
     <div id="course-list" hx-on::htmx:after-request="if(event.detail.failed) { document.getElementById('course-list').innerHTML = `<div class='error-message'><strong>Error:</strong> Request failed. Please try again.</div>`; }">
