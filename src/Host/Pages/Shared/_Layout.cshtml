@@ -10,70 +10,75 @@
 <body>
     <nav class="navbar">
         <span class="brand">Libre LMS</span>
-        <button class="hamburger-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
-            <i data-lucide="menu" class="lucide-icon lucide-hamburger-open"></i>
-            <i data-lucide="x" class="lucide-icon lucide-hamburger-close" hidden></i>
-        </button>
-        <div class="nav-links" id="nav-links">
-            @* Role switcher — inside nav-links for mobile hamburger integration; admin-only *@
-            @if (User.IsInRole("Admin") || User.IsInRole("SuperUser") || User.IsInRole("OrgAdmin"))
-            {
-                <div class="nav-role-switcher" id="role-switcher" data-role="admin">
-                    <button type="button" class="role-segment active" data-value="learner">Learner</button>
-                    <button type="button" class="role-segment" data-value="admin">Admin</button>
-                </div>
-            }
-            <a asp-page="/Courses/Index"><i data-lucide="book-open" class="nav-icon"></i> Browse Courses</a>
-            <a asp-page="/MyCourses/Index"><i data-lucide="graduation-cap" class="nav-icon"></i> My Courses</a>
-            @if (User.IsInRole("Admin") || User.IsInRole("SuperUser") || User.IsInRole("OrgAdmin"))
-            {
-                <a asp-page="/Admin/Dashboard/Index" class="admin-link"><i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard</a>
-                <a asp-page="/Admin/Organizations/Index" class="admin-link"><i data-lucide="building-2" class="nav-icon"></i> Organizations</a>
-                <a asp-page="/Admin/Organizations/Chart" class="admin-link"><i data-lucide="network" class="nav-icon"></i> Org Chart</a>
-                <a asp-page="/Admin/Learners/Index" class="admin-link"><i data-lucide="users" class="nav-icon"></i> Learners</a>
-                <a asp-page="/Admin/Courses/Index" class="admin-link"><i data-lucide="book" class="nav-icon"></i> Courses</a>
-                <a asp-page="/Admin/Enrollments/Index" class="admin-link"><i data-lucide="clipboard-list" class="nav-icon"></i> Enrollments</a>
-                <a asp-page="/Admin/Courses/Create" class="admin-link"><i data-lucide="plus-circle" class="nav-icon"></i> Create Course</a>
-                <a asp-page="/Admin/Upload" class="admin-link"><i data-lucide="upload" class="nav-icon"></i> Upload SCORM</a>
-            }
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                @* Logout removed from top nav — lives in Settings page per spec 018 *@
-            }
-            else
-            {
-                <a asp-page="/Account/Login"><i data-lucide="log-in" class="nav-icon"></i> Login</a>
-            }
-        </div>
+
         @if (User.Identity?.IsAuthenticated == true)
         {
-            @* Avatar / Profile control (Organic) — visible outside hamburger on mobile *@
-            var userName = User.Identity.Name ?? "?";
-            var initials = "?";
-            var nameParts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (nameParts.Length >= 2)
-            {
-                initials = $"{nameParts[0][0]}{nameParts[1][0]}".ToUpperInvariant();
-            }
-            else if (nameParts.Length == 1 && nameParts[0].Length > 0)
-            {
-                initials = $"{nameParts[0][0]}".ToUpperInvariant();
-            }
-            <div class="nav-profile" id="profile-toggle" role="button" tabindex="0" aria-label="Profile menu" aria-expanded="false">
-                <span class="avatar">@initials</span>
-                <span class="profile-name">@userName</span>
-                <i data-lucide="chevron-down" class="dropdown-arrow"></i>
-                <div class="profile-dropdown" id="profile-dropdown">
-                    <a asp-page="/Account/Profile"><i data-lucide="user" class="dropdown-icon"></i> View Profile</a>
-                    <a asp-page="/Account/Settings"><i data-lucide="settings" class="dropdown-icon"></i> Settings</a>
+            <button class="hamburger-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+                <i data-lucide="menu"></i>
+            </button>
+
+            <div class="nav-links" id="nav-links">
+                @* Mobile-only role pill (centered in hamburger dropdown) *@
+                <div class="mobile-role-pill">
+                    <div class="role-pill" id="role-pill-mobile">
+                        <button type="button" class="role-segment" data-value="learner">Learner</button>
+                        <button type="button" class="role-segment" data-value="admin">Admin</button>
+                    </div>
+                </div>
+
+                <a asp-page="/MyCourses/Index" class="nav-link" data-page="my-courses">
+                    <i data-lucide="graduation-cap" class="nav-icon"></i> My Courses
+                </a>
+                <a asp-page="/Courses/Index" class="nav-link" data-page="browse-courses">
+                    <i data-lucide="book-open" class="nav-icon"></i> Browse Courses
+                </a>
+                <a asp-page="/Admin/Dashboard/Index" class="nav-link admin-link" data-role-link="admin" data-page="dashboard">
+                    <i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard
+                </a>
+            </div>
+
+            <div style="flex: 1"></div>
+
+            @* Account Control (spec 020) — div role=button, NOT a button *@
+            <div class="account-control" id="account-control" role="button" tabindex="0" aria-label="Account menu" aria-expanded="false">
+                @* Role toggle pill — always visible, stops propagation *@
+                <div class="role-pill" id="role-pill" onclick="event.stopPropagation()">
+                    <button type="button" class="role-segment" data-value="learner">Learner</button>
+                    <button type="button" class="role-segment" data-value="admin">Admin</button>
+                </div>
+
+                @* Static name — does NOT change with role toggle *@
+                <span class="account-name">@User.Identity.Name</span>
+
+                @* Chevron-down icon *@
+                <i data-lucide="chevron-down" class="account-chevron"></i>
+
+                @* Account dropdown *@
+                <div class="account-dropdown" id="account-dropdown">
+                    <a asp-page="/Account/Profile">
+                        <i data-lucide="user" class="dropdown-icon"></i> View Profile
+                    </a>
+                    <a asp-page="/Account/Settings">
+                        <i data-lucide="settings" class="dropdown-icon"></i> Settings
+                    </a>
                 </div>
             </div>
         }
+        else
+        {
+            <div style="flex: 1"></div>
+            <a asp-page="/Account/Login" class="nav-link">
+                <i data-lucide="log-in" class="nav-icon"></i> Login
+            </a>
+        }
     </nav>
+
     <div class="container">
         @RenderBody()
     </div>
+
     <div class="footer">&copy; 2025 Libre LMS</div>
+
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js"></script>
     <script>
         // Initialize Lucide icons
@@ -81,75 +86,39 @@
             lucide.createIcons({ attributes: { 'stroke-width': 2.75 } });
         })();
 
-        // Hamburger menu toggle with Lucide icon state
+        // ── Active link detection (spec 020) ─────────────────────────────
         (function() {
-            var toggle = document.getElementById('nav-toggle');
-            var nav = document.getElementById('nav-links');
-            var openIcon = toggle?.querySelector('.lucide-hamburger-open');
-            var closeIcon = toggle?.querySelector('.lucide-hamburger-close');
-            if (toggle && nav) {
-                toggle.addEventListener('click', function() {
-                    var isOpen = nav.classList.toggle('is-open');
-                    toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-                    toggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
-                    if (openIcon && closeIcon) {
-                        openIcon.hidden = isOpen;
-                        closeIcon.hidden = !isOpen;
-                    }
-                });
-            }
-        })();
-
-        // Profile dropdown toggle
-        (function() {
-            var toggle = document.getElementById('profile-toggle');
-            var dropdown = document.getElementById('profile-dropdown');
-            if (toggle && dropdown) {
-                function toggleDropdown() {
-                    var isOpen = dropdown.classList.toggle('is-open');
-                    toggle.classList.toggle('is-open');
-                    toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            var path = window.location.pathname;
+            var linkMap = {
+                '/MyCourses/Index': 'my-courses',
+                '/Courses/Index': 'browse-courses',
+                '/Admin/Dashboard/Index': 'dashboard'
+            };
+            for (var urlPage in linkMap) {
+                var pageKey = linkMap[urlPage];
+                if (path.indexOf(urlPage) !== -1 || (urlPage !== '/' && path.indexOf(urlPage.toLowerCase()) !== -1)) {
+                    var activeLink = document.querySelector('a.nav-link[data-page="' + pageKey + '"]');
+                    if (activeLink) activeLink.classList.add('active');
+                    break;
                 }
-                toggle.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    toggleDropdown();
-                });
-                // Close when clicking outside
-                document.addEventListener('click', function(e) {
-                    if (!toggle.contains(e.target)) {
-                        dropdown.classList.remove('is-open');
-                        toggle.classList.remove('is-open');
-                        toggle.setAttribute('aria-expanded', 'false');
-                    }
-                });
-                // Keyboard support
-                toggle.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        toggleDropdown();
-                    }
-                    // Escape to close
-                    if (e.key === 'Escape') {
-                        dropdown.classList.remove('is-open');
-                        toggle.classList.remove('is-open');
-                        toggle.setAttribute('aria-expanded', 'false');
-                    }
-                });
             }
         })();
 
-        // Role switcher — client-side nav link visibility toggle
+        // ── Role switcher — client-side nav link visibility toggle (spec 020) ──
         (function() {
-            var switcher = document.getElementById('role-switcher');
-            var segments = switcher?.querySelectorAll('.role-segment');
+            var pills = document.querySelectorAll('.role-pill');
             var adminLinks = document.querySelectorAll('.admin-link');
-            if (!switcher || !segments.length) return;
 
             function setRole(role) {
-                switcher.setAttribute('data-role', role);
-                segments.forEach(function(seg) {
-                    seg.classList.toggle('active', seg.getAttribute('data-value') === role);
+                // Update all role pills (desktop + mobile)
+                pills.forEach(function(pill) {
+                    pill.setAttribute('data-role', role);
+                    var segments = pill.querySelectorAll('.role-segment');
+                    segments.forEach(function(seg) {
+                        seg.classList.toggle('active', seg.getAttribute('data-value') === role);
+                    });
                 });
+                // Toggle admin links visibility
                 adminLinks.forEach(function(link) {
                     link.style.display = role === 'admin' ? '' : 'none';
                 });
@@ -160,9 +129,91 @@
             var saved = localStorage.getItem('nav-role-view') || 'learner';
             setRole(saved);
 
-            segments.forEach(function(seg) {
-                seg.addEventListener('click', function() {
+            // Bind clicks on all role segments
+            document.querySelectorAll('.role-pill .role-segment').forEach(function(seg) {
+                seg.addEventListener('click', function(e) {
+                    e.stopPropagation();
                     setRole(seg.getAttribute('data-value'));
+                });
+            });
+        })();
+
+        // ── Hamburger menu toggle (spec 020) ─────────────────────────────
+        (function() {
+            var toggle = document.getElementById('nav-toggle');
+            var nav = document.getElementById('nav-links');
+            if (toggle && nav) {
+                toggle.addEventListener('click', function() {
+                    var isOpen = nav.classList.toggle('is-open');
+                    toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                    // Also close account dropdown if open
+                    var dd = document.getElementById('account-dropdown');
+                    var ac = document.getElementById('account-control');
+                    if (dd && ac) {
+                        dd.classList.remove('is-open');
+                        ac.classList.remove('is-open');
+                        ac.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+        })();
+
+        // ── Account control dropdown toggle (spec 020) ──────────────────
+        (function() {
+            var control = document.getElementById('account-control');
+            var dropdown = document.getElementById('account-dropdown');
+            if (!control || !dropdown) return;
+
+            function toggleDropdown() {
+                var isOpen = dropdown.classList.toggle('is-open');
+                control.classList.toggle('is-open');
+                control.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            }
+
+            // Close hamburger nav when dropdown opens
+            function closeHamburger() {
+                var nav = document.getElementById('nav-links');
+                if (nav) nav.classList.remove('is-open');
+                var toggle = document.getElementById('nav-toggle');
+                if (toggle) toggle.setAttribute('aria-expanded', 'false');
+            }
+
+            control.addEventListener('click', function(e) {
+                // Only toggle if click is NOT on the role pill
+                if (e.target.closest('.role-pill')) return;
+                toggleDropdown();
+                closeHamburger();
+            });
+
+            // Keyboard support
+            control.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleDropdown();
+                    closeHamburger();
+                }
+                if (e.key === 'Escape') {
+                    dropdown.classList.remove('is-open');
+                    control.classList.remove('is-open');
+                    control.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            // Close when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!control.contains(e.target)) {
+                    dropdown.classList.remove('is-open');
+                    control.classList.remove('is-open');
+                    control.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            // Close dropdown on navigation (link clicks inside dropdown)
+            dropdown.querySelectorAll('a').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    dropdown.classList.remove('is-open');
+                    control.classList.remove('is-open');
+                    control.setAttribute('aria-expanded', 'false');
                 });
             });
         })();

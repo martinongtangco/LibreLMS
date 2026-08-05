@@ -63,6 +63,16 @@
   /* Shadows */
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
 
+  /* Nav palette (spec 020) */
+  --nav-bg:            #201e1d;
+  --nav-hover:         #3a3634;
+  --page-bg:           #f5ead8;
+  --accent:            #c67139;
+  --accent-text:       #8a4f26;
+  --nav-text:          #c9c2ba;
+  --border-light:      #e4d9c8;
+  --mobile-active-bg:  #f3ddc9;
+
   /* Hamburger */
   --hamburger-z-index: 1050;
   --mobile-nav-z-index: 1040;
@@ -128,7 +138,7 @@ body {
   font-family: var(--font-body);
   line-height: 1.6;
   color: var(--color-text);
-  background: var(--color-bg);
+  background: var(--page-bg);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -143,22 +153,24 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0 var(--container-padding);
 }
 
-/* ── Navigation Bar (Organic) ──────────────────────────────────────────── */
+/* ── Navigation Bar (spec 020) ──────────────────────────────────────────── */
 .navbar {
-  background: var(--color-brand);
-  color: white;
-  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--nav-bg);
+  color: var(--page-bg);
+  padding: 12px 24px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 24px;
   position: relative;
   flex-wrap: wrap;
 }
 
 .navbar .brand {
   font-family: var(--font-heading);
-  font-size: 1.5rem;
+  font-size: 20px;
   font-weight: 400;
+  color: var(--page-bg);
+  margin-right: 16px;
   white-space: nowrap;
 }
 
@@ -166,36 +178,36 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--spacing-sm);
+  gap: 0;
 }
 
-.navbar a {
-  color: white;
+/* Nav links — spec 020 */
+.navbar .nav-links a.nav-link {
+  color: var(--nav-text);
   text-decoration: none;
-  margin-left: var(--spacing-lg);
-  font-weight: 500;
-  font-size: var(--font-size-base);
-  min-height: var(--touch-target-min);
-  min-width: var(--touch-target-min);
+  font-weight: 600;
+  font-size: 14px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-pill);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  transition: background-color 0.15s ease;
+  gap: 6px;
+  padding: 8px 0;
+  transition: color 0.15s ease;
 }
 
-.navbar a:hover {
+.navbar .nav-links a.nav-link:hover {
+  color: #ffffff;
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.15);
+}
+
+.navbar .nav-links a.nav-link.active {
+  color: var(--accent);
 }
 
 /* Nav item icons (Lucide SVG) */
 .nav-icon {
-  margin-right: var(--spacing-sm);
-  width: 1.1em;
-  height: 1.1em;
-  vertical-align: middle;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
   stroke-width: 2.75;
 }
 
@@ -207,52 +219,120 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Profile dropdown icons */
 .dropdown-icon {
-  margin-right: var(--spacing-sm);
-  width: 1em;
-  height: 1em;
-  vertical-align: middle;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  stroke-width: 2.75;
 }
 
-/* Dropdown arrow rotation */
-.nav-profile .dropdown-arrow {
-  transition: transform 0.15s ease;
-}
-
-.nav-profile.is-open .dropdown-arrow {
-  transform: rotate(180deg);
-}
-
-/* ── Role Switcher (Organic pill segmented control) ──────────────────── */
-.nav-role-switcher {
+/* ── Account Control (spec 020) ─────────────────────────────────────── */
+.account-control {
   display: inline-flex;
-  background: rgba(255, 255, 255, var(--alpha-surface, 0.2));
-  border-radius: var(--radius-pill);
-  padding: var(--spacing-xs);
-  gap: var(--spacing-xs);
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px 4px 4px;
+  border-radius: 999px;
+  transition: background-color 0.15s ease;
+  position: relative;
+  user-select: none;
+}
+
+.account-control:hover {
+  background: var(--nav-hover);
+}
+
+/* Role toggle pill — inside account control */
+.role-pill {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--nav-hover);
+  border-radius: 999px;
+  padding: 3px;
   align-items: center;
 }
 
-.nav-role-switcher .role-segment {
+.role-pill .role-segment {
   background: transparent;
-  color: rgba(255, 255, 255, var(--alpha-muted, 0.75));
+  color: var(--nav-text);
   border: none;
-  border-radius: var(--radius-pill);
-  padding: var(--spacing-xs) var(--spacing-md);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
   font-family: var(--font-body);
   cursor: pointer;
-  min-height: var(--touch-target-min);
   transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
 }
 
-.nav-role-switcher .role-segment:hover {
-  background: rgba(255, 255, 255, var(--alpha-surface, 0.1));
+.role-pill .role-segment:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
-.nav-role-switcher .role-segment.active {
+.role-pill .role-segment.active {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+/* Account name — static, spec 020 */
+.account-name {
+  color: var(--page-bg);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Account chevron */
+.account-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--nav-text);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.account-control.is-open .account-chevron {
+  transform: rotate(180deg);
+}
+
+/* Account dropdown menu — spec 020 */
+.account-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
   background: var(--color-surface);
-  color: var(--color-brand);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  min-width: 190px;
+  padding: 8px;
+}
+
+.account-dropdown.is-open {
+  display: block;
+}
+
+.account-dropdown a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--color-text);
+  font-size: 14px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.account-dropdown a:hover {
+  background: var(--border-light);
 }
 
 /* Hamburger toggle button — hidden on desktop */
@@ -260,107 +340,24 @@ h1, h2, h3, h4, h5, h6 {
   display: none;
   background: none;
   border: none;
-  color: white;
-  font-size: 1.5rem;
+  color: var(--page-bg);
   cursor: pointer;
-  padding: var(--spacing-sm);
+  padding: 6px;
   min-width: var(--touch-target-min);
   min-height: var(--touch-target-min);
   line-height: 1;
-}
-
-/* ── Avatar / Profile Control (Organic) ────────────────────────────────── */
-.nav-profile {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  cursor: pointer;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-pill);
+  border-radius: 4px;
   transition: background-color 0.15s ease;
-  position: relative;
-  margin-left: var(--spacing-sm);
-  user-select: none;
 }
 
-.nav-profile:hover {
-  background: rgba(255, 255, 255, 0.15);
+.hamburger-toggle:hover {
+  background: var(--nav-hover);
 }
 
-.nav-profile .avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-heading);
-  font-size: 0.85rem;
-  font-weight: 400;
-  text-transform: uppercase;
-  flex-shrink: 0;
-}
-
-.nav-profile .profile-name {
-  color: white;
-  font-size: var(--font-size-base);
-  font-weight: 500;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.nav-profile .dropdown-arrow {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.7rem;
-  transition: transform 0.15s ease;
-}
-
-.nav-profile.is-open .dropdown-arrow {
-  transform: rotate(180deg);
-}
-
-/* Profile dropdown menu */
-.profile-dropdown {
-  display: none;
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  min-width: 160px;
-  padding: var(--spacing-xs) 0;
-  margin-top: var(--spacing-xs);
-}
-
-.profile-dropdown.is-open {
-  display: block;
-}
-
-.profile-dropdown a,
-.profile-dropdown button {
-  display: block;
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
-  text-decoration: none;
-  color: var(--color-text);
-  font-size: var(--font-size-base);
-  text-align: left;
-  border: none;
-  background: none;
-  cursor: pointer;
-  min-height: var(--touch-target-min);
-}
-
-.profile-dropdown a:hover,
-.profile-dropdown button:hover {
-  background: var(--color-bg);
+.hamburger-toggle svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.75;
 }
 
 /* ── Cards (Organic) ──────────────────────────────────────────────────── */
@@ -1208,66 +1205,90 @@ hr.separator {
 }
 
 /* ==========================================================================
-   Media Query — Mobile Nav (≤ 760px) — hamburger nav collapse
+   Media Query — Mobile Nav (≤ 760px) — hamburger nav collapse (spec 020)
    ========================================================================== */
 @media (max-width: 760px) {
   .navbar {
     flex-wrap: wrap;
-    padding: var(--spacing-md);
+    padding: 12px 16px;
   }
 
   .hamburger-toggle {
     display: inline-flex;
   }
 
+  /* Nav links hidden by default — shown as mobile dropdown */
   .navbar .nav-links {
     display: none;
-    width: 100%;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 16px;
+    right: 16px;
+    width: auto;
     flex-direction: column;
-    align-items: flex-start;
-    padding-top: var(--spacing-md);
-    gap: 0;
+    align-items: stretch;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 8px;
+    gap: 2px;
   }
 
   .navbar .nav-links.is-open {
     display: flex;
   }
 
-  .navbar .nav-links a {
+  /* Mobile nav links — full-width rows */
+  .navbar .nav-links a.nav-link {
     margin-left: 0;
     width: 100%;
-    padding: var(--spacing-sm) 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0;
+    padding: 12px;
+    border-radius: 8px;
+    color: var(--color-text);
+    border-bottom: none;
+    font-size: 14px;
   }
 
-  .navbar .nav-links .nav-user {
-    width: 100%;
+  .navbar .nav-links a.nav-link:hover {
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  .navbar .nav-links a.nav-link.active {
+    background: var(--mobile-active-bg);
+    color: var(--accent-text);
+  }
+
+  /* Role pill centered in mobile dropdown */
+  .navbar .nav-links .mobile-role-pill {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-sm);
-    padding-top: var(--spacing-sm);
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    margin-top: var(--spacing-sm);
-  }
-
-  /* Role switcher in mobile dropdown */
-  .navbar .nav-links .nav-role-switcher {
-    width: 100%;
-    margin-bottom: var(--spacing-sm);
     justify-content: center;
-    padding: var(--spacing-sm);
-    background: rgba(255, 255, 255, 0.08);
+    margin: 8px 0;
   }
 
-  /* Profile control stays visible outside hamburger on mobile (research §6) */
-  .nav-profile {
-    margin-left: 0;
-  }
-
-  .nav-profile .profile-name {
+  /* Account name hidden on mobile */
+  .account-name {
     display: none;
+  }
+
+  /* Page layout adjustments for mobile — spec 020 */
+  h1 {
+    font-size: 28px;
+  }
+
+  .container {
+    padding: 24px 16px 32px;
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+
+  .flex-row,
+  .flex-between {
+    flex-direction: column;
   }
 }
 
@@ -1377,7 +1398,7 @@ hr.separator {
 }
 
 /* ==========================================================================
-   Media Query — Desktop Nav (≥ 761px) — restore desktop nav layout
+   Media Query — Desktop Nav (≥ 761px) — restore desktop nav layout (spec 020)
    ========================================================================== */
 @media (min-width: 761px) {
   .navbar {
@@ -1387,39 +1408,30 @@ hr.separator {
   .navbar .nav-links {
     display: flex !important;
     flex-direction: row !important;
+    position: static !important;
     width: auto !important;
-    padding-top: 0 !important;
-    align-items: center !important;
-  }
-
-  .navbar .nav-links a {
-    margin-left: var(--spacing-lg) !important;
-    width: auto !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
     padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  .navbar .nav-links a.nav-link {
+    width: auto !important;
+    padding: 8px 0 !important;
     border-bottom: none !important;
+    border-radius: 0 !important;
   }
 
-  .navbar .nav-links .nav-user {
-    flex-direction: row !important;
-    width: auto !important;
-    padding-top: 0 !important;
-    border-top: none !important;
-    margin-top: 0 !important;
+  /* Hide mobile-only role pill wrapper on desktop */
+  .navbar .nav-links .mobile-role-pill {
+    display: none !important;
   }
 
-  /* Role switcher — compact pill in desktop nav */
-  .navbar .nav-links .nav-role-switcher {
-    width: auto !important;
-    margin: 0 !important;
-    margin-left: var(--spacing-sm) !important;
-    justify-content: flex-start !important;
-    padding: var(--spacing-xs) !important;
-    background: rgba(255, 255, 255, 0.2) !important;
-  }
-
-  .navbar .nav-links .nav-role-switcher .role-segment {
-    padding: var(--spacing-xs) var(--spacing-sm) !important;
-    font-size: var(--font-size-sm) !important;
+  /* Account name visible on desktop */
+  .account-name {
+    display: inline !important;
   }
 }
 
