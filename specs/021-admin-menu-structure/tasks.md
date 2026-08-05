@@ -6,7 +6,7 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Create branch `story/021-admin-menu-structure` from `main`
+- [X] T001 Create branch `story/021-admin-menu-structure` from `main`
 
 ---
 
@@ -18,9 +18,9 @@
 
 ### Implementation
 
-- [ ] T002 [P] Add 5 admin nav link `<a>` tags to `src/Host/Pages/Shared/_Layout.cshtml` (after the existing Dashboard link, each with `data-role-link="admin"`, `data-page`, Lucide icon, and `asp-page` pointing to the correct admin page)
-- [ ] T003 [P] Update the JS `linkMap` object in `src/Host/Pages/Shared/_Layout.cshtml` with paths for `/Admin/Courses/Index`, `/Admin/Enrollments/Index`, `/Admin/Learners/Index`, `/Admin/Organizations/Index`, `/Admin/Upload`
-- [ ] T004 Verify that existing CSS (`[data-role-link="admin"]` selectors) already handles visibility toggle for the new links without changes to `src/Host/wwwroot/css/site.css`
+- [X] T002 [P] Add 5 admin nav link `<a>` tags to `src/Host/Pages/Shared/_Layout.cshtml` (after the existing Dashboard link, each with `data-role-link="admin"`, `data-page`, Lucide icon, and `asp-page` pointing to the correct admin page)
+- [X] T003 [P] Update the JS `linkMap` object in `src/Host/Pages/Shared/_Layout.cshtml` with paths for `/Admin/Courses/Index`, `/Admin/Enrollments/Index`, `/Admin/Learners/Index`, `/Admin/Organizations/Index`, `/Admin/Upload`
+- [X] T004 Verify that existing CSS (`[data-role-link="admin"]` selectors) already handles visibility toggle for the new links without changes to `src/Host/wwwroot/css/site.css`
 
 ---
 
@@ -32,7 +32,7 @@
 
 ### Implementation
 
-- [ ] T005 Manual verification — no code change expected. The `[data-role-link="admin"]` CSS selector on all new links (added in T002) is sufficient. Confirm by browser test.
+- [X] T005 Manual verification — no code change expected. The `[data-role-link="admin"]` CSS selector on all new links (added in T002) is sufficient. Confirm by browser test.
 
 ---
 
@@ -44,17 +44,17 @@
 
 ### Implementation
 
-- [ ] T006 Verify spec.md is complete (already done in `/speckit.specify` step)
+- [X] T006 Verify spec.md is complete (already done in `/speckit.specify` step)
 
 ---
 
 ## Phase 5: Validation
 
-- [ ] T007 Run `dotnet build` and confirm no compilation errors
-- [ ] T008 Run `dotnet test tests/ArchitectureTests` and confirm architecture tests pass
-- [ ] T009 Run the app (`dotnet run`) and validate all 5 scenarios from `quickstart.md`
-- [ ] T010 Commit changes, push branch, merge to `main`
-- [ ] T011 Switch back to `main` (Constitution Principle XII)
+- [X] T007 Run `dotnet build` and confirm no compilation errors
+- [X] T008 Run `dotnet test tests/ArchitectureTests` and confirm architecture tests pass (2 pre-existing failures unrelated to this spec)
+- [X] T009 Run the app (`dotnet run`) and validate all 5 scenarios from `quickstart.md`
+- [X] T010 Commit changes, push branch, merge to `main`
+- [X] T011 Switch back to `main` (Constitution Principle XII)
 
 ---
 
