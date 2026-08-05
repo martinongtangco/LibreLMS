@@ -59,21 +59,22 @@ public class CourseCatalogSearchTests : IAsyncLifetime
                 IF NOT EXISTS (SELECT 1 FROM sys.fulltext_catalogs WHERE name = 'LearningLmsFtCatalog')
                     CREATE FULLTEXT CATALOG LearningLmsFtCatalog AS DEFAULT;
 
-                -- Create Full-Text Index
+                -- Create Full-Text Index (use PK_Courses — must be single-column unique index)
                 IF NOT EXISTS (SELECT 1 FROM sys.fulltext_indexes fti
                                JOIN sys.tables t ON fti.object_id = t.object_id
                                WHERE t.name = 'Courses')
+                BEGIN
                     CREATE FULLTEXT INDEX ON Courses(Title)
-                    KEY INDEX UK_Title_OrganizationId
-                    CATALOG LearningLmsFtCatalog
-                    WITH (CHANGE_TRACKING AUTO);
+                    KEY INDEX PK_Courses
+                    ON LearningLmsFtCatalog
+                    WITH (CHANGE_TRACKING = AUTO);
+                END;
 
-                -- Create stored procedure
-                CREATE PROCEDURE BrowseCourses
+                -- Create stored procedure (org visibility filtered in C#)
+                IF OBJECT_ID('BrowseCourses', 'P') IS NOT NULL DROP PROCEDURE BrowseCourses;
+                EXEC('CREATE PROCEDURE BrowseCourses
                     @SearchTerm NVARCHAR(200) = NULL,
                     @Category NVARCHAR(100) = NULL,
-                    @OrganizationIdScope UNIQUEIDENTIFIER = NULL,
-                    @VisibleCourseIds UNIQUEIDENTIFIER[] = NULL,
                     @PageSize INT = 12,
                     @PageNumber INT = 1
                 AS
@@ -90,9 +91,7 @@ public class CourseCatalogSearchTests : IAsyncLifetime
 
                     SELECT c.Id, c.Title, c.ShortDescription, c.Category, c.Duration
                     FROM Courses c
-                    WHERE (@VisibleCourseIds IS NULL OR EXISTS (SELECT 1 FROM @VisibleCourseIds v WHERE v.value = c.Id))
-                        AND (@OrganizationIdScope IS NULL OR c.OrganizationId = @OrganizationIdScope)
-                        AND (@Category IS NULL OR @Category = '' OR c.Category = @Category)
+                    WHERE (@Category IS NULL OR @Category = '' OR c.Category = @Category)
                         AND (@SearchTerm IS NULL OR @SearchTerm = ''
                             OR ((@FtsAvailable = 1 AND CONTAINS(c.Title, @SearchTerm))
                                 OR (@FtsAvailable = 0 AND c.Title LIKE '%' + @SearchTerm + '%')))
@@ -100,13 +99,11 @@ public class CourseCatalogSearchTests : IAsyncLifetime
                     OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
 
                     SELECT COUNT(*) AS TotalCount FROM Courses c
-                    WHERE (@VisibleCourseIds IS NULL OR EXISTS (SELECT 1 FROM @VisibleCourseIds v WHERE v.value = c.Id))
-                        AND (@OrganizationIdScope IS NULL OR c.OrganizationId = @OrganizationIdScope)
-                        AND (@Category IS NULL OR @Category = '' OR c.Category = @Category)
+                    WHERE (@Category IS NULL OR @Category = '' OR c.Category = @Category)
                         AND (@SearchTerm IS NULL OR @SearchTerm = ''
                             OR ((@FtsAvailable = 1 AND CONTAINS(c.Title, @SearchTerm))
                                 OR (@FtsAvailable = 0 AND c.Title LIKE '%' + @SearchTerm + '%')));
-                END;
+                END;');
             END;
         ", new SqlConnection(_connectionString!));
         cmd.ExecuteNonQuery();
@@ -364,10 +361,12 @@ public class CourseCatalogSearchTests : IAsyncLifetime
             IF NOT EXISTS (SELECT 1 FROM sys.fulltext_indexes fti
                            JOIN sys.tables t ON fti.object_id = t.object_id
                            WHERE t.name = 'Courses')
+            BEGIN
                 CREATE FULLTEXT INDEX ON Courses(Title)
-                KEY INDEX UK_Title_OrganizationId
-                CATALOG LearningLmsFtCatalog
-                WITH (CHANGE_TRACKING AUTO);
+                KEY INDEX PK_Courses
+                ON LearningLmsFtCatalog
+                WITH (CHANGE_TRACKING = AUTO);
+            END;
         ", new SqlConnection(_connectionString!)))
         {
             recreateCmd.ExecuteNonQuery();

@@ -144,7 +144,6 @@ public class CourseCatalogService(CatalogDbContext context)
             command.Parameters.Add("@Category", SqlDbType.NVarChar, 100).Value = category ?? (object)DBNull.Value;
             command.Parameters.Add("@PageSize", SqlDbType.Int).Value = pageSize;
             command.Parameters.Add("@PageNumber", SqlDbType.Int).Value = pageNumber;
-            command.Parameters.Add("@OrganizationIdScope", SqlDbType.UniqueIdentifier).Value = (object)DBNull.Value;
 
             var allItems = new List<CourseItemDto>();
             var totalCount = 0;
