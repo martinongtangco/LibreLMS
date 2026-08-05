@@ -20,11 +20,11 @@
 
 **Purpose**: Create the Full-Text Search index, stored procedure, and EF Core migration — the database foundation everything depends on.
 
-- [ ] T001 Create EF Core migration `AddFullTextIndexAndBrowseProcedure` in `src/Modules/Catalog/Infrastructure/Migrations/` with raw SQL to create Full-Text Catalog `LearningLmsFtCatalog` and Full-Text Index on `Courses.Title` using key index `UK_Title_OrganizationId` with `CHANGE_TRACKING AUTO`
+- [X] T001 Create EF Core migration `AddFullTextIndexAndBrowseProcedure` in `src/Modules/Catalog/Infrastructure/Migrations/` with raw SQL to create Full-Text Catalog `LearningLmsFtCatalog` and Full-Text Index on `Courses.Title` using key index `UK_Title_OrganizationId` with `CHANGE_TRACKING AUTO`
 
-- [ ] T002 Add T-SQL stored procedure `BrowseCourses` in the migration's `Up()` method with parameters `@SearchTerm NVARCHAR(200)`, `@Category NVARCHAR(100)`, `@PageSize INT = 12`, `@PageNumber INT = 1`; Result Set 1 returns `Id, Title, ShortDescription, Category, Duration` for the page; Result Set 2 returns `TotalCount`; use `CONTAINS(Title, @SearchTerm)` for FTS search with fallback to `LIKE '%' + @SearchTerm + '%'` when FTS is unavailable; use `ORDER BY Title ASC OFFSET (@PageNumber - 1) * @PageSize ROWS FETCH NEXT @PageSize ROWS ONLY` for pagination
+- [X] T002 Add T-SQL stored procedure `BrowseCourses` in the migration's `Up()` method with parameters `@SearchTerm NVARCHAR(200)`, `@Category NVARCHAR(100)`, `@PageSize INT = 12`, `@PageNumber INT = 1`; Result Set 1 returns `Id, Title, ShortDescription, Category, Duration` for the page; Result Set 2 returns `TotalCount`; use `CONTAINS(Title, @SearchTerm)` for FTS search with fallback to `LIKE '%' + @SearchTerm + '%'` when FTS is unavailable; use `ORDER BY Title ASC OFFSET (@PageNumber - 1) * @PageSize ROWS FETCH NEXT @PageSize ROWS ONLY` for pagination
 
-- [ ] T003 Add the inverse SQL in the migration's `Down()` method to drop the stored procedure, Full-Text Index, and Full-Text Catalog
+- [X] T003 Add the inverse SQL in the migration's `Down()` method to drop the stored procedure, Full-Text Index, and Full-Text Catalog
 
 ---
 
@@ -34,9 +34,9 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T004 Add `record BrowseResult(IEnumerable<CourseItemDto> Items, int TotalCount, int PageNumber, int PageSize)` type in `src/Modules/Catalog/Application/CourseCatalogService.cs` to carry paginated results from the stored procedure
+- [X] T004 Add `record BrowseResult(IEnumerable<CourseItemDto> Items, int TotalCount, int PageNumber, int PageSize)` type in `src/Modules/Catalog/Application/CourseCatalogService.cs` to carry paginated results from the stored procedure
 
-- [ ] T005 Add `BrowseAsync(string? searchTerm, string? category, int pageNumber, int pageSize)` method to `CourseCatalogService` in `src/Modules/Catalog/Application/CourseCatalogService.cs` that calls `BrowseCourses` via `context.Database.GetDbConnection()` + `SqlCommand` with `SqlDataReader` to read both result sets (courses + total count), maps rows to `CourseItemDto` records, and returns `BrowseResult`
+- [X] T005 Add `BrowseAsync(string? searchTerm, string? category, int pageNumber, int pageSize)` method to `CourseCatalogService` in `src/Modules/Catalog/Application/CourseCatalogService.cs` that calls `BrowseCourses` via `context.Database.GetDbConnection()` + `SqlCommand` with `SqlDataReader` to read both result sets (courses + total count), maps rows to `CourseItemDto` records, and returns `BrowseResult`
 
 **Checkpoint**: Foundation ready — `BrowseAsync` can be called from the Razor Page model. User story implementation can now begin.
 
@@ -50,15 +50,15 @@
 
 ### Implementation for US1 + US2
 
-- [ ] T006 [US1] Add `[BindProperty(SupportsGet = true)] public string? Search { get; set; }` and `[BindProperty(SupportsGet = true)] public string? Category { get; set; }` properties (already exist, verify) and call `CourseCatalogService.BrowseAsync(Search, Category, 1, 12)` in `OnGetAsync()` in `src/Host/Pages/Courses/Index.cshtml.cs`; map returned `BrowseResult.Items` to `CourseItem` records for the view; derive `Categories` list from the filtered results
+- [X] T006 [US1] Add `[BindProperty(SupportsGet = true)] public string? Search { get; set; }` and `[BindProperty(SupportsGet = true)] public string? Category { get; set; }` properties (already exist, verify) and call `CourseCatalogService.BrowseAsync(Search, Category, 1, 12)` in `OnGetAsync()` in `src/Host/Pages/Courses/Index.cshtml.cs`; map returned `BrowseResult.Items` to `CourseItem` records for the view; derive `Categories` list from the filtered results
 
-- [ ] T007 [US1] Update `OnGetCourseListAsync` handler in `src/Host/Pages/Courses/Index.cshtml.cs` to accept `string? search`, `string? category` parameters and call `BrowseAsync(search, category, 1, 12)` — replacing the current `GetCoursesAndEnrollments` call — and return the `_CourseList` partial with paginated results
+- [X] T007 [US1] Update `OnGetCourseListAsync` handler in `src/Host/Pages/Courses/Index.cshtml.cs` to accept `string? search`, `string? category` parameters and call `BrowseAsync(search, category, 1, 12)` — replacing the current `GetCoursesAndEnrollments` call — and return the `_CourseList` partial with paginated results
 
-- [ ] T008 [US1] Wrap search input and category select in a single `<form class="filters" id="filter-form">` in `src/Host/Pages/Courses/Index.cshtml`; add `hx-include="#filter-form"` to BOTH the search `<input>` and category `<select>` so each HTMX request sends all filter parameters; set search input `hx-trigger="keyup changed delay:300ms"` and category select `hx-trigger="change"`; both target `hx-target="#course-list"`
+- [X] T008 [US1] Wrap search input and category select in a single `<form class="filters" id="filter-form">` in `src/Host/Pages/Courses/Index.cshtml`; add `hx-include="#filter-form"` to BOTH the search `<input>` and category `<select>` so each HTMX request sends all filter parameters; set search input `hx-trigger="keyup changed delay:300ms"` and category select `hx-trigger="change"`; both target `hx-target="#course-list"`
 
-- [ ] T009 [P] [US2] Verify the Clear button in `src/Host/Pages/Courses/Index.cshtml` navigates to `/Courses/Index` (no query params) to reset all filters
+- [X] T009 [P] [US2] Verify the Clear button in `src/Host/Pages/Courses/Index.cshtml` navigates to `/Courses/Index` (no query params) to reset all filters
 
-- [ ] T010 [P] [US2] Update `_CourseList` partial in `src/Host/Pages/Shared/_CourseList.cshtml` to correctly handle empty model (show empty state) and non-empty model (render course cards) — existing logic should suffice, verify it renders `BrowseResult.Items` correctly
+- [X] T010 [P] [US2] Update `_CourseList` partial in `src/Host/Pages/Shared/_CourseList.cshtml` to correctly handle empty model (show empty state) and non-empty model (render course cards) — existing logic should suffice, verify it renders `BrowseResult.Items` correctly
 
 **Checkpoint**: At this point, search by title and filter by category both work via HTMX with FTS-backed T-SQL queries. This is the MVP — the Browse Courses page is functional for discovery.
 
@@ -72,17 +72,17 @@
 
 ### Implementation for US3
 
-- [ ] T011 [US3] Add `[BindProperty(SupportsGet = true)] public int PageNumber { get; set; } = 1` and `public int PageSize { get; set; } = 12` properties and `public int TotalCount { get; set; } = 0` to `CourseIndexModel` in `src/Host/Pages/Courses/Index.cshtml.cs`; pass `PageNumber` and `PageSize` to `BrowseAsync` in both `OnGetAsync` and `OnGetCourseListAsync`
+- [X] T011 [US3] Add `[BindProperty(SupportsGet = true)] public int PageNumber { get; set; } = 1` and `public int PageSize { get; set; } = 12` properties and `public int TotalCount { get; set; } = 0` to `CourseIndexModel` in `src/Host/Pages/Courses/Index.cshtml.cs`; pass `PageNumber` and `PageSize` to `BrowseAsync` in both `OnGetAsync` and `OnGetCourseListAsync`
 
-- [ ] T012 [US3] Add `public int PageNumber { get; set; } = 1` parameter to `OnGetCourseListAsync` in `src/Host/Pages/Courses/Index.cshtml.cs` and pass it to `BrowseAsync`; store `BrowseResult.TotalCount` on the model; return both the course list and pagination state to the partial
+- [X] T012 [US3] Add `public int PageNumber { get; set; } = 1` parameter to `OnGetCourseListAsync` in `src/Host/Pages/Courses/Index.cshtml.cs` and pass it to `BrowseAsync`; store `BrowseResult.TotalCount` on the model; return both the course list and pagination state to the partial
 
-- [ ] T013 [P] [US3] Create `_Pagination.cshtml` partial in `src/Host/Pages/Shared/_Pagination.cshtml` that accepts `int pageNumber`, `int totalCount`, `int pageSize`, `string? search`, `string? category` as model; computes `totalPages = Math.Ceiling((double)totalCount / pageSize)`; renders Previous button (disabled when `pageNumber == 1`), page indicator text ("Page X of Y"), and Next button (disabled when `pageNumber >= totalPages`); buttons use `hx-get="/Courses/Index?handler=CourseList"` with `hx-include="#filter-form"` and include `page` as a hidden input or query parameter via `hx-vals`
+- [X] T013 [P] [US3] Create `_Pagination.cshtml` partial in `src/Host/Pages/Shared/_Pagination.cshtml` that accepts `int pageNumber`, `int totalCount`, `int pageSize`, `string? search`, `string? category` as model; computes `totalPages = Math.Ceiling((double)totalCount / pageSize)`; renders Previous button (disabled when `pageNumber == 1`), page indicator text ("Page X of Y"), and Next button (disabled when `pageNumber >= totalPages`); buttons use `hx-get="/Courses/Index?handler=CourseList"` with `hx-include="#filter-form"` and include `page` as a hidden input or query parameter via `hx-vals`
 
-- [ ] T014 [US3] Update `OnGetCourseListAsync` in `src/Host/Pages/Courses/Index.cshtml.cs` to return a combined `PartialViewResult` that renders both `_CourseList` and `_Pagination` together, so the `#course-list` div swap includes pagination controls
+- [X] T014 [US3] Update `OnGetCourseListAsync` in `src/Host/Pages/Courses/Index.cshtml.cs` to return a combined `PartialViewResult` that renders both `_CourseList` and `_Pagination` together, so the `#course-list` div swap includes pagination controls
 
-- [ ] T015 [US3] Update `_CourseList.cshtml` in `src/Host/Pages/Shared/_CourseList.cshtml` to render the course card grid; pagination controls are now rendered alongside it by the handler (T014)
+- [X] T015 [US3] Update `_CourseList.cshtml` in `src/Host/Pages/Shared/_CourseList.cshtml` to render the course card grid; pagination controls are now rendered alongside it by the handler (T014)
 
-- [ ] T016 [US3] Update the search input in `src/Host/Pages/Courses/Index.cshtml` to include a hidden `<input type="hidden" name="page" value="1" id="page-reset" class="search-page-reset">` that is included in search/filter HTMX requests (resets to page 1), but NOT included in pagination requests. Use `hx-include="#filter-form #page-reset"` on search and category, and `hx-include="#filter-form"` (without page-reset) on pagination buttons
+- [X] T016 [US3] Update the search input in `src/Host/Pages/Courses/Index.cshtml` to include a hidden `<input type="hidden" name="page" value="1" id="page-reset" class="search-page-reset">` that is included in search/filter HTMX requests (resets to page 1), but NOT included in pagination requests. Use `hx-include="#filter-form #page-reset"` on search and category, and `hx-include="#filter-form"` (without page-reset) on pagination buttons
 
 **Checkpoint**: Pagination works independently. Users can page through courses with Previous/Next controls.
 
@@ -96,13 +96,13 @@
 
 ### Implementation for US4
 
-- [ ] T017 [US4] Verify `hx-include="#filter-form"` on pagination buttons in `src/Host/Pages/Shared/_Pagination.cshtml` sends `search` and `category` values along with `page` — so filters persist when navigating pages
+- [X] T017 [US4] Verify `hx-include="#filter-form"` on pagination buttons in `src/Host/Pages/Shared/_Pagination.cshtml` sends `search` and `category` values along with `page` — so filters persist when navigating pages
 
-- [ ] T018 [US4] Verify that search input and category dropdown requests (with `#page-reset` included) always send `page=1` — so filter changes reset pagination — in `src/Host/Pages/Courses/Index.cshtml`
+- [X] T018 [US4] Verify that search input and category dropdown requests (with `#page-reset` included) always send `page=1` — so filter changes reset pagination — in `src/Host/Pages/Courses/Index.cshtml`
 
-- [ ] T019 [US4] Update `OnGetCourseListAsync` in `src/Host/Pages/Courses/Index.cshtml.cs` to accept all three parameters (`search`, `category`, `page`) and apply the page-reset logic: if `search` changed or `category` changed, ignore the `page` parameter and use 1; if only `page` changed, use the provided page number
+- [X] T019 [US4] Update `OnGetCourseListAsync` in `src/Host/Pages/Courses/Index.cshtml.cs` to accept all three parameters (`search`, `category`, `page`) and apply the page-reset logic: if `search` changed or `category` changed, ignore the `page` parameter and use 1; if only `page` changed, use the provided page number
 
-- [ ] T020 [P] [US4] Add edge case handling in `OnGetCourseListAsync` in `src/Host/Pages/Courses/Index.cshtml.cs`: trim whitespace from search term (treat empty-after-trim as null); cap `pageNumber` to `Math.Max(1, Math.Min(pageNumber, totalPages))` to handle invalid page numbers after filter changes
+- [X] T020 [P] [US4] Add edge case handling in `OnGetCourseListAsync` in `src/Host/Pages/Courses/Index.cshtml.cs`: trim whitespace from search term (treat empty-after-trim as null); cap `pageNumber` to `Math.Max(1, Math.Min(pageNumber, totalPages))` to handle invalid page numbers after filter changes
 
 **Checkpoint**: All four user stories are functional. Search, filter, and pagination work together as an integrated system.
 
@@ -112,19 +112,19 @@
 
 **Purpose**: Validate that the T-SQL stored procedure with Full-Text Search meets the performance requirements (NFR-001 through NFR-003) and scales to large catalogs.
 
-- [ ] T021 [P] Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `Stored_procedure_returns_page_within_200ms_with_100_courses` that seeds 100 courses, calls `BrowseCourses` stored procedure via `SqlConnection` + `SqlCommand` directly (bypassing EF Core for pure DB measurement), measures `Stopwatch.ElapsedMilliseconds`, and asserts result time < 200ms and correct row count (12 per page)
+- [X] T021 [P] Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `Stored_procedure_returns_page_within_200ms_with_100_courses` that seeds 100 courses, calls `BrowseCourses` stored procedure via `SqlConnection` + `SqlCommand` directly (bypassing EF Core for pure DB measurement), measures `Stopwatch.ElapsedMilliseconds`, and asserts result time < 200ms and correct row count (12 per page)
 
-- [ ] T022 [P] Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `Stored_procedure_returns_page_within_500ms_with_1000_courses` that seeds 1,000 courses with varied titles, calls `BrowseCourses` with a search term and category filter, measures execution time, and asserts result time < 500ms and correct total count in Result Set 2
+- [X] T022 [P] Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `Stored_procedure_returns_page_within_500ms_with_1000_courses` that seeds 1,000 courses with varied titles, calls `BrowseCourses` with a search term and category filter, measures execution time, and asserts result time < 500ms and correct total count in Result Set 2
 
-- [ ] T023 [P] Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `Stored_procedure_returns_page_within_1000ms_with_10000_courses` that seeds 10,000 courses, calls `BrowseCourses` with search + category + pagination (page 5 of 12), measures execution time, and asserts result time < 1000ms and exactly 12 rows in Result Set 1
+- [X] T023 [P] Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `Stored_procedure_returns_page_within_1000ms_with_10000_courses` that seeds 10,000 courses, calls `BrowseCourses` with search + category + pagination (page 5 of 12), measures execution time, and asserts result time < 1000ms and exactly 12 rows in Result Set 1
 
-- [ ] T024 Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `Full_text_search_outperforms_like_search` that runs the same search query twice — once with `CONTAINS` (FTS) and once with `LIKE '%term%'` — on a dataset of 1,000+ courses, and asserts the FTS query is measurably faster (or at least not slower) with `Assert.True(ftsTime <= likeTime * 1.5)` (allowing 50% margin for FTS index overhead on small datasets)
+- [X] T024 Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `Full_text_search_outperforms_like_search` that runs the same search query twice — once with `CONTAINS` (FTS) and once with `LIKE '%term%'` — on a dataset of 1,000+ courses, and asserts the FTS query is measurably faster (or at least not slower) with `Assert.True(ftsTime <= likeTime * 1.5)` (allowing 50% margin for FTS index overhead on small datasets)
 
-- [ ] T025 Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_service_method_within_500ms` that calls `CourseCatalogService.BrowseAsync("test", null, 1, 12)` through the DI-resolved service (full stack: C# + EF Core + SQL), measures end-to-end time, and asserts < 500ms to validate the application layer adds acceptable overhead
+- [X] T025 Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_service_method_within_500ms` that calls `CourseCatalogService.BrowseAsync("test", null, 1, 12)` through the DI-resolved service (full stack: C# + EF Core + SQL), measures end-to-end time, and asserts < 500ms to validate the application layer adds acceptable overhead
 
-- [ ] T026 [P] Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `FTS_index_exists_after_migration` that connects to the database and queries `sys.fulltext_indexes` to verify a Full-Text Index exists on the `Courses` table, and queries `sys.fulltext_catalogs` to verify the catalog exists
+- [X] T026 [P] Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `FTS_index_exists_after_migration` that connects to the database and queries `sys.fulltext_indexes` to verify a Full-Text Index exists on the `Courses` table, and queries `sys.fulltext_catalogs` to verify the catalog exists
 
-- [ ] T027 [P] Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `Stored_procedure_fallback_to_like_when_fts_unavailable` that temporarily drops the FTS index, runs `BrowseCourses` with a search term, verifies results are still returned (using LIKE fallback), then recreates the FTS index in the test cleanup
+- [X] T027 [P] Create `PerformanceTests.cs` in `tests/Catalog.Tests/` with xUnit test `Stored_procedure_fallback_to_like_when_fts_unavailable` that temporarily drops the FTS index, runs `BrowseCourses` with a search term, verifies results are still returned (using LIKE fallback), then recreates the FTS index in the test cleanup
 
 ---
 
@@ -132,17 +132,17 @@
 
 **Purpose**: Verify the BrowseAsync service method and HTMX endpoint produce correct results for all acceptance scenarios.
 
-- [ ] T028 [P] Create `CourseCatalogSearchTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_returns_matching_courses_by_title` that calls `BrowseAsync("python", null, 1, 12)` and asserts all returned courses have titles containing "python" (case-insensitive)
+- [X] T028 [P] Create `CourseCatalogSearchTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_returns_matching_courses_by_title` that calls `BrowseAsync("python", null, 1, 12)` and asserts all returned courses have titles containing "python" (case-insensitive)
 
-- [ ] T029 [P] Create `CourseCatalogSearchTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_filters_by_category` that calls `BrowseAsync(null, "Programming", 1, 12)` and asserts all returned courses have Category == "Programming"
+- [X] T029 [P] Create `CourseCatalogSearchTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_filters_by_category` that calls `BrowseAsync(null, "Programming", 1, 12)` and asserts all returned courses have Category == "Programming"
 
-- [ ] T030 [P] Create `CourseCatalogSearchTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_combines_search_and_category` that calls `BrowseAsync("data", "Programming", 1, 12)` and asserts all results match both criteria
+- [X] T030 [P] Create `CourseCatalogSearchTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_combines_search_and_category` that calls `BrowseAsync("data", "Programming", 1, 12)` and asserts all results match both criteria
 
-- [ ] T031 Create `CourseCatalogSearchTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_returns_correct_page` that calls `BrowseAsync` with page 1 and page 2 and asserts different, non-overlapping course sets with correct ordering
+- [X] T031 Create `CourseCatalogSearchTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_returns_correct_page` that calls `BrowseAsync` with page 1 and page 2 and asserts different, non-overlapping course sets with correct ordering
 
-- [ ] T032 Create `CourseCatalogSearchTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_total_count_across_pages_matches` that paginates through all pages and asserts the sum of all page row counts equals `TotalCount` from Result Set 2
+- [X] T032 Create `CourseCatalogSearchTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_total_count_across_pages_matches` that paginates through all pages and asserts the sum of all page row counts equals `TotalCount` from Result Set 2
 
-- [ ] T033 [P] Create `CourseCatalogSearchTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_empty_result_for_no_match` that calls `BrowseAsync("xyznonexistent", null, 1, 12)` and asserts zero items and TotalCount == 0
+- [X] T033 [P] Create `CourseCatalogSearchTests.cs` in `tests/Catalog.Tests/` with xUnit test `BrowseAsync_empty_result_for_no_match` that calls `BrowseAsync("xyznonexistent", null, 1, 12)` and asserts zero items and TotalCount == 0
 
 ---
 
