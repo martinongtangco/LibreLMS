@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace LibreLms.Host.Pages.Admin.Courses;
 
+[Authorize(Roles = "SuperUser,OrgAdmin")]
 public class CreateCourseModel : PageModel
 {
     private readonly IHttpClientFactory _httpClientFactory;

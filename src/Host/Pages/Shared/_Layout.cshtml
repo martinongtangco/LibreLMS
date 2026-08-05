@@ -11,6 +11,12 @@
     <nav class="navbar">
         <span class="brand">Libre LMS</span>
 
+        @* Server-side role check — computed outside the if block so it's in scope for the script tag too *@
+        @{
+            var hasAdminRole = User.Identity?.IsAuthenticated == true
+                && (User.IsInRole("SuperUser") || User.IsInRole("OrgAdmin"));
+        }
+
         @if (User.Identity?.IsAuthenticated == true)
         {
             <button class="hamburger-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
@@ -18,13 +24,16 @@
             </button>
 
             <div class="nav-links" id="nav-links">
-                @* Mobile-only role pill (centered in hamburger dropdown) *@
-                <div class="mobile-role-pill">
-                    <div class="role-pill" id="role-pill-mobile">
-                        <button type="button" class="role-segment" data-value="learner">Learner</button>
-                        <button type="button" class="role-segment" data-value="admin">Admin</button>
+                @* Mobile-only role pill — shown only to users with admin roles *@
+                @if (hasAdminRole)
+                {
+                    <div class="mobile-role-pill">
+                        <div class="role-pill" id="role-pill-mobile">
+                            <button type="button" class="role-segment" data-value="learner">Learner</button>
+                            <button type="button" class="role-segment" data-value="admin">Admin</button>
+                        </div>
                     </div>
-                </div>
+                }
 
                 <a asp-page="/MyCourses/Index" class="nav-link" data-page="my-courses">
                     <i data-lucide="graduation-cap" class="nav-icon"></i> My Courses
@@ -32,20 +41,26 @@
                 <a asp-page="/Courses/Index" class="nav-link" data-page="browse-courses">
                     <i data-lucide="book-open" class="nav-icon"></i> Browse Courses
                 </a>
-                <a asp-page="/Admin/Dashboard/Index" class="nav-link admin-link" data-role-link="admin" data-page="dashboard">
-                    <i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard
-                </a>
+                @if (hasAdminRole)
+                {
+                    <a asp-page="/Admin/Dashboard/Index" class="nav-link admin-link" data-role-link="admin" data-page="dashboard">
+                        <i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard
+                    </a>
+                }
             </div>
 
             <div style="flex: 1"></div>
 
             @* Account Control (spec 020) — div role=button, NOT a button *@
             <div class="account-control" id="account-control" role="button" tabindex="0" aria-label="Account menu" aria-expanded="false">
-                @* Role toggle pill — always visible, stops propagation *@
-                <div class="role-pill" id="role-pill" onclick="event.stopPropagation()">
-                    <button type="button" class="role-segment" data-value="learner">Learner</button>
-                    <button type="button" class="role-segment" data-value="admin">Admin</button>
-                </div>
+                @* Role toggle pill — shown only to users with admin roles *@
+                @if (hasAdminRole)
+                {
+                    <div class="role-pill" id="role-pill" onclick="event.stopPropagation()">
+                        <button type="button" class="role-segment" data-value="learner">Learner</button>
+                        <button type="button" class="role-segment" data-value="admin">Admin</button>
+                    </div>
+                }
 
                 @* Static name — does NOT change with role toggle *@
                 <span class="account-name">@User.Identity.Name</span>
@@ -106,9 +121,13 @@
 
         // ── Role switcher — client-side nav link visibility toggle (spec 020) ──
         (function() {
+            var hasAdminRole = @(hasAdminRole ? "true" : "false");
+
+            // Pure Learners: no toggle, no admin links — just return early
+            if (!hasAdminRole) return;
+
             function setRole(role) {
                 var pills = document.querySelectorAll('.role-pill');
-                var adminLinks = document.querySelectorAll('[data-role-link="admin"]');
 
                 // Update all role pills (desktop + mobile)
                 pills.forEach(function(pill) {
@@ -129,8 +148,8 @@
                 localStorage.setItem('nav-role-view', role);
             }
 
-            // Initialize from localStorage or default to learner
-            var saved = localStorage.getItem('nav-role-view') || 'learner';
+            // Initialize from localStorage or default to admin for admin-capable users
+            var saved = localStorage.getItem('nav-role-view') || 'admin';
             setRole(saved);
 
             // Bind clicks on all role segments
