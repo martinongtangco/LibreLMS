@@ -1,3 +1,5 @@
+using System.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using LibreLms.Modules.Catalog.Domain;
 using LibreLms.Modules.Catalog.Infrastructure;
@@ -101,4 +103,100 @@ public class CourseCatalogService(CatalogDbContext context)
             .OrderBy(c => c.Title)
             .ToListAsync();
     }
+
+    /// <summary>
+    /// Browse courses with search, category filter, and pagination using a T-SQL stored procedure.
+    /// Uses SQL Server Full-Text Search (FTS) when available, falling back to LIKE-based search.
+    /// </summary>
+    public async Task<BrowseResult> BrowseAsync(
+        string? searchTerm,
+        string? category,
+        int pageNumber,
+        int pageSize,
+        HashSet<Guid>? visibleCourseIds = null)
+    {
+        // Trim whitespace from search term
+        searchTerm = searchTerm?.Trim();
+        if (string.IsNullOrWhiteSpace(searchTerm))
+            searchTerm = null;
+
+        if (string.IsNullOrWhiteSpace(category))
+            category = null;
+
+        if (pageNumber < 1)
+            pageNumber = 1;
+
+        if (pageSize < 1)
+            pageSize = 12;
+
+        var connection = context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync();
+
+        try
+        {
+            using var command = new SqlCommand("BrowseCourses", (SqlConnection)connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            command.Parameters.Add("@SearchTerm", SqlDbType.NVarChar, 200).Value = searchTerm ?? (object)DBNull.Value;
+            command.Parameters.Add("@Category", SqlDbType.NVarChar, 100).Value = category ?? (object)DBNull.Value;
+            command.Parameters.Add("@PageSize", SqlDbType.Int).Value = pageSize;
+            command.Parameters.Add("@PageNumber", SqlDbType.Int).Value = pageNumber;
+
+            var allItems = new List<CourseItemDto>();
+            var totalCount = 0;
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            // Result Set 1: Course items
+            while (reader.Read())
+            {
+                allItems.Add(new CourseItemDto(
+                    reader.GetGuid(0),
+                    reader.GetString(1),
+                    reader.GetString(2),
+                    reader.GetString(3),
+                    reader.GetString(4)
+                ));
+            }
+
+            // Move to Result Set 2: Total count
+            await reader.NextResultAsync();
+            if (reader.Read())
+            {
+                totalCount = reader.GetInt32(0);
+            }
+
+            // Apply org visibility filter in C# (avoids TVP complexity)
+            var filteredItems = allItems;
+            if (visibleCourseIds != null && visibleCourseIds.Count > 0)
+            {
+                filteredItems = allItems.Where(c => visibleCourseIds.Contains(c.Id)).ToList();
+            }
+
+            return new BrowseResult(filteredItems, totalCount, pageNumber, pageSize);
+        }
+        finally
+        {
+            if (connection.State == ConnectionState.Open)
+                await connection.CloseAsync();
+        }
+    }
 }
+
+/// <summary>DTO for a course item returned from BrowseAsync.</summary>
+public record CourseItemDto(
+    Guid Id,
+    string Title,
+    string ShortDescription,
+    string Category,
+    string Duration);
+
+/// <summary>Paginated browse result from the stored procedure.</summary>
+public record BrowseResult(
+    IEnumerable<CourseItemDto> Items,
+    int TotalCount,
+    int PageNumber,
+    int PageSize);
