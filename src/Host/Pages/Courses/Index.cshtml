@@ -7,7 +7,7 @@
 <div id="main-content">
     <h1>Browse Courses</h1>
 
-    <form class="filters">
+    <form class="filters" id="filter-form">
         <input type="text"
                id="search-input"
                name="search"
@@ -16,11 +16,13 @@
                hx-get="/Courses/Index?handler=CourseList"
                hx-trigger="keyup changed delay:300ms"
                hx-target="#course-list"
+               hx-include="#filter-form #page-reset"
                hx-indicator=".htmx-indicator" />
         <select name="category"
                 hx-get="/Courses/Index?handler=CourseList"
                 hx-trigger="change"
                 hx-target="#course-list"
+                hx-include="#filter-form #page-reset"
                 hx-indicator=".htmx-indicator">
             <option value="">All Categories</option>
             @foreach (var cat in Model.Categories)
@@ -31,8 +33,12 @@
         <a asp-page="Index" class="btn btn-ghost">Clear</a>
     </form>
 
+    <!-- Hidden field: resets to page 1 when search/category changes -->
+    <input type="hidden" name="page" value="1" id="page-reset" class="search-page-reset" />
+
     <div id="course-list" hx-on::htmx:after-request="if(event.detail.failed) { document.getElementById('course-list').innerHTML = `<div class='error-message'><strong>Error:</strong> Request failed. Please try again.</div>`; }">
         <div class="htmx-indicator text-center text-muted" style="padding: 1rem;">⏳ Loading...</div>
-        @await Html.PartialAsync("_CourseList", Model.Courses)
+        @await Html.PartialAsync("_CourseListWithPagination",
+            new BrowseViewModel(Model.Courses, Model.TotalCount, Model.PageNumber, Model.PageSize, Model.Search, Model.Category))
     </div>
 </div>

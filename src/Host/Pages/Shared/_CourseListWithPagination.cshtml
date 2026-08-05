@@ -1,0 +1,20 @@
+@using LibreLms.Host.Pages.Courses
+@model BrowseViewModel
+
+@if (!Model.Courses.Any())
+{
+    <div class="card empty-state" style="padding: 2rem;">
+        <p class="text-muted">No courses match your search.</p>
+    </div>
+}
+else
+{
+    <div class="metric-cards">
+        @foreach (var course in Model.Courses)
+        {
+            @await Html.PartialAsync("_CourseCard", course)
+        }
+    </div>
+}
+
+@await Html.PartialAsync("_Pagination", (Model.PageNumber, Model.TotalCount, Model.PageSize, Model.Search, Model.Category))
