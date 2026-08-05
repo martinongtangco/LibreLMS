@@ -46,6 +46,21 @@
                     <a asp-page="/Admin/Dashboard/Index" class="nav-link admin-link" data-role-link="admin" data-page="dashboard">
                         <i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard
                     </a>
+                    <a asp-page="/Admin/Courses/Index" class="nav-link admin-link" data-role-link="admin" data-page="admin-courses">
+                        <i data-lucide="layers" class="nav-icon"></i> Courses
+                    </a>
+                    <a asp-page="/Admin/Enrollments/Index" class="nav-link admin-link" data-role-link="admin" data-page="admin-enrollments">
+                        <i data-lucide="users" class="nav-icon"></i> Enrollments
+                    </a>
+                    <a asp-page="/Admin/Learners/Index" class="nav-link admin-link" data-role-link="admin" data-page="admin-learners">
+                        <i data-lucide="user-round" class="nav-icon"></i> Learners
+                    </a>
+                    <a asp-page="/Admin/Organizations/Index" class="nav-link admin-link" data-role-link="admin" data-page="admin-orgs">
+                        <i data-lucide="building-2" class="nav-icon"></i> Organizations
+                    </a>
+                    <a asp-page="/Admin/Upload" class="nav-link admin-link" data-role-link="admin" data-page="admin-upload">
+                        <i data-lucide="upload" class="nav-icon"></i> Upload
+                    </a>
                 }
             </div>
 
@@ -107,7 +122,12 @@
             var linkMap = {
                 '/MyCourses/Index': 'my-courses',
                 '/Courses/Index': 'browse-courses',
-                '/Admin/Dashboard/Index': 'dashboard'
+                '/Admin/Dashboard/Index': 'dashboard',
+                '/Admin/Courses/Index': 'admin-courses',
+                '/Admin/Enrollments/Index': 'admin-enrollments',
+                '/Admin/Learners/Index': 'admin-learners',
+                '/Admin/Organizations/Index': 'admin-orgs',
+                '/Admin/Upload': 'admin-upload'
             };
             for (var urlPage in linkMap) {
                 var pageKey = linkMap[urlPage];
