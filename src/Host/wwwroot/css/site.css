@@ -178,7 +178,19 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0;
+  gap: 4px;
+}
+
+/* Admin link visibility — controlled by body class (spec 020) */
+body.role-learner [data-role-link="admin"] {
+  display: none !important;
+}
+body.role-admin [data-role-link="admin"] {
+  display: inline-flex !important;
+}
+/* Default: hide admin links until role is set */
+[data-role-link="admin"] {
+  display: none;
 }
 
 /* Nav links — spec 020 */
@@ -190,17 +202,39 @@ h1, h2, h3, h4, h5, h6 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 0;
-  transition: color 0.15s ease;
+  padding: 8px 12px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  border-radius: 6px;
 }
 
 .navbar .nav-links a.nav-link:hover {
   color: #ffffff;
   text-decoration: none;
+  background: var(--nav-hover);
 }
 
 .navbar .nav-links a.nav-link.active {
   color: var(--accent);
+}
+
+/* Login link — direct child of .navbar (not inside .nav-links) */
+.navbar > a.nav-link {
+  color: var(--nav-text);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  border-radius: 6px;
+}
+
+.navbar > a.nav-link:hover {
+  color: #ffffff;
+  text-decoration: none;
+  background: var(--nav-hover);
 }
 
 /* Nav item icons (Lucide SVG) */
@@ -1419,9 +1453,16 @@ hr.separator {
 
   .navbar .nav-links a.nav-link {
     width: auto !important;
-    padding: 8px 0 !important;
+    padding: 8px 12px !important;
     border-bottom: none !important;
-    border-radius: 0 !important;
+    border-radius: 6px !important;
+  }
+
+  .navbar > a.nav-link {
+    width: auto !important;
+    padding: 8px 12px !important;
+    border-bottom: none !important;
+    border-radius: 6px !important;
   }
 
   /* Hide mobile-only role pill wrapper on desktop */

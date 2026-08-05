@@ -106,10 +106,10 @@
 
         // ── Role switcher — client-side nav link visibility toggle (spec 020) ──
         (function() {
-            var pills = document.querySelectorAll('.role-pill');
-            var adminLinks = document.querySelectorAll('.admin-link');
-
             function setRole(role) {
+                var pills = document.querySelectorAll('.role-pill');
+                var adminLinks = document.querySelectorAll('[data-role-link="admin"]');
+
                 // Update all role pills (desktop + mobile)
                 pills.forEach(function(pill) {
                     pill.setAttribute('data-role', role);
@@ -118,10 +118,14 @@
                         seg.classList.toggle('active', seg.getAttribute('data-value') === role);
                     });
                 });
-                // Toggle admin links visibility
-                adminLinks.forEach(function(link) {
-                    link.style.display = role === 'admin' ? '' : 'none';
-                });
+                // Toggle admin links visibility using CSS class on body
+                if (role === 'admin') {
+                    document.body.classList.add('role-admin');
+                    document.body.classList.remove('role-learner');
+                } else {
+                    document.body.classList.add('role-learner');
+                    document.body.classList.remove('role-admin');
+                }
                 localStorage.setItem('nav-role-view', role);
             }
 
