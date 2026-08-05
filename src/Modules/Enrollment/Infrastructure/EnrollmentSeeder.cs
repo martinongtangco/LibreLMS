@@ -20,6 +20,16 @@ public static class EnrollmentSeeder
         return Convert.ToBase64String(hash);
     }
 
+    // Canonical seed data: email → expected role.
+    // Always enforce these roles — never trust stale DB state.
+    private static readonly Dictionary<string, string> SeedRoles = new()
+    {
+        { "alice@example.com", RoleNames.Learner },
+        { "bob@example.com", RoleNames.Learner },
+        { "carol@example.com", RoleNames.Learner },
+        { "admin@example.com", RoleNames.OrgAdmin },
+    };
+
     public static void Seed(EnrollmentDbContext context)
     {
         var passwordHash = HashPassword("password123");
@@ -69,6 +79,16 @@ public static class EnrollmentSeeder
         };
 
         context.Students.AddRange(students);
+        context.SaveChanges();
+
+        // Enforce canonical roles on ALL seed students (fixes stale data from prior runs)
+        foreach (var student in context.Students)
+        {
+            if (SeedRoles.TryGetValue(student.Email, out var expectedRole))
+            {
+                student.Roles = expectedRole;
+            }
+        }
         context.SaveChanges();
 
         // Enroll Alice in the seeded SCORM course ("Introduction to C#" - course ID from CatalogSeeder)
