@@ -24,7 +24,7 @@ All paths are relative to the repository root (`/workspace`).
 
 **Purpose**: Create the implementation branch from master.
 
-- [ ] T001 Create branch `story/020-nav-account-menu` from `master` and check it out
+- [X] T001 Create branch `story/020-nav-account-menu` from `master` and check it out
 
 ---
 
@@ -34,10 +34,10 @@ All paths are relative to the repository root (`/workspace`).
 
 **⚠️ CRITICAL**: No user story work can begin until color tokens and base nav styles are in place.
 
-- [ ] T002 [P] Add nav color custom properties to `:root` in `src/Host/wwwroot/css/site.css` (`--nav-bg: #201e1d`, `--nav-hover: #3a3634`, `--page-bg: #f5ead8`, `--accent: #c67139`, `--accent-text: #8a4f26`, `--nav-text: #c9c2ba`, `--border-light: #e4d9c8`, `--mobile-active-bg: #f3ddc9`)
-- [ ] T003 [P] Update `body` background to use `--page-bg` (#f5ead8) in `src/Host/wwwroot/css/site.css`
-- [ ] T004 Rewrite `.navbar` base styles in `src/Host/wwwroot/css/site.css`: background `--nav-bg`, flex row, align-items center, gap 24px, padding 12px 24px, flex-wrap wrap
-- [ ] T005 Update `.navbar .brand` styles in `src/Host/wwwroot/css/site.css`: Caprasimo serif display font, 20px, color `--page-bg` (#f5ead8), margin-right 16px
+- [X] T002 [P] Add nav color custom properties to `:root` in `src/Host/wwwroot/css/site.css` (`--nav-bg: #201e1d`, `--nav-hover: #3a3634`, `--page-bg: #f5ead8`, `--accent: #c67139`, `--accent-text: #8a4f26`, `--nav-text: #c9c2ba`, `--border-light: #e4d9c8`, `--mobile-active-bg: #f3ddc9`)
+- [X] T003 [P] Update `body` background to use `--page-bg` (#f5ead8) in `src/Host/wwwroot/css/site.css`
+- [X] T004 Rewrite `.navbar` base styles in `src/Host/wwwroot/css/site.css`: background `--nav-bg`, flex row, align-items center, gap 24px, padding 12px 24px, flex-wrap wrap
+- [X] T005 Update `.navbar .brand` styles in `src/Host/wwwroot/css/site.css`: Caprasimo serif display font, 20px, color `--page-bg` (#f5ead8), margin-right 16px
 
 **Checkpoint**: Nav bar renders with dark background and correct brand styling. Page background is #f5ead8.
 
@@ -51,14 +51,14 @@ All paths are relative to the repository root (`/workspace`).
 
 ### Implementation for User Story 1
 
-- [ ] T006 [US1] Rewrite nav links section in `src/Host/Pages/Shared/_Layout.cshtml`: replace current nav-links structure with flex-spacer (`<div style="flex:1"></div>`) pushing account control right; links for My Courses (graduation-cap icon) and Browse Courses (book-open icon) as `<a>` tags with `asp-page` routing
-- [ ] T007 [US1] Add admin-conditional Dashboard link in `src/Host/Pages/Shared/_Layout.cshtml`: `<a asp-page="/Admin/Dashboard/Index">` wrapped in role-check data attribute for client-side toggle (data-role-link="admin"), icon `layout-dashboard`
-- [ ] T008 [US1] Remove Organizations, Org Chart, Learners, Courses, Enrollments, Create Course, Upload SCORM links from nav (spec does not include them; these remain accessible via Dashboard page)
-- [ ] T009 [US1] Style nav links in `src/Host/wwwroot/css/site.css`: 14px font, weight 600, color `--nav-text` (#c9c2ba), icon 16px stroke-width 2.75 + label, gap 6px, no border/background, padding 8px 0
-- [ ] T010 [US1] Add nav link hover state in `src/Host/wwwroot/css/site.css`: color `#ffffff` on hover
-- [ ] T011 [US1] Add active link detection in `src/Host/Pages/Shared/_Layout.cshtml`: compare `@Context.Request.Path` with each link target to apply `class="active"` when matching
-- [ ] T012 [US1] Style active nav link in `src/Host/wwwroot/css/site.css`: color `--accent` (#c67139) for `.navbar a.active`
-- [ ] T013 [US1] Update role switcher JS in `src/Host/Pages/Shared/_Layout.cshtml`: toggle admin links visibility based on `data-role` attribute; hide all `data-role-link="admin"` elements when role is "learner"
+- [X] T006 [US1] Rewrite nav links section in `src/Host/Pages/Shared/_Layout.cshtml`: replace current nav-links structure with flex-spacer (`<div style="flex:1"></div>`) pushing account control right; links for My Courses (graduation-cap icon) and Browse Courses (book-open icon) as `<a>` tags with `asp-page` routing
+- [X] T007 [US1] Add admin-conditional Dashboard link in `src/Host/Pages/Shared/_Layout.cshtml`: `<a asp-page="/Admin/Dashboard/Index">` wrapped in role-check data attribute for client-side toggle (data-role-link="admin"), icon `layout-dashboard`
+- [X] T008 [US1] Remove Organizations, Org Chart, Learners, Courses, Enrollments, Create Course, Upload SCORM links from nav (spec does not include them; these remain accessible via Dashboard page)
+- [X] T009 [US1] Style nav links in `src/Host/wwwroot/css/site.css`: 14px font, weight 600, color `--nav-text` (#c9c2ba), icon 16px stroke-width 2.75 + label, gap 6px, no border/background, padding 8px 0
+- [X] T010 [US1] Add nav link hover state in `src/Host/wwwroot/css/site.css`: color `#ffffff` on hover
+- [X] T011 [US1] Add active link detection in `src/Host/Pages/Shared/_Layout.cshtml`: compare `@Context.Request.Path` with each link target to apply `class="active"` when matching
+- [X] T012 [US1] Style active nav link in `src/Host/wwwroot/css/site.css`: color `--accent` (#c67139) for `.navbar a.active`
+- [X] T013 [US1] Update role switcher JS in `src/Host/Pages/Shared/_Layout.cshtml`: toggle admin links visibility based on `data-role` attribute; hide all `data-role-link="admin"` elements when role is "learner"
 
 **Checkpoint**: Nav bar displays brand + links with correct colors. Active link highlighted. Admin links toggle with role switcher. User can navigate between pages.
 
@@ -72,16 +72,16 @@ All paths are relative to the repository root (`/workspace`).
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Replace avatar + profile control in `src/Host/Pages/Shared/_Layout.cshtml` with new account control: `<div class="account-control" id="account-control" role="button" tabindex="0" aria-label="Account menu" aria-expanded="false">` containing role toggle pill, name span, and chevron icon
-- [ ] T015 [US2] Build role toggle pill inside account control in `src/Host/Pages/Shared/_Layout.cshtml`: `<div class="role-pill" id="role-pill">` with two `<button class="role-segment">` elements (Learner/Admin), always visible for all authenticated users (remove `@if (User.IsInRole(...))` guard)
-- [ ] T016 [US2] Add static name display in `src/Host/Pages/Shared/_Layout.cshtml`: `<span class="account-name">@User.Identity.Name</span>` at 13px weight 600, color #f5ead8 — rendered outside any role-conditional block
-- [ ] T017 [US2] Add chevron-down icon after name in `src/Host/Pages/Shared/_Layout.cshtml`: `<i data-lucide="chevron-down" class="account-chevron"></i>` at 14px, stroke-width 2.75, color #c9c2ba
-- [ ] T018 [P] Style account control wrapper in `src/Host/wwwroot/css/site.css`: position relative, flex row, align-items center, gap 8px, padding 4px 8px 4px 4px, border-radius 999px (pill), cursor pointer, hover background `--nav-hover` (#3a3634)
-- [ ] T019 [P] Style role toggle pill in `src/Host/wwwroot/css/site.css`: flex row, gap 2px, background `--nav-hover` (#3a3634), border-radius 999px, padding 3px
-- [ ] T020 [P] Style role segments in `src/Host/wwwroot/css/site.css`: 12px font, weight 700, padding 6px 14px, border-radius 999px, transparent background, color #c9c2ba; active state: background `--accent` (#c67139), color #ffffff
-- [ ] T021 [US2] Write account control JS handler in `src/Host/Pages/Shared/_Layout.cshtml`: click on `.account-control` toggles dropdown; click on `.role-pill` calls `event.stopPropagation()` and toggles role only
-- [ ] T022 [US2] Update role switcher JS in `src/Host/Pages/Shared/_Layout.cshtml`: integrate with account control role pill; `setRole()` updates pill active state, admin link visibility, and localStorage; `stopPropagation` on pill clicks
-- [ ] T023 [US2] Add keyboard support for account control in `src/Host/Pages/Shared/_Layout.cshtml`: Enter/Space toggles dropdown, Escape closes dropdown
+- [X] T014 [US2] Replace avatar + profile control in `src/Host/Pages/Shared/_Layout.cshtml` with new account control: `<div class="account-control" id="account-control" role="button" tabindex="0" aria-label="Account menu" aria-expanded="false">` containing role toggle pill, name span, and chevron icon
+- [X] T015 [US2] Build role toggle pill inside account control in `src/Host/Pages/Shared/_Layout.cshtml`: `<div class="role-pill" id="role-pill">` with two `<button class="role-segment">` elements (Learner/Admin), always visible for all authenticated users (remove `@if (User.IsInRole(...))` guard)
+- [X] T016 [US2] Add static name display in `src/Host/Pages/Shared/_Layout.cshtml`: `<span class="account-name">@User.Identity.Name</span>` at 13px weight 600, color #f5ead8 — rendered outside any role-conditional block
+- [X] T017 [US2] Add chevron-down icon after name in `src/Host/Pages/Shared/_Layout.cshtml`: `<i data-lucide="chevron-down" class="account-chevron"></i>` at 14px, stroke-width 2.75, color #c9c2ba
+- [X] T018 [P] Style account control wrapper in `src/Host/wwwroot/css/site.css`: position relative, flex row, align-items center, gap 8px, padding 4px 8px 4px 4px, border-radius 999px (pill), cursor pointer, hover background `--nav-hover` (#3a3634)
+- [X] T019 [P] Style role toggle pill in `src/Host/wwwroot/css/site.css`: flex row, gap 2px, background `--nav-hover` (#3a3634), border-radius 999px, padding 3px
+- [X] T020 [P] Style role segments in `src/Host/wwwroot/css/site.css`: 12px font, weight 700, padding 6px 14px, border-radius 999px, transparent background, color #c9c2ba; active state: background `--accent` (#c67139), color #ffffff
+- [X] T021 [US2] Write account control JS handler in `src/Host/Pages/Shared/_Layout.cshtml`: click on `.account-control` toggles dropdown; click on `.role-pill` calls `event.stopPropagation()` and toggles role only
+- [X] T022 [US2] Update role switcher JS in `src/Host/Pages/Shared/_Layout.cshtml`: integrate with account control role pill; `setRole()` updates pill active state, admin link visibility, and localStorage; `stopPropagation` on pill clicks
+- [X] T023 [US2] Add keyboard support for account control in `src/Host/Pages/Shared/_Layout.cshtml`: Enter/Space toggles dropdown, Escape closes dropdown
 
 **Checkpoint**: Account control shows role pill + name + chevron. Role toggle changes nav links without changing name. Click opens/closes dropdown.
 
@@ -95,11 +95,11 @@ All paths are relative to the repository root (`/workspace`).
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Build dropdown markup in `src/Host/Pages/Shared/_Layout.cshtml`: `<div class="account-dropdown" id="account-dropdown">` inside account control, containing two `<a>` rows: View Profile (user icon, `asp-page="/Account/Profile"`) and Settings (settings icon, `asp-page="/Account/Settings"`), each with icon 15px stroke-width 2.75, gap 10px
-- [ ] T025 [US3] Style dropdown in `src/Host/wwwroot/css/site.css`: position absolute, top `calc(100% + 8px)`, right 0, min-width 190px, padding 8px, white background, border-radius 12px, subtle shadow, z-index 1000, display none by default, `.is-open` shows display block
-- [ ] T026 [US3] Style dropdown rows in `src/Host/wwwroot/css/site.css`: full width, flex row, align-items center, gap 10px, padding 8px 12px, border-radius 8px, 14px font, text-align left, no border/background; hover: background `--border-light` (#e4d9c8)
-- [ ] T027 [US3] Add dropdown close-on-outside-click handler in `src/Host/Pages/Shared/_Layout.cshtml`: `document.addEventListener('click', ...)` checks if click target is outside `.account-control`, closes dropdown
-- [ ] T028 [US3] Add chevron rotation in `src/Host/wwwroot/css/site.css`: `.account-control.is-open .account-chevron` gets `transform: rotate(180deg)` with transition
+- [X] T024 [US3] Build dropdown markup in `src/Host/Pages/Shared/_Layout.cshtml`: `<div class="account-dropdown" id="account-dropdown">` inside account control, containing two `<a>` rows: View Profile (user icon, `asp-page="/Account/Profile"`) and Settings (settings icon, `asp-page="/Account/Settings"`), each with icon 15px stroke-width 2.75, gap 10px
+- [X] T025 [US3] Style dropdown in `src/Host/wwwroot/css/site.css`: position absolute, top `calc(100% + 8px)`, right 0, min-width 190px, padding 8px, white background, border-radius 12px, subtle shadow, z-index 1000, display none by default, `.is-open` shows display block
+- [X] T026 [US3] Style dropdown rows in `src/Host/wwwroot/css/site.css`: full width, flex row, align-items center, gap 10px, padding 8px 12px, border-radius 8px, 14px font, text-align left, no border/background; hover: background `--border-light` (#e4d9c8)
+- [X] T027 [US3] Add dropdown close-on-outside-click handler in `src/Host/Pages/Shared/_Layout.cshtml`: `document.addEventListener('click', ...)` checks if click target is outside `.account-control`, closes dropdown
+- [X] T028 [US3] Add chevron rotation in `src/Host/wwwroot/css/site.css`: `.account-control.is-open .account-chevron` gets `transform: rotate(180deg)` with transition
 
 **Checkpoint**: Dropdown opens with View Profile and Settings. Clicking navigates correctly. Closes on outside click. No Logout present.
 
@@ -113,7 +113,7 @@ All paths are relative to the repository root (`/workspace`).
 
 ### Implementation for User Story 4
 
-- [ ] T029 [US4] Verify `src/Host/Pages/Account/Settings.cshtml` has Logout as last row of preferences list (after Email notifications and Theme) — no edit expected, confirm structure matches spec
+- [X] T029 [US4] Verify `src/Host/Pages/Account/Settings.cshtml` has Logout as last row of preferences list (after Email notifications and Theme) — no edit expected, confirm structure matches spec
 
 **Checkpoint**: Settings page has Logout as last row. Top nav has zero Logout instances.
 
@@ -127,15 +127,15 @@ All paths are relative to the repository root (`/workspace`).
 
 ### Implementation for User Story 5
 
-- [ ] T030 [US5] Add hamburger button to `src/Host/Pages/Shared/_Layout.cshtml`: `<button class="hamburger-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">` with menu icon (20px, stroke-width 2.75, padding 6px), visible only at ≤760px
-- [ ] T031 [US5] Restructure mobile nav in `src/Host/Pages/Shared/_Layout.cshtml`: at ≤760px, nav links hidden by default; hamburger click opens a dropdown (absolute, top `calc(100% + 8px)`, left/right 16px, card surface) containing role toggle pill (centered, margin 8px) then page links stacked as full-width rows
-- [ ] T032 [US5] Hide account name on mobile in `src/Host/wwwroot/css/site.css`: `.account-name { display: none; }` inside `@media (max-width: 760px)` block
-- [ ] T033 [P] Style mobile hamburger dropdown in `src/Host/wwwroot/css/site.css`: absolute position, card surface (white bg, border-radius 12px, shadow), grid gap 2px, padding 8px; page links as full-width rows with padding 12px, border-radius 8px
-- [ ] T034 [P] Style mobile active link in `src/Host/wwwroot/css/site.css`: background `--mobile-active-bg` (#f3ddc9), text color `--accent-text` (#8a4f26) for active links in hamburger menu
-- [ ] T035 [P] Style hamburger button in `src/Host/wwwroot/css/site.css`: 20px icon, stroke-width 2.75, padding 6px, hover background `--nav-hover` (#3a3634), hidden at >760px
-- [ ] T036 [US5] Write hamburger toggle JS in `src/Host/Pages/Shared/_Layout.cshtml`: click toggles `.is-open` on nav-links dropdown; update aria-expanded; close on outside click
-- [ ] T037 [P] Add page-level mobile adjustments in `src/Host/wwwroot/css/site.css` (`@media (max-width: 760px)`): `h1 { font-size: 28px; }`, `.container { padding: 24px 16px 32px; }`, `.filters { flex-direction: column; }`, `.flex-row, .flex-between { flex-direction: column; }`
-- [ ] T038 [US5] Hide desktop nav links at ≤760px and show hamburger dropdown: update existing `@media (max-width: 760px)` block in `src/Host/wwwroot/css/site.css` to use the new mobile dropdown pattern
+- [X] T030 [US5] Add hamburger button to `src/Host/Pages/Shared/_Layout.cshtml`: `<button class="hamburger-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">` with menu icon (20px, stroke-width 2.75, padding 6px), visible only at ≤760px
+- [X] T031 [US5] Restructure mobile nav in `src/Host/Pages/Shared/_Layout.cshtml`: at ≤760px, nav links hidden by default; hamburger click opens a dropdown (absolute, top `calc(100% + 8px)`, left/right 16px, card surface) containing role toggle pill (centered, margin 8px) then page links stacked as full-width rows
+- [X] T032 [US5] Hide account name on mobile in `src/Host/wwwroot/css/site.css`: `.account-name { display: none; }` inside `@media (max-width: 760px)` block
+- [X] T033 [P] Style mobile hamburger dropdown in `src/Host/wwwroot/css/site.css`: absolute position, card surface (white bg, border-radius 12px, shadow), grid gap 2px, padding 8px; page links as full-width rows with padding 12px, border-radius 8px
+- [X] T034 [P] Style mobile active link in `src/Host/wwwroot/css/site.css`: background `--mobile-active-bg` (#f3ddc9), text color `--accent-text` (#8a4f26) for active links in hamburger menu
+- [X] T035 [P] Style hamburger button in `src/Host/wwwroot/css/site.css`: 20px icon, stroke-width 2.75, padding 6px, hover background `--nav-hover` (#3a3634), hidden at >760px
+- [X] T036 [US5] Write hamburger toggle JS in `src/Host/Pages/Shared/_Layout.cshtml`: click toggles `.is-open` on nav-links dropdown; update aria-expanded; close on outside click
+- [X] T037 [P] Add page-level mobile adjustments in `src/Host/wwwroot/css/site.css` (`@media (max-width: 760px)`): `h1 { font-size: 28px; }`, `.container { padding: 24px 16px 32px; }`, `.filters { flex-direction: column; }`, `.flex-row, .flex-between { flex-direction: column; }`
+- [X] T038 [US5] Hide desktop nav links at ≤760px and show hamburger dropdown: update existing `@media (max-width: 760px)` block in `src/Host/wwwroot/css/site.css` to use the new mobile dropdown pattern
 
 **Checkpoint**: At ≤760px, hamburger replaces nav links. Dropdown shows role pill + page links. Account name hidden. Page heading 28px, reduced padding, stacked layouts.
 
@@ -145,12 +145,12 @@ All paths are relative to the repository root (`/workspace`).
 
 **Purpose**: Clean up legacy styles, ensure no regressions, validate complete nav behavior.
 
-- [ ] T039 Remove old `.nav-profile`, `.nav-role-switcher` (standalone), and avatar CSS from `src/Host/wwwroot/css/site.css` that are superseded by the new account control styles
-- [ ] T040 Remove old desktop nav media query overrides (`@media (min-width: 761px)`) from `src/Host/wwwroot/css/site.css` that reference the previous nav structure
-- [ ] T041 [P] Audit `src/Host/wwwroot/css/site.css` for any remaining references to `--color-brand` in nav selectors; replace with `--nav-bg` or remove
-- [ ] T042 Run `dotnet test tests/ArchitectureTests` to confirm no module boundary violations
-- [ ] T043 Run quickstart.md validation scenarios at 375px, 760px, 761px, 1280px, 1920px viewports
-- [ ] T044 Verify all interactive elements have hover states: nav links (#ffffff), account control (#3a3634), dropdown rows (#e4d9c8), hamburger (#3a3634)
+- [X] T039 Remove old `.nav-profile`, `.nav-role-switcher` (standalone), and avatar CSS from `src/Host/wwwroot/css/site.css` that are superseded by the new account control styles
+- [X] T040 Remove old desktop nav media query overrides (`@media (min-width: 761px)`) from `src/Host/wwwroot/css/site.css` that reference the previous nav structure
+- [X] T041 [P] Audit `src/Host/wwwroot/css/site.css` for any remaining references to `--color-brand` in nav selectors; replace with `--nav-bg` or remove
+- [X] T042 Run `dotnet test tests/ArchitectureTests` to confirm no module boundary violations
+- [X] T043 Run quickstart.md validation scenarios at 375px, 760px, 761px, 1280px, 1920px viewports
+- [X] T044 Verify all interactive elements have hover states: nav links (#ffffff), account control (#3a3634), dropdown rows (#e4d9c8), hamburger (#3a3634)
 
 ---
 
