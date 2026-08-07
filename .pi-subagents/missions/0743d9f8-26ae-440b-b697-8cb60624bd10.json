@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "id": "0743d9f8-26ae-440b-b697-8cb60624bd10",
+  "title": "Create the file /workspace/tests/Playwright.Tests/pages/AdminDashboardPage.ts",
+  "goal": "Create the file /workspace/tests/Playwright.Tests/pages/AdminDashboardPage.ts\n\nThis is a Playwright Page Object for the Admin Dashboard. The Razor page has:\n- Metric cards in .metric-cards container with .metric-label and .metric-value divs\n- Labels: \"Organizations\", \"Learners\", \"Courses\", \"Enrollments\"\n- All Courses table with class .courses-table\n- Completion Rate section\n\nThe file should:\n- Extend BasePage from '../BasePage'\n- Export an AdminDashboardPage class\n- Have locators: metricCard(label) dynamic, metricValue(label) dynamic, allCoursesTable (.courses-table)\n- Have methods: isOnDashboardPage(), getMetricValue(label) returning string, getMetricLabels() returning array\n- Import { Page, Locator } from '@playwright/test'\n\nBranch: story/022-playwright-ui-tests\nSpec: 022-playwright-ui-tests\nPrinciples: IV (Human-Legible), VIII (Branching)",
+  "status": "failed",
+  "createdAt": "2026-08-07T06:40:52.699Z",
+  "updatedAt": "2026-08-07T07:09:49.793Z",
+  "runs": [
+    {
+      "runId": "820d9a0f",
+      "mode": "single",
+      "agent": "worker",
+      "status": "failed",
+      "startedAt": "2026-08-07T07:09:49.793Z",
+      "completedAt": "2026-08-07T07:09:49.793Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/workspace/.pi-subagents/artifacts/820d9a0f_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/workspace/.pi-subagents/artifacts/820d9a0f_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-07T06-30-03-294Z_019fdaea-1b1e-7c1c-aeaa-32d140f7f2ee.jsonl",
+  "summary": "Failed\n\nOutput:\nThe AdminDashboardPage.ts has a nullable return issue. Let me fix it. The other errors are about missing `@types/node` (parent-level concern) and files created by sibling subagents.\n\nOutput artifact: /workspace/.pi-subagents/artifacts/820d9a0f_worker_0_output.md",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "attestation",
+        "status": "failed",
+        "message": "Structured acceptance report not found."
+      }
+    ],
+    "verifyRuns": [],
+    "childReportParseError": "Structured acceptance report not found."
+  }
+}

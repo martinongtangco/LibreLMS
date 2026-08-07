@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "9fb1dac7-6ed4-46f6-a3ff-d7fd8f99d0d1",
+  "title": "Create the file /workspace/tests/Playwright.Tests/tests/06-admin-organizations.spec.ts",
+  "goal": "Create the file /workspace/tests/Playwright.Tests/tests/06-admin-organizations.spec.ts\n\nThis is a Playwright test file for Admin Organizations page (Phase 7).\n\nThe test file should contain test suite \"Admin Organizations\":\n   a. \"organization list shows root org\" — as OrgAdmin (admin@example.com/password123), navigates to /Admin/Organizations/Index, verifies \"Root Organization\" appears on the page\n   b. \"create organization form is accessible\" — clicks \"Create Organization\" button, verifies create page/form loads\n\nUse:\n- import { test, expect } from '@playwright/test'\n- import { testUsers } from '../utils/testUsers'\n- Helper function to login with email/password\n- Organizations page has: org tree rendered via _OrgNode partial, \"Create Organization\" button\n\nBranch: story/022-playwright-ui-tests\nSpec: 022-playwright-ui-tests\nPrinciples: IV (Human-Legible), VIII (Branching)",
+  "status": "failed",
+  "createdAt": "2026-08-07T07:15:00.156Z",
+  "updatedAt": "2026-08-07T07:45:00.180Z",
+  "runs": [
+    {
+      "runId": "cf740ee7",
+      "mode": "single",
+      "agent": "worker",
+      "status": "failed",
+      "startedAt": "2026-08-07T07:45:00.180Z",
+      "completedAt": "2026-08-07T07:45:00.180Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/workspace/.pi-subagents/artifacts/cf740ee7_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/workspace/.pi-subagents/artifacts/cf740ee7_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-07T06-30-03-294Z_019fdaea-1b1e-7c1c-aeaa-32d140f7f2ee.jsonl",
+  "summary": "Subagent timed out after 1800000ms.\n\nOutput artifact: /workspace/.pi-subagents/artifacts/cf740ee7_worker_0_output.md",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "timeout",
+        "status": "failed",
+        "message": "Acceptance was not evaluated because the subagent timed out."
+      }
+    ],
+    "verifyRuns": []
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "8db4a085-0e7e-4af6-a621-d55fe0eb1bf1",
+  "title": "Create the file /workspace/tests/Playwright.Tests/tests/08-rbac.spec.ts",
+  "goal": "Create the file /workspace/tests/Playwright.Tests/tests/08-rbac.spec.ts\n\nThis is a Playwright test file for Role-Based Access Control (User Story 2).\n\nThe test file should contain:\n\n1. \"RBAC — Unauthenticated\":\n   a. \"unauthenticated user redirected to login for /Admin/Dashboard/Index\"\n   b. \"unauthenticated user redirected to login for /Admin/Learners/Index\"\n   c. \"unauthenticated user redirected to login for /MyCourses/Index\"\n\n2. \"RBAC — Learner Access Denied\":\n   a. \"Learner cannot access /Admin/Dashboard/Index\" — logs in as alice@example.com/password123, navigates to dashboard, verifies 403 or redirect\n   b. \"Learner cannot access /Admin/Learners/Index\"\n   c. \"Learner cannot access /Admin/Organizations/Index\"\n   d. \"Learner cannot access /Admin/Enrollments/Index\"\n   e. \"Learner CAN access /Courses/Index and /MyCourses/Index\"\n\n3. \"RBAC — OrgAdmin Full Access\":\n   a. \"OrgAdmin can access /Admin/Dashboard/Index\" — logs in as admin@example.com/password123\n   b. \"OrgAdmin can access /Admin/Learners/Index\"\n   c. \"OrgAdmin can access /Admin/Organizations/Index\"\n   d. \"OrgAdmin can access /Admin/Enrollments/Index\"\n   e. \"OrgAdmin can access /Admin/Courses/Index\"\n   f. \"OrgAdmin can access /Admin/Upload\"\n\n4. \"RBAC — SuperUser Full Access\":\n   a. \"SuperUser can access all admin pages\" — logs in as admin@librelms.local/Admin@12345, iterates over all admin paths, verifies each loads (200 or redirect to content page)\n\nUse:\n- import { test, expect } from '@playwright/test'\n- import { testUsers } from '../utils/testUsers'\n- Helper function to login with email/password\n- For 403/redirect checks: navigate to URL, check if URL changed to /Account/Login or response status is 403\n\nBranch: story/022-playwright-ui-tests\nSpec: 022-playwright-ui-tests\nPrinciples: IV (Human-Legible), VIII (Branching)",
+  "status": "failed",
+  "createdAt": "2026-08-07T07:14:59.836Z",
+  "updatedAt": "2026-08-07T07:44:59.854Z",
+  "runs": [
+    {
+      "runId": "91b28d5b",
+      "mode": "single",
+      "agent": "worker",
+      "status": "failed",
+      "startedAt": "2026-08-07T07:44:59.854Z",
+      "completedAt": "2026-08-07T07:44:59.854Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/workspace/.pi-subagents/artifacts/91b28d5b_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/workspace/.pi-subagents/artifacts/91b28d5b_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-07T06-30-03-294Z_019fdaea-1b1e-7c1c-aeaa-32d140f7f2ee.jsonl",
+  "summary": "Subagent timed out after 1800000ms.\n\nOutput:\nSubagent timed out after 1800000ms.\n\nPartial output before timeout:\nI notice there's a duplicate function declaration. Let me fix that.\n\nOutput artifact: /workspace/.pi-subagents/artifacts/91b28d5b_worker_0_output.md",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "timeout",
+        "status": "failed",
+        "message": "Acceptance was not evaluated because the subagent timed out."
+      }
+    ],
+    "verifyRuns": []
+  }
+}

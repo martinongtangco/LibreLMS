@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "id": "4f40c13d-4b98-4df5-9d06-7b5d2db6fde5",
+  "title": "Create the file /workspace/tests/Playwright.Tests/pages/MyCoursesPage.ts",
+  "goal": "Create the file /workspace/tests/Playwright.Tests/pages/MyCoursesPage.ts\n\nThis is a Playwright Page Object for the My Courses page. The Razor page at src/Host/Pages/MyCourses/Index.cshtml has:\n- Refresh button with text \"↻ Refresh\" (hx-get partial refresh)\n- Enrollment list container with id=\"enrollment-list\"\n- Course rows rendered via _EnrollmentList partial\n\nThe file should:\n- Extend BasePage from '../BasePage'\n- Export a MyCoursesPage class\n- Have locators: refreshButton (by role button matching \"Refresh\"), enrollmentList (#enrollment-list), courseRow(courseTitle) dynamic locator\n- Have methods: isOnMyCoursesPage(), getEnrolledCourseTitles(), refresh()\n- Import { Page, Locator } from '@playwright/test'\n\nBranch: story/022-playwright-ui-tests\nSpec: 022-playwright-ui-tests\nPrinciples: IV (Human-Legible), VIII (Branching)",
+  "status": "completed",
+  "createdAt": "2026-08-07T06:40:52.627Z",
+  "updatedAt": "2026-08-07T07:02:17.380Z",
+  "runs": [
+    {
+      "runId": "51636c13",
+      "mode": "single",
+      "agent": "worker",
+      "status": "completed",
+      "startedAt": "2026-08-07T07:02:17.380Z",
+      "completedAt": "2026-08-07T07:02:17.380Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/workspace/.pi-subagents/artifacts/51636c13_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/workspace/.pi-subagents/artifacts/51636c13_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-07T06-30-03-294Z_019fdaea-1b1e-7c1c-aeaa-32d140f7f2ee.jsonl",
+  "summary": "File created successfully.",
+  "acceptance": {
+    "status": "checked",
+    "evidenceStatus": "checked",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "criterion:criterion-1",
+        "status": "passed",
+        "message": "Required criterion 'criterion-1' satisfied."
+      },
+      {
+        "id": "evidence:changed-files",
+        "status": "passed",
+        "message": "changed-files evidence present."
+      },
+      {
+        "id": "evidence:tests-added",
+        "status": "not-applicable",
+        "message": "tests-added evidence explicitly reported as not applicable."
+      },
+      {
+        "id": "evidence:commands-run",
+        "status": "passed",
+        "message": "commands-run evidence present."
+      },
+      {
+        "id": "evidence:residual-risks",
+        "status": "passed",
+        "message": "residual-risks evidence present."
+      },
+      {
+        "id": "evidence:no-staged-files",
+        "status": "passed",
+        "message": "no-staged-files evidence present."
+      },
+      {
+        "id": "no-staged-files",
+        "status": "passed",
+        "message": "No staged files detected."
+      }
+    ],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Created /workspace/tests/Playwright.Tests/pages/MyCoursesPage.ts extending BasePage with all required locators (refreshButton, enrollmentList, courseRow), methods (isOnMyCoursesPage, getEnrolledCourseTitles, refresh), and proper HTMX settle handling. Scope matches spec T012 exactly."
+        }
+      ],
+      "changedFiles": [
+        "tests/Playwright.Tests/pages/MyCoursesPage.ts"
+      ],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [
+        {
+          "command": "git branch --show-current",
+          "result": "passed",
+          "summary": "Confirmed on story/022-playwright-ui-tests"
+        },
+        {
+          "command": "git status --short tests/Playwright.Tests/pages/MyCoursesPage.ts",
+          "result": "passed",
+          "summary": "File created as untracked (not staged)"
+        }
+      ],
+      "validationOutput": [
+        "File created with all required members: refreshButton, enrollmentList, courseRow(courseTitle), isOnMyCoursesPage(), getEnrolledCourseTitles(), refresh()"
+      ],
+      "residualRisks": [
+        "none"
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Added new MyCoursesPage.ts extending BasePage with enrollment list locators and refresh action",
+      "reviewFindings": [
+        "no blockers"
+      ],
+      "manualNotes": ""
+    }
+  }
+}

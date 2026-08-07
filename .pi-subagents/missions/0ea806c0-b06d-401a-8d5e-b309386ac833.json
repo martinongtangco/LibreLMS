@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "0ea806c0-b06d-401a-8d5e-b309386ac833",
+  "title": "Create the file /workspace/tests/Playwright.Tests/tests/05-admin-learners.spec.ts",
+  "goal": "Create the file /workspace/tests/Playwright.Tests/tests/05-admin-learners.spec.ts\n\nThis is a Playwright test file for Admin Learners page (Phase 7).\n\nThe test file should contain test suite \"Admin Learners\":\n   a. \"learner list shows seeded users\" — as OrgAdmin (admin@example.com/password123), navigates to /Admin/Learners/Index, verifies Alice Johnson, Bob Smith, Carol Davis appear in the .data-table\n   b. \"create learner form is accessible\" — clicks \"Create Learner\" button, verifies create page/form loads\n\nUse:\n- import { test, expect } from '@playwright/test'\n- import { testUsers } from '../utils/testUsers'\n- Helper function to login with email/password\n- Learners page has: .data-table with user rows, \"Create Learner\" button\n\nBranch: story/022-playwright-ui-tests\nSpec: 022-playwright-ui-tests\nPrinciples: IV (Human-Legible), VIII (Branching)",
+  "status": "failed",
+  "createdAt": "2026-08-07T07:15:00.044Z",
+  "updatedAt": "2026-08-07T07:45:00.064Z",
+  "runs": [
+    {
+      "runId": "b7e013bc",
+      "mode": "single",
+      "agent": "worker",
+      "status": "failed",
+      "startedAt": "2026-08-07T07:45:00.064Z",
+      "completedAt": "2026-08-07T07:45:00.064Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/workspace/.pi-subagents/artifacts/b7e013bc_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/workspace/.pi-subagents/artifacts/b7e013bc_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-07T06-30-03-294Z_019fdaea-1b1e-7c1c-aeaa-32d140f7f2ee.jsonl",
+  "summary": "Subagent timed out after 1800000ms.\n\nOutput:\nSubagent timed out after 1800000ms.\n\nPartial output before timeout:\nNow I'll create the test file following the established patterns from the existing test files.\n\nOutput artifact: /workspace/.pi-subagents/artifacts/b7e013bc_worker_0_output.md",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "timeout",
+        "status": "failed",
+        "message": "Acceptance was not evaluated because the subagent timed out."
+      }
+    ],
+    "verifyRuns": []
+  }
+}

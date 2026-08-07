@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "id": "e9f0a994-097c-4d9b-867d-5fcf300c2854",
+  "title": "Create the file /workspace/tests/Playwright.Tests/pages/AdminEnrollmentsPage.ts",
+  "goal": "Create the file /workspace/tests/Playwright.Tests/pages/AdminEnrollmentsPage.ts\n\nThis is a Playwright Page Object for the Admin Enrollments page. The Razor page has:\n- H1 \"Enrollment Management\"\n- \"Bulk Enroll\" button (class=\"btn btn-primary\")\n- Data table with class .data-table showing Student, Email, Course, Organization, Enrolled, Actions columns\n- Search/filter inputs\n\nThe file should:\n- Extend BasePage from '../BasePage'\n- Export an AdminEnrollmentsPage class\n- Have locators: enrollmentTable (.data-table), bulkEnrollButton (role button \"Bulk Enroll\")\n- Have methods: isOnEnrollmentsPage(), hasEnrollment(studentName, courseTitle), clickBulkEnroll()\n- Import { Page, Locator } from '@playwright/test'\n\nBranch: story/022-playwright-ui-tests\nSpec: 022-playwright-ui-tests\nPrinciples: IV (Human-Legible), VIII (Branching)",
+  "status": "failed",
+  "createdAt": "2026-08-07T06:40:52.952Z",
+  "updatedAt": "2026-08-07T07:09:49.712Z",
+  "runs": [
+    {
+      "runId": "4881d3e4",
+      "mode": "single",
+      "agent": "worker",
+      "status": "failed",
+      "startedAt": "2026-08-07T07:09:49.712Z",
+      "completedAt": "2026-08-07T07:09:49.712Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/workspace/.pi-subagents/artifacts/4881d3e4_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/workspace/.pi-subagents/artifacts/4881d3e4_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-07T06-30-03-294Z_019fdaea-1b1e-7c1c-aeaa-32d140f7f2ee.jsonl",
+  "summary": "Request timed out.\n\nOutput:\nI see issues — the relative import path needs fixing and `getText` is not the right API. Let me fix those.\n\nOutput artifact: /workspace/.pi-subagents/artifacts/4881d3e4_worker_0_output.md",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "attestation",
+        "status": "failed",
+        "message": "Structured acceptance report not found."
+      }
+    ],
+    "verifyRuns": [],
+    "childReportParseError": "Structured acceptance report not found."
+  }
+}

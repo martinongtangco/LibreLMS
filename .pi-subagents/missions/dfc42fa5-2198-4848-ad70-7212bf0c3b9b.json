@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "dfc42fa5-2198-4848-ad70-7212bf0c3b9b",
+  "title": "Create the file /workspace/tests/Playwright.Tests/tests/07-admin-enrollments.spec.ts",
+  "goal": "Create the file /workspace/tests/Playwright.Tests/tests/07-admin-enrollments.spec.ts\n\nThis is a Playwright test file for Admin Enrollments page (Phase 7).\n\nThe test file should contain test suite \"Admin Enrollments\":\n   a. \"enrollment list shows seeded enrollments\" — as OrgAdmin (admin@example.com/password123), navigates to /Admin/Enrollments/Index, verifies Alice's enrollment in \"Introduction to C#\" appears in the .data-table\n   b. \"bulk enroll form is accessible\" — verifies \"Bulk Enroll\" button is visible and clicking it navigates to the bulk enroll page\n\nUse:\n- import { test, expect } from '@playwright/test'\n- import { testUsers } from '../utils/testUsers'\n- Helper function to login with email/password\n- Enrollments page has: .data-table with enrollment rows, \"Bulk Enroll\" button (role button \"Bulk Enroll\")\n\nBranch: story/022-playwright-ui-tests\nSpec: 022-playwright-ui-tests\nPrinciples: IV (Human-Legible), VIII (Branching)",
+  "status": "failed",
+  "createdAt": "2026-08-07T07:15:00.278Z",
+  "updatedAt": "2026-08-07T07:45:00.312Z",
+  "runs": [
+    {
+      "runId": "aa993ff3",
+      "mode": "single",
+      "agent": "worker",
+      "status": "failed",
+      "startedAt": "2026-08-07T07:45:00.312Z",
+      "completedAt": "2026-08-07T07:45:00.312Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/workspace/.pi-subagents/artifacts/aa993ff3_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/workspace/.pi-subagents/artifacts/aa993ff3_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-07T06-30-03-294Z_019fdaea-1b1e-7c1c-aeaa-32d140f7f2ee.jsonl",
+  "summary": "Subagent timed out after 1800000ms.\n\nOutput:\nSubagent timed out after 1800000ms.\n\nPartial output before timeout:\nLet me check all the test files that were supposed to be created.\n\nOutput artifact: /workspace/.pi-subagents/artifacts/aa993ff3_worker_0_output.md",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "timeout",
+        "status": "failed",
+        "message": "Acceptance was not evaluated because the subagent timed out."
+      }
+    ],
+    "verifyRuns": []
+  }
+}

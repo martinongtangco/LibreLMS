@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "id": "7ed78b50-052c-413d-8e70-d69c29594aa2",
+  "title": "Create the file /workspace/tests/Playwright.Tests/tests/03-enrollment.spec.ts",
+  "goal": "Create the file /workspace/tests/Playwright.Tests/tests/03-enrollment.spec.ts\n\nThis is a Playwright test file for enrollment flows (User Story 1).\n\nThe test file should contain test suite \"Enrollment Smoke\":\n   a. \"enroll in a course from detail page\" — as bob@example.com/password123 (not yet enrolled in \"Advanced .NET Patterns\"), navigates to that course detail, clicks \"Enroll now\" button, verifies success message or \"✓ Enrolled\" button appears\n   b. \"view my courses shows enrolled courses\" — navigates to /MyCourses/Index, verifies at least one course appears in the enrollment list (#enrollment-list)\n\nUse:\n- import { test, expect } from '@playwright/test'\n- import { testUsers } from '../utils/testUsers'\n- Helper function to login with email/password\n- Course detail page has: h1 with title, \"Enroll now\" button (role button \"Enroll now\"), \"✓ Enrolled\" when enrolled\n- My Courses page has: #enrollment-list div with enrollment rows\n\nImportant: After clicking \"Enroll now\" (HTMX POST), wait for the enroll region to update. The button text should change to \"✓ Enrolled\" after successful enrollment.\n\nBranch: story/022-playwright-ui-tests\nSpec: 022-playwright-ui-tests\nPrinciples: IV (Human-Legible), VIII (Branching)",
+  "status": "completed",
+  "createdAt": "2026-08-07T07:14:59.645Z",
+  "updatedAt": "2026-08-07T07:38:31.383Z",
+  "runs": [
+    {
+      "runId": "099bab24",
+      "mode": "single",
+      "agent": "worker",
+      "status": "completed",
+      "startedAt": "2026-08-07T07:38:31.383Z",
+      "completedAt": "2026-08-07T07:38:31.383Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/workspace/.pi-subagents/artifacts/099bab24_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/workspace/.pi-subagents/artifacts/099bab24_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-07T06-30-03-294Z_019fdaea-1b1e-7c1c-aeaa-32d140f7f2ee.jsonl",
+  "summary": "(no output)",
+  "acceptance": {
+    "status": "checked",
+    "evidenceStatus": "checked",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "criterion:criterion-1",
+        "status": "passed",
+        "message": "Required criterion 'criterion-1' satisfied."
+      },
+      {
+        "id": "evidence:changed-files",
+        "status": "passed",
+        "message": "changed-files evidence present."
+      },
+      {
+        "id": "evidence:tests-added",
+        "status": "passed",
+        "message": "tests-added evidence present."
+      },
+      {
+        "id": "evidence:commands-run",
+        "status": "passed",
+        "message": "commands-run evidence present."
+      },
+      {
+        "id": "evidence:residual-risks",
+        "status": "passed",
+        "message": "residual-risks evidence present."
+      },
+      {
+        "id": "evidence:no-staged-files",
+        "status": "passed",
+        "message": "no-staged-files evidence present."
+      },
+      {
+        "id": "no-staged-files",
+        "status": "passed",
+        "message": "No staged files detected."
+      }
+    ],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Created /workspace/tests/Playwright.Tests/tests/03-enrollment.spec.ts with two tests: (a) 'enroll in a course from detail page' using bob@example.com to enroll in 'Advanced .NET Patterns', verifying '✓ Enrolled' button appears after HTMX swap; (b) 'view my courses shows enrolled courses' verifying #enrollment-list contains at least one row. Uses testUsers utility, proper HTMX wait, and scoped to enrollment flows only."
+        }
+      ],
+      "changedFiles": [
+        "tests/Playwright.Tests/tests/03-enrollment.spec.ts"
+      ],
+      "testsAddedOrUpdated": [
+        "tests/Playwright.Tests/tests/03-enrollment.spec.ts"
+      ],
+      "commandsRun": [
+        {
+          "command": "git branch --show-current",
+          "result": "passed",
+          "summary": "Confirmed on story/022-playwright-ui-tests branch"
+        },
+        {
+          "command": "wc -l tests/Playwright.Tests/tests/03-enrollment.spec.ts",
+          "result": "passed",
+          "summary": "64 lines written"
+        }
+      ],
+      "validationOutput": [
+        "File created at tests/Playwright.Tests/tests/03-enrollment.spec.ts with 2 test cases under 'Enrollment Smoke' describe block"
+      ],
+      "residualRisks": [
+        "Test assumes Bob is not already enrolled in 'Advanced .NET Patterns' — if a prior run enrolled him, the enroll button won't appear; the test handles this gracefully with an isVisible check"
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "New file: enrollment smoke tests with login-as-Bob beforeEach, enroll-in-course test, and view-my-courses test",
+      "reviewFindings": [
+        "no blockers"
+      ],
+      "manualNotes": ""
+    }
+  }
+}

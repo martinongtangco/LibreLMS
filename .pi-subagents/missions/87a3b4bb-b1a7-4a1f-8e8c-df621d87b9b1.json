@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "87a3b4bb-b1a7-4a1f-8e8c-df621d87b9b1",
+  "title": "Create the file /workspace/tests/Playwright.Tests/tests/09-responsive.spec.ts",
+  "goal": "Create the file /workspace/tests/Playwright.Tests/tests/09-responsive.spec.ts\n\nThis is a Playwright test file for responsive/mobile navigation (User Story 4).\n\nThe test file should use a mobile viewport and contain:\n\ntest.use({ viewport: { width: 375, height: 812 } })\n\nTest suite \"Responsive Navigation\":\n   a. \"hamburger menu toggles navigation on mobile\" — at 375px width, clicks hamburger button (#nav-toggle), verifies nav links (#nav-links) become visible with is-open class\n   b. \"clicking nav link closes hamburger menu\" — clicks a nav link inside hamburger, verifies menu closes (is-open class removed)\n   c. \"admin links hidden by default on mobile for Learner\" — logs in as alice@example.com/password123, verifies .admin-link elements are not visible (role defaults to 'learner' hiding admin links)\n   d. \"role toggle shows admin links on mobile\" — as OrgAdmin (admin@example.com/password123), clicks role-segment \"admin\", verifies admin links appear\n\nUse:\n- import { test, expect } from '@playwright/test'\n- import { testUsers } from '../utils/testUsers'\n- Helper function to login with email/password\n- Hamburger toggle: #nav-toggle button\n- Nav links: #nav-links div\n- Admin links: .admin-link elements\n- Role segments: .role-segment buttons with data-value=\"learner\" and data-value=\"admin\"\n- Admin links are shown/hidden via body class .role-admin / .role-learner\n\nBranch: story/022-playwright-ui-tests\nSpec: 022-playwright-ui-tests\nPrinciples: IV (Human-Legible), VIII (Branching)",
+  "status": "failed",
+  "createdAt": "2026-08-07T07:14:59.939Z",
+  "updatedAt": "2026-08-07T07:44:59.947Z",
+  "runs": [
+    {
+      "runId": "c1b623a3",
+      "mode": "single",
+      "agent": "worker",
+      "status": "failed",
+      "startedAt": "2026-08-07T07:44:59.947Z",
+      "completedAt": "2026-08-07T07:44:59.947Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/workspace/.pi-subagents/artifacts/c1b623a3_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/workspace/.pi-subagents/artifacts/c1b623a3_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-07T06-30-03-294Z_019fdaea-1b1e-7c1c-aeaa-32d140f7f2ee.jsonl",
+  "summary": "Subagent timed out after 1800000ms.\n\nOutput:\nSubagent timed out after 1800000ms.\n\nPartial output before timeout:\nNow I have all the context needed. Let me create the responsive test file.\n\nOutput artifact: /workspace/.pi-subagents/artifacts/c1b623a3_worker_0_output.md",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "timeout",
+        "status": "failed",
+        "message": "Acceptance was not evaluated because the subagent timed out."
+      }
+    ],
+    "verifyRuns": []
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "id": "75d8e0a7-6941-430b-8727-031c584e6192",
+  "title": "Create the file /workspace/tests/Playwright.Tests/pages/AdminLearnersPage.ts",
+  "goal": "Create the file /workspace/tests/Playwright.Tests/pages/AdminLearnersPage.ts\n\nThis is a Playwright Page Object for the Admin Learners page. The Razor page has:\n- H1 \"Learner Management\"\n- \"Create Learner\" button (class=\"btn btn-primary\")\n- Data table with class .data-table showing Name, Email, Role, Organization, Actions columns\n- Search input and filter dropdowns\n\nThe file should:\n- Extend BasePage from '../BasePage'\n- Export an AdminLearnersPage class\n- Have locators: learnerTable (.data-table), learnerRow(name) dynamic, createButton (role button \"Create Learner\")\n- Have methods: isOnLearnersPage(), getLearnerNames() returning array, clickCreate()\n- Import { Page, Locator } from '@playwright/test'\n\nBranch: story/022-playwright-ui-tests\nSpec: 022-playwright-ui-tests\nPrinciples: IV (Human-Legible), VIII (Branching)",
+  "status": "completed",
+  "createdAt": "2026-08-07T06:40:52.770Z",
+  "updatedAt": "2026-08-07T06:53:41.729Z",
+  "runs": [
+    {
+      "runId": "b2d373e7",
+      "mode": "single",
+      "agent": "worker",
+      "status": "completed",
+      "startedAt": "2026-08-07T06:53:41.729Z",
+      "completedAt": "2026-08-07T06:53:41.729Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/workspace/.pi-subagents/artifacts/b2d373e7_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/workspace/.pi-subagents/artifacts/b2d373e7_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-07T06-30-03-294Z_019fdaea-1b1e-7c1c-aeaa-32d140f7f2ee.jsonl",
+  "summary": "(no output)",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "criterion:criterion-1",
+        "status": "passed",
+        "message": "Required criterion 'criterion-1' satisfied."
+      },
+      {
+        "id": "evidence:changed-files",
+        "status": "passed",
+        "message": "changed-files evidence present."
+      },
+      {
+        "id": "evidence:tests-added",
+        "status": "not-applicable",
+        "message": "tests-added evidence explicitly reported as not applicable."
+      },
+      {
+        "id": "evidence:commands-run",
+        "status": "failed",
+        "message": "commands-run evidence missing from child report."
+      },
+      {
+        "id": "evidence:residual-risks",
+        "status": "passed",
+        "message": "residual-risks evidence present."
+      },
+      {
+        "id": "evidence:no-staged-files",
+        "status": "passed",
+        "message": "no-staged-files evidence present."
+      },
+      {
+        "id": "no-staged-files",
+        "status": "passed",
+        "message": "No staged files detected."
+      }
+    ],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Created AdminLearnersPage.ts extending BasePage with all required locators (learnerTable, learnerRow(name), createButton) and methods (isOnLearnersPage, getLearnerNames, clickCreate). Imports Page, Locator from @playwright/test. No scope creep beyond the acceptance contract."
+        }
+      ],
+      "changedFiles": [
+        "tests/Playwright.Tests/pages/AdminLearnersPage.ts"
+      ],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "File created and verified: AdminLearnersPage.ts extends BasePage, exports class, has all required locators and methods"
+      ],
+      "residualRisks": [
+        "none"
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Added new AdminLearnersPage.ts Page Object with learner table locators, row filtering by name, and create button action",
+      "reviewFindings": [
+        "no blockers"
+      ],
+      "manualNotes": ""
+    }
+  }
+}

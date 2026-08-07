@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "301e832f-8c81-4d97-8c8c-d8f7fec0e31b",
+  "title": "Create the file /workspace/tests/Playwright.Tests/tests/04-admin-dashboard.spec.ts",
+  "goal": "Create the file /workspace/tests/Playwright.Tests/tests/04-admin-dashboard.spec.ts\n\nThis is a Playwright test file for admin dashboard smoke tests (User Story 1).\n\nThe test file should contain test suite \"Admin Dashboard Smoke\":\n   a. \"OrgAdmin can access dashboard\" — logs in as admin@example.com/password123, navigates to /Admin/Dashboard/Index, verifies metric cards are visible (Organizations, Learners, Courses, Enrollments)\n   b. \"dashboard shows non-zero metrics for seeded data\" — verifies each .metric-value is a positive number\n\nUse:\n- import { test, expect } from '@playwright/test'\n- import { testUsers } from '../utils/testUsers'\n- Helper function to login with email/password\n- Dashboard has: .metric-cards container with .metric-card divs, each containing .metric-label and .metric-value\n- Metric labels: \"Organizations\", \"Learners\", \"Courses\", \"Enrollments\"\n\nBranch: story/022-playwright-ui-tests\nSpec: 022-playwright-ui-tests\nPrinciples: IV (Human-Legible), VIII (Branching)",
+  "status": "failed",
+  "createdAt": "2026-08-07T07:14:59.744Z",
+  "updatedAt": "2026-08-07T07:44:59.749Z",
+  "runs": [
+    {
+      "runId": "3a9bff8e",
+      "mode": "single",
+      "agent": "worker",
+      "status": "failed",
+      "startedAt": "2026-08-07T07:44:59.748Z",
+      "completedAt": "2026-08-07T07:44:59.748Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/workspace/.pi-subagents/artifacts/3a9bff8e_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/workspace/.pi-subagents/artifacts/3a9bff8e_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-07T06-30-03-294Z_019fdaea-1b1e-7c1c-aeaa-32d140f7f2ee.jsonl",
+  "summary": "Subagent timed out after 1800000ms.\n\nOutput:\nSubagent timed out after 1800000ms.\n\nPartial output before timeout:\nThe file is created and correct. Let me verify it compiles:\n\nOutput artifact: /workspace/.pi-subagents/artifacts/3a9bff8e_worker_0_output.md",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "timeout",
+        "status": "failed",
+        "message": "Acceptance was not evaluated because the subagent timed out."
+      }
+    ],
+    "verifyRuns": []
+  }
+}

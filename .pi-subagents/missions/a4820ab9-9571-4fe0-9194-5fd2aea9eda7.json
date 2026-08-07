@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "a4820ab9-9571-4fe0-9194-5fd2aea9eda7",
+  "title": "Create the file /workspace/tests/Playwright.Tests/tests/02-course-browse.spec.ts",
+  "goal": "Create the file /workspace/tests/Playwright.Tests/tests/02-course-browse.spec.ts\n\nThis is a Playwright test file for course browsing (User Story 1 + User Story 3).\n\nThe test file should contain these test suites:\n\n1. \"Course Browse Smoke\" (US1):\n   a. \"browse page loads and shows seeded courses\" — logs in as Learner (alice@example.com/password123), navigates to /Courses/Index, verifies at least 10 course cards visible\n   b. \"click course card navigates to detail page\" — clicks first course card link, verifies /Courses/Detail loads with correct title\n   c. \"unauthenticated user can browse courses\" — uses fresh context, navigates to /Courses/Index, verifies page loads\n\n2. \"Course Search\" (US3):\n   a. \"search by keyword filters results\" — types \"C#\" in search box (#search-input), waits for HTMX update, verifies only \"Introduction to C#\" appears\n   b. \"clear button resets search\" — clicks Clear button, verifies all 10 courses reappear\n   c. \"search with no results shows empty state\" — types \"xyznonexistent\", verifies no course cards match\n\n3. \"Course Category Filter\" (US3):\n   a. \"selecting Programming category shows 4 courses\"\n   b. \"selecting Design category shows 2 courses\"\n   c. \"selecting Database category shows 2 courses\"\n   d. \"selecting Tools category shows 2 courses\"\n   e. \"selecting All Categories shows all 10 courses\"\n\n4. \"Course Detail Navigation\" (US3):\n   a. \"clicking a course card loads detail page with correct info\" — clicks \"Introduction to C#\", verifies title matches, description contains \"C# programming\"\n   b. \"SCORM course detail shows launch option\" — verifies launch button is present on SCORM course\n\nUse:\n- import { test, expect } from '@playwright/test'\n- import { testUsers } from '../utils/testUsers'\n- Helper function to login: navigate to /Account/Login, fill credentials, submit, wait for redirect\n- For HTMX waits, use: await page.waitForTimeout(500) after triggering HTMX events, or wait for specific content\n- Course cards are .card elements within #course-list\n\nBranch: story/022-playwright-ui-tests\nSpec: 022-playwright-ui-tests\nPrinciples: IV (Human-Legible), VIII (Branching)",
+  "status": "failed",
+  "createdAt": "2026-08-07T07:14:59.579Z",
+  "updatedAt": "2026-08-07T07:44:59.571Z",
+  "runs": [
+    {
+      "runId": "881ad93f",
+      "mode": "single",
+      "agent": "worker",
+      "status": "failed",
+      "startedAt": "2026-08-07T07:44:59.571Z",
+      "completedAt": "2026-08-07T07:44:59.571Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/workspace/.pi-subagents/artifacts/881ad93f_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/workspace/.pi-subagents/artifacts/881ad93f_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-07T06-30-03-294Z_019fdaea-1b1e-7c1c-aeaa-32d140f7f2ee.jsonl",
+  "summary": "Subagent timed out after 1800000ms.\n\nOutput artifact: /workspace/.pi-subagents/artifacts/881ad93f_worker_0_output.md",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "timeout",
+        "status": "failed",
+        "message": "Acceptance was not evaluated because the subagent timed out."
+      }
+    ],
+    "verifyRuns": []
+  }
+}

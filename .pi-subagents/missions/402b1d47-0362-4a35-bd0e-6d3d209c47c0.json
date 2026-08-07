@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "402b1d47-0362-4a35-bd0e-6d3d209c47c0",
+  "title": "Create the file /workspace/tests/Playwright.Tests/tests/01-auth.spec.ts",
+  "goal": "Create the file /workspace/tests/Playwright.Tests/tests/01-auth.spec.ts\n\nThis is a Playwright test file for authentication flows (User Story 1).\n\nThe test file should contain:\n1. Test suite \"Authentication\" with:\n   a. \"successful login with learner credentials\" — logs in as alice@example.com/password123, verifies redirect to /Courses/Index and account name shows \"Alice Johnson\"\n   b. \"rejects invalid credentials\" — submits wrong password, verifies error message displayed and stays on login page\n   c. \"successful login with admin credentials\" — logs in as admin@example.com/password123, verifies admin nav links are visible\n   d. \"logout clears session\" — logs in, navigates to /Account/Logout, verifies redirect to /Account/Login and account control is not visible\n\nUse:\n- import { test, expect } from '@playwright/test'\n- import { testUsers } from '../utils/testUsers'\n- baseURL: http://localhost:5000 (configured in playwright.config.ts)\n- Direct page.locator calls for selectors (no need for page objects in this simple test)\n\nImportant selectors from the actual pages:\n- Login page: getByLabel('Email'), getByLabel('Password'), getByRole('button', { name: 'Sign In' }), .error-message\n- Account name: .account-name\n- Admin links: .admin-link elements\n- Account control: #account-control\n\nBranch: story/022-playwright-ui-tests\nSpec: 022-playwright-ui-tests\nPrinciples: IV (Human-Legible), VIII (Branching)",
+  "status": "failed",
+  "createdAt": "2026-08-07T07:14:59.514Z",
+  "updatedAt": "2026-08-07T07:44:59.497Z",
+  "runs": [
+    {
+      "runId": "25e1a4ba",
+      "mode": "single",
+      "agent": "worker",
+      "status": "failed",
+      "startedAt": "2026-08-07T07:44:59.497Z",
+      "completedAt": "2026-08-07T07:44:59.497Z"
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/workspace/.pi-subagents/artifacts/25e1a4ba_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/workspace/.pi-subagents/artifacts/25e1a4ba_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-07T06-30-03-294Z_019fdaea-1b1e-7c1c-aeaa-32d140f7f2ee.jsonl",
+  "summary": "Subagent timed out after 1800000ms.\n\nOutput artifact: /workspace/.pi-subagents/artifacts/25e1a4ba_worker_0_output.md",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "timeout",
+        "status": "failed",
+        "message": "Acceptance was not evaluated because the subagent timed out."
+      }
+    ],
+    "verifyRuns": []
+  }
+}
