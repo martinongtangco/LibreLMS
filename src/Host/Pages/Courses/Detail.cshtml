@@ -45,8 +45,7 @@ else
             }
             else
             {
-                <form hx-post="/Courses/Detail?handler=Enroll"
-                      hx-vals='{"courseId": "@Model.Course.Id"}'
+                <form hx-post="/Courses/Detail/@Model.Course.Id?handler=Enroll"
                       hx-swap="outerHTML"
                       hx-target="#enroll-region">
                     <button type="submit" class="btn btn-primary">Enroll now</button>

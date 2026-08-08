@@ -21,11 +21,9 @@ else
 {
     <div>
         <div class="alert alert-danger mb-md">@Model.Message</div>
-        <form hx-post="/Courses/Detail?handler=Enroll"
-              hx-vals='{"courseId": "@Model.CourseId"}'
+        <form hx-post="/Courses/Detail/@Model.CourseId?handler=Enroll"
               hx-swap="outerHTML"
-              hx-target="#enroll-region"
-              >
+              hx-target="#enroll-region">
             <button type="submit" class="btn btn-primary">Retry</button>
         </form>
     </div>
