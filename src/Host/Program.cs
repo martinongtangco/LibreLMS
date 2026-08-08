@@ -105,11 +105,7 @@ using (var scope = app.Services.CreateScope())
     var managementCtx = scope.ServiceProvider.GetRequiredService<ManagementDbContext>();
     var hostEnv = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
 
-    // Create database if it doesn't exist
-    catalogCtx.Database.EnsureCreated();
-
-    // Drop and recreate database cleanly, then apply all migrations
-    catalogCtx.Database.EnsureDeleted();
+    // Apply all migrations (creates database if it doesn't exist)
     catalogCtx.Database.Migrate();
     enrollmentCtx.Database.Migrate();
     scormCtx.Database.Migrate();
