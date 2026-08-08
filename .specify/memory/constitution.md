@@ -1,18 +1,16 @@
 <!--
   Sync Impact Report
   ==================
-  Version change: 1.5.0 → 1.6.0 (MINOR: new principle added)
+  Version change: 1.6.0 → 1.7.0 (MINOR: new principle added)
   Added sections:
-    - XII. Return to Master After Implementation — mandates switching back to `master`
-      after completing an implementation slice, so the session is on the integration
-      branch for the next planning cycle
+    - XIII. Verification Before Claim — mandates that no fix or feature is considered
+      complete until the application compiles, runs locally, and Playwright E2E tests
+      validate the change both before and after merging to `master`
   Modified principles: none
   Removed sections: none
   Templates updated:
-    - .pi/prompts/speckit.implement.md — ✅ no changes needed (the Completion Report
-      section and Done-When checklist already describe reporting completion; the new
-      constitution principle adds the explicit branch-switch mandate)
-    - .specify/templates/tasks-template.md — ✅ no changes needed
+    - .specify/templates/tasks-template.md — ✅ no changes needed (test tasks are
+      already optional and gated by spec; this principle makes them mandatory)
     - .specify/templates/plan-template.md — ✅ no changes needed
     - .specify/templates/spec-template.md — ✅ no changes needed
     - README.md — ✅ no changes needed (references constitution as source of truth)
@@ -183,6 +181,25 @@ visible. An agent session that stays on a completed feature branch risks running
 `/speckit.specify` or `/speckit.plan` from the wrong context, or accidentally accumulating
 unrelated commits on a finished branch.
 
+### XIII. Verification Before Claim
+An agent MUST NOT claim an issue is fixed or a feature is complete until all three verification
+gates pass:
+
+1. **Compiles and runs**: The application builds without errors and starts successfully on the
+   local machine. A running process that responds to HTTP requests is the minimum bar.
+2. **E2E tests validate the change**: Playwright tests must be run against the running
+   application and demonstrate the fix or new behavior. If no relevant test exists, the agent
+   MUST write one before claiming completion.
+3. **Post-merge regression**: After merging to `master`, Playwright tests MUST be run again
+   against the merged code to confirm the fix survives the merge and doesn't regress.
+
+A fix that compiles but has no E2E test is unverified. A test that passes on a feature branch
+but isn't re-run after merge is incomplete. All three gates are mandatory — no exemptions.
+
+Rationale: Without automated verification, the agent has no way to distinguish "works on my
+machine" from "actually fixed." Playwright tests provide the observable evidence that a change
+behaves as intended from the user's perspective, not just that it compiles.
+
 ## Technology & Scope Constraints
 
 - **.NET 10 (GA/LTS)**, pinned via `global.json` to a released SDK band — never a preview band,
@@ -208,6 +225,8 @@ unrelated commits on a finished branch.
   `valkey` as sibling services before any module that needs them is implemented.
 - `dotnet test tests/ArchitectureTests` must pass before a slice is considered done — this is the
   automated check for Principle III.
+- Playwright E2E tests must pass before any fix or feature is claimed complete (Principle XIII).
+  If no test covers the changed behavior, write one.
 - Any decision that took real discussion to reach (a technology choice, a boundary placement, the
   sandboxing model) gets a short ADR under `docs/adr/`, numbered sequentially.
 
@@ -220,4 +239,4 @@ simplify the instruction, not to add more words explaining it. Amendments requir
 file, bumping the version below, and — if the amendment reverses a prior ADR — recording that
 reversal as a new ADR rather than editing the old one.
 
-**Version**: 1.6.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-07-31
+**Version**: 1.7.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-08-05
