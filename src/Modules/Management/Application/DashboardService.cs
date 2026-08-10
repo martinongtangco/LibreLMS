@@ -120,26 +120,39 @@ public class DashboardService(
     {
         var activities = new List<RecentActivityDto>();
 
-        // Recent enrollments
-        var recentEnrollments = await enrollmentCtx.Enrollments
+        // Recent enrollments: query enrollments+students from EnrollmentDbContext,
+        // then look up course titles from CatalogDbContext in memory (cross-context joins
+        // are not supported by EF Core).
+        var recentEnrollmentData = await enrollmentCtx.Enrollments
             .Join(
                 enrollmentCtx.Students,
                 e => e.StudentId,
                 s => s.Id,
                 (e, s) => new { Enrollment = e, Student = s })
-            .Join(
-                catalogCtx.Courses,
-                x => x.Enrollment.CourseId,
-                c => c.Id,
-                (x, c) => new { x.Student, x.Enrollment, Course = c })
             .OrderByDescending(x => x.Enrollment.EnrolledAt)
             .Take(limit)
             .ToListAsync();
 
-        foreach (var e in recentEnrollments)
+        // Load course titles for the enrolled course IDs
+        var courseIds = recentEnrollmentData.Select(x => x.Enrollment.CourseId).ToList();
+        var courseTitles = new Dictionary<Guid, string>();
+        if (courseIds.Count > 0)
         {
+            var courses = await catalogCtx.Courses
+                .Where(c => courseIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, c => c.Title);
+
+            courseTitles = courses;
+        }
+
+        foreach (var e in recentEnrollmentData)
+        {
+            var courseTitle = courseTitles.TryGetValue(e.Enrollment.CourseId, out var title)
+                ? title
+                : $"Course ({e.Enrollment.CourseId})";
+
             activities.Add(new RecentActivityDto(
-                $"{e.Student.Name} enrolled in {e.Course.Title}",
+                $"{e.Student.Name} enrolled in {courseTitle}",
                 e.Enrollment.EnrolledAt,
                 "enrollment"
             ));

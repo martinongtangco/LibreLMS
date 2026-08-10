@@ -47,8 +47,10 @@ public class IndexModel : PageModel
         try
         {
             Role = AuthHelpers.GetCurrentUserRole(user);
+            var isSuperUser = AuthHelpers.IsSuperUser(user);
+            var orgId = AuthHelpers.GetCurrentUserOrgId(user);
 
-            if (AuthHelpers.IsSuperUser(user))
+            if (isSuperUser)
             {
                 var metrics = await _dashboardService.GetSystemMetricsAsync();
                 TotalOrganizations = metrics.TotalOrganizations;
@@ -57,36 +59,44 @@ public class IndexModel : PageModel
                 TotalEnrollments = metrics.TotalEnrollments;
                 CompletionRate = metrics.AverageCompletionRate.ToString("P1");
             }
-            else
+            else if (orgId.HasValue)
             {
-                var orgId = AuthHelpers.GetCurrentUserOrgId(user);
-                if (orgId.HasValue)
-                {
-                    var metrics = await _dashboardService.GetOrgMetricsAsync(orgId.Value);
-                    TotalOrganizations = metrics.OrganizationCount;
-                    TotalLearners = metrics.LearnerCount;
-                    TotalCourses = metrics.CourseCount;
-                    TotalEnrollments = metrics.EnrollmentCount;
-                    CompletionRate = metrics.AverageCompletionRate.ToString("P1");
-                    OrganizationName = metrics.OrganizationName;
-                }
+                var metrics = await _dashboardService.GetOrgMetricsAsync(orgId.Value);
+                TotalOrganizations = metrics.OrganizationCount;
+                TotalLearners = metrics.LearnerCount;
+                TotalCourses = metrics.CourseCount;
+                TotalEnrollments = metrics.EnrollmentCount;
+                CompletionRate = metrics.AverageCompletionRate.ToString("P1");
+                OrganizationName = metrics.OrganizationName;
             }
 
             RecentActivity = (await _dashboardService.GetRecentActivityAsync(10)).Cast<RecentActivityDto>().ToList();
 
             // Load all visible courses with enrollment counts
-            var visibleCourses = AuthHelpers.IsSuperUser(user)
-                ? await _visibilityService.GetAllCoursesAsync()
-                : await _visibilityService.GetVisibleCoursesAsync(AuthHelpers.GetCurrentUserOrgId(user).Value);
+            if (isSuperUser)
+            {
+                var visibleCourses = await _visibilityService.GetAllCoursesAsync();
+                var courseIds = visibleCourses.Select(c => c.CourseId).ToList();
+                var enrollmentCounts = await _enrollmentService.GetEnrollmentCountsByCourseAsync(courseIds);
 
-            var courseIds = visibleCourses.Select(c => c.CourseId).ToList();
-            var enrollmentCounts = await _enrollmentService.GetEnrollmentCountsByCourseAsync(courseIds);
+                AllCourses = visibleCourses.Select(c => new CourseRow(
+                    c.Title,
+                    c.Category,
+                    enrollmentCounts.TryGetValue(c.CourseId, out var count) ? count : 0
+                )).ToList();
+            }
+            else if (orgId.HasValue)
+            {
+                var visibleCourses = await _visibilityService.GetVisibleCoursesAsync(orgId.Value);
+                var courseIds = visibleCourses.Select(c => c.CourseId).ToList();
+                var enrollmentCounts = await _enrollmentService.GetEnrollmentCountsByCourseAsync(courseIds);
 
-            AllCourses = visibleCourses.Select(c => new CourseRow(
-                c.Title,
-                c.Category,
-                enrollmentCounts.TryGetValue(c.CourseId, out var count) ? count : 0
-            )).ToList();
+                AllCourses = visibleCourses.Select(c => new CourseRow(
+                    c.Title,
+                    c.Category,
+                    enrollmentCounts.TryGetValue(c.CourseId, out var count) ? count : 0
+                )).ToList();
+            }
         }
         catch (Exception ex)
         {
