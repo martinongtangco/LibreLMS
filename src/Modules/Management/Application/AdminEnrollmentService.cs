@@ -135,40 +135,58 @@ public class AdminEnrollmentService(
     /// <summary>List enrollments scoped to organization subtree.</summary>
     public async Task<IList<EnrollmentDto>> ListEnrollmentsAsync(IList<Guid> orgIds, string? studentName = null, string? courseTitle = null)
     {
-        var query = enrollmentCtx.Enrollments
+        // Step 1: Query enrollments + students from EnrollmentDbContext (same context).
+        // Apply org-scope and student-name filters here.
+        var enrollmentQuery = enrollmentCtx.Enrollments
             .Join(
                 enrollmentCtx.Students,
                 e => e.StudentId,
                 s => s.Id,
                 (e, s) => new { Enrollment = e, Student = s })
-            .Where(x => orgIds.Contains(x.Student.OrganizationId))
-            .Join(
-                catalogCtx.Courses,
-                x => x.Enrollment.CourseId,
-                c => c.Id,
-                (x, c) => new { x.Enrollment, x.Student, Course = c });
+            .Where(x => orgIds.Contains(x.Student.OrganizationId));
 
         if (!string.IsNullOrWhiteSpace(studentName))
         {
             var term = studentName.ToLowerInvariant();
-            query = query.Where(x => x.Student.Name.ToLowerInvariant().Contains(term));
+            enrollmentQuery = enrollmentQuery.Where(x => x.Student.Name.ToLowerInvariant().Contains(term));
         }
+
+        var enrollmentData = await enrollmentQuery
+            .OrderByDescending(x => x.Enrollment.EnrolledAt)
+            .ToListAsync();
+
+        // Step 2: Load courses from CatalogDbContext (separate context) by collected IDs.
+        var courseIds = enrollmentData.Select(x => x.Enrollment.CourseId).ToList();
+        var courseMap = new Dictionary<Guid, (Guid Id, string Title)>();
+        if (courseIds.Count > 0)
+        {
+            var courses = await catalogCtx.Courses
+                .Where(c => courseIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, c => (c.Id, c.Title));
+
+            courseMap = courses;
+        }
+
+        // Step 3: Join in memory and apply course-title filter.
+        var joined = enrollmentData.Where(e => courseMap.TryGetValue(e.Enrollment.CourseId, out var course))
+            .Select(e => new
+            {
+                e.Enrollment,
+                e.Student,
+                Course = courseMap[e.Enrollment.CourseId]
+            });
 
         if (!string.IsNullOrWhiteSpace(courseTitle))
         {
             var term = courseTitle.ToLowerInvariant();
-            query = query.Where(x => x.Course.Title.ToLowerInvariant().Contains(term));
+            joined = joined.Where(x => x.Course.Title.ToLowerInvariant().Contains(term));
         }
 
-        var results = await query
-            .OrderByDescending(x => x.Enrollment.EnrolledAt)
-            .ToListAsync();
-
-        // Build DTOs with org names
+        // Step 4: Build DTOs with org names from ManagementDbContext.
         var orgCache = new Dictionary<Guid, string>();
         var dtos = new List<EnrollmentDto>();
 
-        foreach (var r in results)
+        foreach (var r in joined)
         {
             var orgId = r.Student.OrganizationId;
             if (!orgCache.TryGetValue(orgId, out var orgName))
@@ -199,38 +217,57 @@ public class AdminEnrollmentService(
     /// <summary>List all enrollments (SuperUser).</summary>
     public async Task<IList<EnrollmentDto>> ListAllEnrollmentsAsync(string? studentName = null, string? courseTitle = null)
     {
-        var query = enrollmentCtx.Enrollments
+        // Step 1: Query enrollments + students from EnrollmentDbContext (same context).
+        // Apply student-name filter here.
+        var enrollmentQuery = enrollmentCtx.Enrollments
             .Join(
                 enrollmentCtx.Students,
                 e => e.StudentId,
                 s => s.Id,
-                (e, s) => new { Enrollment = e, Student = s })
-            .Join(
-                catalogCtx.Courses,
-                x => x.Enrollment.CourseId,
-                c => c.Id,
-                (x, c) => new { x.Enrollment, x.Student, Course = c });
+                (e, s) => new { Enrollment = e, Student = s });
 
         if (!string.IsNullOrWhiteSpace(studentName))
         {
             var term = studentName.ToLowerInvariant();
-            query = query.Where(x => x.Student.Name.ToLowerInvariant().Contains(term));
+            enrollmentQuery = enrollmentQuery.Where(x => x.Student.Name.ToLowerInvariant().Contains(term));
         }
+
+        var enrollmentData = await enrollmentQuery
+            .OrderByDescending(x => x.Enrollment.EnrolledAt)
+            .ToListAsync();
+
+        // Step 2: Load courses from CatalogDbContext (separate context) by collected IDs.
+        var courseIds = enrollmentData.Select(x => x.Enrollment.CourseId).ToList();
+        var courseMap = new Dictionary<Guid, (Guid Id, string Title)>();
+        if (courseIds.Count > 0)
+        {
+            var courses = await catalogCtx.Courses
+                .Where(c => courseIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, c => (c.Id, c.Title));
+
+            courseMap = courses;
+        }
+
+        // Step 3: Join in memory and apply course-title filter.
+        var joined = enrollmentData.Where(e => courseMap.TryGetValue(e.Enrollment.CourseId, out var course))
+            .Select(e => new
+            {
+                e.Enrollment,
+                e.Student,
+                Course = courseMap[e.Enrollment.CourseId]
+            });
 
         if (!string.IsNullOrWhiteSpace(courseTitle))
         {
             var term = courseTitle.ToLowerInvariant();
-            query = query.Where(x => x.Course.Title.ToLowerInvariant().Contains(term));
+            joined = joined.Where(x => x.Course.Title.ToLowerInvariant().Contains(term));
         }
 
-        var results = await query
-            .OrderByDescending(x => x.Enrollment.EnrolledAt)
-            .ToListAsync();
-
+        // Step 4: Build DTOs with org names from ManagementDbContext.
         var orgCache = new Dictionary<Guid, string>();
         var dtos = new List<EnrollmentDto>();
 
-        foreach (var r in results)
+        foreach (var r in joined)
         {
             var orgId = r.Student.OrganizationId;
             if (!orgCache.TryGetValue(orgId, out var orgName))
