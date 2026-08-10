@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -8,6 +9,7 @@ using LibreLms.Modules.Scorm.Application;
 
 namespace LibreLms.Host.Pages.Courses;
 
+[IgnoreAntiforgeryToken]
 public class CourseDetailModel : PageModel
 {
     private readonly CourseCatalogService _catalogService;
@@ -78,7 +80,6 @@ public class CourseDetailModel : PageModel
 
     /// <summary>HTMX handler: enroll in a course and return result partial (US2).</summary>
     [Authorize]
-    [IgnoreAntiforgeryToken]
     public async Task<PartialViewResult> OnPostEnrollAsync()
     {
         // Use the route-bound Id (from @page "{id:guid}") as the course ID

@@ -44,17 +44,21 @@ test.describe('Enrollment Smoke', () => {
     const canEnroll = await enrollButton.isVisible().catch(() => false);
 
     if (canEnroll) {
-      // Not enrolled yet — click to enroll
-      await enrollButton.click();
+      // Capture state before click to verify the swap actually happens
+      const beforeEnroll = await enrollRegion.textContent();
+
+      // Not enrolled yet — click to enroll (force click to avoid waiting for navigation)
+      await page.locator('#enroll-region button').first().click({ force: true });
 
       // Wait for HTMX swap — the enroll region should update
-      await page.waitForTimeout(1500);
+      await page.waitForTimeout(2000);
 
-      // Verify the enroll region changed (shows enrolled state or a button)
+      // Verify the enroll region changed (shows enrolled state)
       await expect(enrollRegion).toBeVisible();
-      // Either "✓ Enrolled" button or the enroll region shows success content
       const afterEnroll = await enrollRegion.textContent();
-      expect(afterEnroll).toBeTruthy();
+      // Must have changed from "Enroll now" to show enrolled state
+      expect(afterEnroll).not.toBe(beforeEnroll);
+      expect(afterEnroll).toMatch(/enrolled|successfully/i);
     } else if (isEnrolled) {
       // Already enrolled from a previous run — that's fine
     }
