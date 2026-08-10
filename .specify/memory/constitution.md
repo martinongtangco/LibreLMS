@@ -1,16 +1,15 @@
 <!--
   Sync Impact Report
   ==================
-  Version change: 1.6.0 → 1.7.0 (MINOR: new principle added)
-  Added sections:
-    - XIII. Verification Before Claim — mandates that no fix or feature is considered
-      complete until the application compiles, runs locally, and Playwright E2E tests
-      validate the change both before and after merging to `master`
-  Modified principles: none
+  Version change: 1.7.0 → 1.7.1 (PATCH: strengthened Principle XIII)
+  Added sections: none
+  Modified principles:
+    - XIII. Verification Before Claim — added concrete proof requirements for each gate;
+      agent must show build output, test results, and restart evidence — not just claim
+      a gate is passed
   Removed sections: none
   Templates updated:
-    - .specify/templates/tasks-template.md — ✅ no changes needed (test tasks are
-      already optional and gated by spec; this principle makes them mandatory)
+    - .specify/templates/tasks-template.md — ✅ no changes needed
     - .specify/templates/plan-template.md — ✅ no changes needed
     - .specify/templates/spec-template.md — ✅ no changes needed
     - README.md — ✅ no changes needed (references constitution as source of truth)
@@ -183,18 +182,21 @@ unrelated commits on a finished branch.
 
 ### XIII. Verification Before Claim
 An agent MUST NOT claim an issue is fixed or a feature is complete until all three verification
-gates pass:
+gates pass **with concrete proof** from each:
 
-1. **Compiles and runs**: The application builds without errors and starts successfully on the
-   local machine. A running process that responds to HTTP requests is the minimum bar.
-2. **E2E tests validate the change**: Playwright tests must be run against the running
-   application and demonstrate the fix or new behavior. If no relevant test exists, the agent
-   MUST write one before claiming completion.
-3. **Post-merge regression**: After merging to `master`, Playwright tests MUST be run again
-   against the merged code to confirm the fix survives the merge and doesn't regress.
+1. **Compiles and runs**: Rebuild the app (`dotnet build`), restart the process, and confirm
+   a running process responds to HTTP requests. Show build output and the "Now listening"
+   log line — do not claim "it compiles" without running the build.
+2. **E2E tests validate the change**: Run Playwright tests against the running application
+   and show passing output. If no relevant test exists, the agent MUST write one before
+   claiming completion. Show test results — do not claim "tests pass" without running them.
+3. **Post-merge regression**: After merging to `master`, rebuild, restart, and re-run
+   Playwright tests against the merged code. Show passing output — do not assume the merge
+   preserved correctness.
 
 A fix that compiles but has no E2E test is unverified. A test that passes on a feature branch
-but isn't re-run after merge is incomplete. All three gates are mandatory — no exemptions.
+but isn't re-run after merge is incomplete. Claiming a gate is passed without showing evidence
+from running that gate is a violation. All three gates are mandatory — no exemptions.
 
 Rationale: Without automated verification, the agent has no way to distinguish "works on my
 machine" from "actually fixed." Playwright tests provide the observable evidence that a change
@@ -239,4 +241,4 @@ simplify the instruction, not to add more words explaining it. Amendments requir
 file, bumping the version below, and — if the amendment reverses a prior ADR — recording that
 reversal as a new ADR rather than editing the old one.
 
-**Version**: 1.7.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-08-05
+**Version**: 1.7.1 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-08-10
