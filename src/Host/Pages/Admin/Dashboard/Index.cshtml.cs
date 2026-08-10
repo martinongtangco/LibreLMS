@@ -42,13 +42,13 @@ public class IndexModel : PageModel
 
     public record CourseRow(string Title, string Category, int EnrollmentCount);
 
-    public async Task OnGetAsync(ClaimsPrincipal user)
+    public async Task OnGetAsync()
     {
         try
         {
-            Role = AuthHelpers.GetCurrentUserRole(user);
-            var isSuperUser = AuthHelpers.IsSuperUser(user);
-            var orgId = AuthHelpers.GetCurrentUserOrgId(user);
+            Role = AuthHelpers.GetCurrentUserRole(User);
+            var isSuperUser = AuthHelpers.IsSuperUser(User);
+            var orgId = AuthHelpers.GetCurrentUserOrgId(User);
 
             if (isSuperUser)
             {
