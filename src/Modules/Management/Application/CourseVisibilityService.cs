@@ -167,17 +167,22 @@ public class CourseVisibilityService(
     {
         var allCourses = await catalogCtx.Courses.ToListAsync();
         var orgNameCache = new Dictionary<Guid, string>();
+        var result = new List<CourseVisibilityDto>();
 
-        return allCourses.Select(c =>
+        foreach (var course in allCourses)
         {
-            if (!orgNameCache.TryGetValue(c.OrganizationId, out var orgName))
+            if (!orgNameCache.TryGetValue(course.OrganizationId, out var orgName))
             {
-                orgName = "Unknown";
-                orgNameCache[c.OrganizationId] = orgName;
+                var org = await orgLookup.GetOrganizationAsync(course.OrganizationId);
+                orgName = org?.Name ?? "Unknown";
+                orgNameCache[course.OrganizationId] = orgName;
             }
-            return new CourseVisibilityDto(
-                c.Id, c.Title, c.Category, c.OrganizationId, orgName, false, false);
-        }).OrderBy(c => c.Title).ToList();
+
+            result.Add(new CourseVisibilityDto(
+                course.Id, course.Title, course.Category, course.OrganizationId, orgName, false, false));
+        }
+
+        return result.OrderBy(c => c.Title).ToList();
     }
 
     /// <summary>

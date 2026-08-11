@@ -2,6 +2,7 @@
 @model LibreLms.Host.Pages.Admin.Courses.IndexModel
 @{
     ViewData["Title"] = "Course Management";
+    var totalPages = Model.TotalCount > 0 ? (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize) : 1;
 }
 
 <h1>Course Management</h1>
@@ -16,47 +17,153 @@
     <div class="alert alert-success">@Model.SuccessMessage</div>
 }
 
-@if (Model.Courses.Count == 0)
-{
-    <div class="empty-state">No courses found.</div>
-}
-else
-{
-    <div class="table-wrapper">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Category</th>
-                    <th>Organization</th>
-                    <th>Source</th>
-                    <th>Visibility</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var course in Model.Courses)
-                {
-                    <tr>
-                        <td>@course.Title</td>
-                        <td>
-                            <span class="badge badge-category">@course.Category</span>
-                        </td>
-                        <td>@course.OrganizationName</td>
-                        <td>
-                            <span class="badge @(course.Source == "Inherited" ? "badge-duration" : "badge-enrolled")">@course.Source</span>
-                        </td>
-                        <td>
-                            <span class="badge @(course.Visibility == "Hidden" ? "badge-category" : "badge-enrolled")">@course.Visibility</span>
-                        </td>
-                        <td>
-                            <form method="post" asp-page-handler="Delete" asp-route-courseId="@course.CourseId" onsubmit="return confirm('Are you sure you want to delete this course?');">
-                                <button type="submit" class="btn btn-secondary" style="background:#c62828; color:white;">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+<div class="card">
+    <div style="padding: var(--spacing-md);">
+        <!-- Action bar: Create button + Search + Filter -->
+        <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-md); align-items: center; margin-bottom: var(--spacing-md);">
+            <a asp-page="Create" class="btn btn-primary">Create Course</a>
+
+            <form method="get" style="display: flex; flex-wrap: wrap; gap: var(--spacing-sm); align-items: center; flex: 1;">
+                <input type="hidden" name="sortBy" value="@Model.SortBy" />
+                <input type="hidden" name="sortDirection" value="@Model.SortDirection" />
+                <input type="hidden" name="pageNumber" value="1" />
+
+                <input type="text"
+                       name="search"
+                       value="@Model.Search"
+                       placeholder="Search courses..."
+                       class="form-control"
+                       style="flex: 1; min-width: 150px;" />
+
+                <select name="category" class="form-control" style="min-width: 120px;">
+                    <option value="">All Categories</option>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        <option value="@cat" selected="@(Model.Category == cat ? "selected" : null)">@cat</option>
+                    }
+                </select>
+
+                <button type="submit" class="btn btn-secondary">Search</button>
+                <a asp-page="Index" class="btn btn-ghost">Clear</a>
+            </form>
+        </div>
+
+        @if (Model.Courses.Count == 0)
+        {
+            <div class="empty-state">
+                No courses match your search. Try adjusting your filters or <a asp-page="Create">create a new course</a>.
+            </div>
+        }
+        else
+        {
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <a asp-page="Index"
+                                   asp-route-sortBy="title"
+                                   asp-route-sortDirection="@(Model.SortBy == "title" && Model.SortDirection == "asc" ? "desc" : "asc")"
+                                   asp-route-pageNumber="1"
+                                   asp-route-search="@Model.Search"
+                                   asp-route-category="@Model.Category">
+                                    Title @(GetSortIndicator("title"))
+                                </a>
+                            </th>
+                            <th>
+                                <a asp-page="Index"
+                                   asp-route-sortBy="category"
+                                   asp-route-sortDirection="@(Model.SortBy == "category" && Model.SortDirection == "asc" ? "desc" : "asc")"
+                                   asp-route-pageNumber="1"
+                                   asp-route-search="@Model.Search"
+                                   asp-route-category="@Model.Category">
+                                    Category @(GetSortIndicator("category"))
+                                </a>
+                            </th>
+                            <th>Organization</th>
+                            <th>Source</th>
+                            <th>Visibility</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var course in Model.Courses)
+                        {
+                            <tr>
+                                <td>@course.Title</td>
+                                <td>
+                                    <span class="badge badge-category">@course.Category</span>
+                                </td>
+                                <td>@course.OrganizationName</td>
+                                <td>
+                                    <span class="badge @(course.Source == "Inherited" ? "badge-duration" : "badge-enrolled")">@course.Source</span>
+                                </td>
+                                <td>
+                                    <span class="badge @(course.Visibility == "Hidden" ? "badge-category" : "badge-enrolled")">@course.Visibility</span>
+                                </td>
+                                <td style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
+                                    <a asp-page="Edit" asp-route-courseId="@course.CourseId" class="btn btn-sm btn-secondary">Edit</a>
+                                    <form method="post" asp-page-handler="Delete" asp-route-courseId="@course.CourseId" onsubmit="return confirm('Are you sure you want to delete this course?');">
+                                        <button type="submit" class="btn btn-sm btn-secondary" style="background:#c62828; color:white;">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (totalPages > 1)
+            {
+                <nav style="display: flex; align-items: center; justify-content: center; gap: var(--spacing-md); margin-top: var(--spacing-lg); padding: var(--spacing-sm) 0;">
+                    @if (Model.PageNumber > 1)
+                    {
+                        <a asp-page="Index"
+                           asp-route-pageNumber="@(Model.PageNumber - 1)"
+                           asp-route-search="@Model.Search"
+                           asp-route-category="@Model.Category"
+                           asp-route-sortBy="@Model.SortBy"
+                           asp-route-sortDirection="@Model.SortDirection"
+                           class="btn btn-sm btn-ghost">
+                            ← Previous
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="btn btn-sm btn-ghost" style="pointer-events:none;opacity:0.5;">← Previous</span>
+                    }
+
+                    <span style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                        Page @Model.PageNumber of @totalPages (@Model.TotalCount total)
+                    </span>
+
+                    @if (Model.PageNumber < totalPages)
+                    {
+                        <a asp-page="Index"
+                           asp-route-pageNumber="@(Model.PageNumber + 1)"
+                           asp-route-search="@Model.Search"
+                           asp-route-category="@Model.Category"
+                           asp-route-sortBy="@Model.SortBy"
+                           asp-route-sortDirection="@Model.SortDirection"
+                           class="btn btn-sm btn-ghost">
+                            Next →
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="btn btn-sm btn-ghost" style="pointer-events:none;opacity:0.5;">Next →</span>
+                    }
+                </nav>
+            }
+        }
     </div>
+</div>
+
+@functions {
+    string GetSortIndicator(string column)
+    {
+        if (Model.SortBy != column) return "";
+        return Model.SortDirection == "asc" ? "▲" : "▼";
+    }
 }

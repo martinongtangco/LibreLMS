@@ -86,6 +86,24 @@ public class CourseCatalogService(CatalogDbContext context)
         return course;
     }
 
+    /// <summary>Update an existing course in the catalog.</summary>
+    public async Task<Course> UpdateAsync(Guid courseId, Endpoints.UpdateCourseRequest request)
+    {
+        var course = await context.Courses.FindAsync(courseId);
+        if (course is null)
+            throw new KeyNotFoundException($"Course with ID {courseId} not found.");
+
+        course.Title = request.Title;
+        course.ShortDescription = request.ShortDescription;
+        course.FullDescription = request.FullDescription;
+        course.Category = request.Category;
+        course.Duration = request.Duration;
+
+        await context.SaveChangesAsync();
+
+        return course;
+    }
+
     /// <summary>List courses scoped to specific organization IDs (used for org-scoped queries).</summary>
     public async Task<IEnumerable<Course>> ListByOrgIdsAsync(IList<Guid> orgIds)
     {

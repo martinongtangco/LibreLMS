@@ -26,7 +26,7 @@ description: "Task list for Admin Courses Management Overhaul"
 
 **Purpose**: Branch creation and environment preparation
 
-- [ ] T001 Create git branch `bug/025-admin-courses-management` from `main`
+- [X] T001 Create git branch `bug/025-admin-courses-management` from `main`
 
 ---
 
@@ -36,9 +36,9 @@ description: "Task list for Admin Courses Management Overhaul"
 
 **CRITICAL**: T002-T004 must complete before dependent story phases begin.
 
-- [ ] T002 [P] [US3] Create `UpdateCourseRequest` record in `src/Modules/Catalog/Endpoints/UpdateCourseRequest.cs` with fields: Title (string), ShortDescription (string), FullDescription (string), Category (string), Duration (string)
-- [ ] T003 [P] [US3] Add `UpdateAsync(Guid courseId, UpdateCourseRequest request)` method to `src/Modules/Catalog/Application/CourseCatalogService.cs` that fetches the course by ID, updates Title/ShortDescription/FullDescription/Category/Duration, calls SaveChangesAsync, and returns the updated Course (throws KeyNotFoundException if not found)
-- [ ] T004 [P] [US4] Fix `GetAllCoursesAsync` in `src/Modules/Management/Application/CourseVisibilityService.cs` to resolve organization names using `orgLookup.GetOrganizationAsync` instead of hardcoding "Unknown", following the same pattern used in `GetVisibleCoursesAsync`
+- [X] T002 [P] [US3] Create `UpdateCourseRequest` record in `src/Modules/Catalog/Endpoints/UpdateCourseRequest.cs` with fields: Title (string), ShortDescription (string), FullDescription (string), Category (string), Duration (string)
+- [X] T003 [P] [US3] Add `UpdateAsync(Guid courseId, UpdateCourseRequest request)` method to `src/Modules/Catalog/Application/CourseCatalogService.cs` that fetches the course by ID, updates Title/ShortDescription/FullDescription/Category/Duration, calls SaveChangesAsync, and returns the updated Course (throws KeyNotFoundException if not found)
+- [X] T004 [P] [US4] Fix `GetAllCoursesAsync` in `src/Modules/Management/Application/CourseVisibilityService.cs` to resolve organization names using `orgLookup.GetOrganizationAsync` instead of hardcoding "Unknown", following the same pattern used in `GetVisibleCoursesAsync`
 
 **Checkpoint**: Service layer ready — all new methods and fixes are in place. Page implementation can begin.
 
@@ -54,8 +54,8 @@ description: "Task list for Admin Courses Management Overhaul"
 
 ### Implementation for User Story 1
 
-- [ ] T005 [P] [US1] Rewrite `src/Host/Pages/Admin/Courses/Index.cshtml.cs`: add `[BindProperty(SupportsGet = true)]` params for Search (string?), Category (string?), SortBy (string, default "title"), SortDirection (string, default "asc"), PageNumber (int, default 1), PageSize (int, default 15); add `Categories` property (List<string>); in `OnGetAsync`, call `CourseCatalogService.BrowseAsync(search, category, pageNumber, pageSize)` or fall back to `ListAsync` with LINQ filtering and in-memory `.OrderBy()` + `.Skip().Take()` for sorting and pagination; populate Categories from distinct course categories using `CourseCatalogService.ListAsync()`
-- [ ] T006 [P] [US1] Rewrite `src/Host/Pages/Admin/Courses/Index.cshtml`: add "Create Course" button linking to `/Admin/Courses/Create`; add search input and category dropdown filter above the table; make column headers clickable links with sort params (e.g., `?sortBy=title&sortDirection=desc`); wrap table in a `<div class="card">` for contrast against page background; add "Edit" link (`asp-page="Edit" asp-route-courseId="@course.CourseId"`) and keep existing Delete form in Actions column; add pagination controls below the table with Previous/Next buttons and page info; add empty state message when no courses match filters; update `CourseDisplay` record if needed to include additional fields for edit/delete actions
+- [X] T005 [P] [US1] Rewrite `src/Host/Pages/Admin/Courses/Index.cshtml.cs`: add `[BindProperty(SupportsGet = true)]` params for Search (string?), Category (string?), SortBy (string, default "title"), SortDirection (string, default "asc"), PageNumber (int, default 1), PageSize (int, default 15); add `Categories` property (List<string>); in `OnGetAsync`, call `CourseCatalogService.BrowseAsync(search, category, pageNumber, pageSize)` or fall back to `ListAsync` with LINQ filtering and in-memory `.OrderBy()` + `.Skip().Take()` for sorting and pagination; populate Categories from distinct course categories using `CourseCatalogService.ListAsync()`
+- [X] T006 [P] [US1] Rewrite `src/Host/Pages/Admin/Courses/Index.cshtml`: add "Create Course" button linking to `/Admin/Courses/Create`; add search input and category dropdown filter above the table; make column headers clickable links with sort params (e.g., `?sortBy=title&sortDirection=desc`); wrap table in a `<div class="card">` for contrast against page background; add "Edit" link (`asp-page="Edit" asp-route-courseId="@course.CourseId"`) and keep existing Delete form in Actions column; add pagination controls below the table with Previous/Next buttons and page info; add empty state message when no courses match filters; update `CourseDisplay` record if needed to include additional fields for edit/delete actions
 
 **Checkpoint**: At this point, the Admin/Courses listing page supports search, category filter, column sorting, pagination, and displays Create/Edit/Delete actions. Create and Edit links point to pages that will be completed in later stories.
 
@@ -69,8 +69,8 @@ description: "Task list for Admin Courses Management Overhaul"
 
 ### Implementation for User Story 2
 
-- [ ] T007 [P] [US2] Rewrite `src/Host/Pages/Admin/Courses/Create.cshtml.cs`: replace `IHttpClientFactory` injection with `CourseCatalogService` injection; in `OnPostAsync`, call `CourseCatalogService.CreateAsync` directly with the form fields instead of making an HTTP POST; after successful creation, redirect to `/Admin/Courses` with a success query parameter (e.g., `?success=true`)
-- [ ] T008 [P] [US2] Update `src/Host/Pages/Admin/Courses/Create.cshtml` redirect link from `asp-page="/Courses/Index"` to `asp-page="/Admin/Courses"` in the success message section
+- [X] T007 [P] [US2] Rewrite `src/Host/Pages/Admin/Courses/Create.cshtml.cs`: replace `IHttpClientFactory` injection with `CourseCatalogService` injection; in `OnPostAsync`, call `CourseCatalogService.CreateAsync` directly with the form fields instead of making an HTTP POST; after successful creation, redirect to `/Admin/Courses` with a success query parameter (e.g., `?success=true`)
+- [X] T008 [P] [US2] Update `src/Host/Pages/Admin/Courses/Create.cshtml` redirect link from `asp-page="/Courses/Index"` to `asp-page="/Admin/Courses"` in the success message section
 
 **Checkpoint**: Course creation works end-to-end: button click → form → submit → success → listing shows new course.
 
@@ -86,8 +86,8 @@ description: "Task list for Admin Courses Management Overhaul"
 
 ### Implementation for User Story 3
 
-- [ ] T009 [US3] Create `src/Host/Pages/Admin/Courses/Edit.cshtml.cs`: `[Authorize(Roles = "SuperUser,OrgAdmin")]` page model injecting `CourseCatalogService`; `[BindProperty]` properties for Title, ShortDescription, FullDescription, Category, Duration; `OnGetAsync(courseId)` loads the course by ID and populates fields (redirects to Index with error if not found); `OnPostAsync(courseId)` calls `CourseCatalogService.UpdateAsync(courseId, new UpdateCourseRequest(...))` and redirects to Index with success
-- [ ] T010 [US3] Create `src/Host/Pages/Admin/Courses/Edit.cshtml`: page with `<h1>Edit Course</h1>`, form with inputs for Title, ShortDescription, FullDescription (textarea), Category, Duration matching the Create form layout using existing CSS classes (`card`, `form-group`, `form-label`, `form-control`, `form-textarea`, `btn-primary`, `btn-secondary`); Save Changes and Cancel buttons; Cancel links to `/Admin/Courses`
+- [X] T009 [US3] Create `src/Host/Pages/Admin/Courses/Edit.cshtml.cs`: `[Authorize(Roles = "SuperUser,OrgAdmin")]` page model injecting `CourseCatalogService`; `[BindProperty]` properties for Title, ShortDescription, FullDescription, Category, Duration; `OnGetAsync(courseId)` loads the course by ID and populates fields (redirects to Index with error if not found); `OnPostAsync(courseId)` calls `CourseCatalogService.UpdateAsync(courseId, new UpdateCourseRequest(...))` and redirects to Index with success
+- [X] T010 [US3] Create `src/Host/Pages/Admin/Courses/Edit.cshtml`: page with `<h1>Edit Course</h1>`, form with inputs for Title, ShortDescription, FullDescription (textarea), Category, Duration matching the Create form layout using existing CSS classes (`card`, `form-group`, `form-label`, `form-control`, `form-textarea`, `btn-primary`, `btn-secondary`); Save Changes and Cancel buttons; Cancel links to `/Admin/Courses`
 
 **Checkpoint**: Course editing works end-to-end: Edit link → pre-populated form → save → success → listing shows updated data.
 
@@ -103,7 +103,7 @@ description: "Task list for Admin Courses Management Overhaul"
 
 ### Implementation for User Story 4
 
-- [ ] T011 [US4] Verify delete flow in `src/Host/Pages/Admin/Courses/Index.cshtml.cs`: confirm that `OnPostDeleteAsync` calls `CourseVisibilityService.DeleteCourseAsync`, handles `KeyNotFoundException` with an error message, and refreshes the course list via `OnGetAsync`; ensure the delete form in `Index.cshtml` correctly passes `courseId` via `asp-route-courseId`
+- [X] T011 [US4] Verify delete flow in `src/Host/Pages/Admin/Courses/Index.cshtml.cs`: confirm that `OnPostDeleteAsync` calls `CourseVisibilityService.DeleteCourseAsync`, handles `KeyNotFoundException` with an error message, and refreshes the course list via `OnGetAsync`; ensure the delete form in `Index.cshtml` correctly passes `courseId` via `asp-route-courseId`
 
 **Checkpoint**: Course deletion works: Delete click → confirm dialog → course removed → success message → listing updated.
 
@@ -117,7 +117,7 @@ description: "Task list for Admin Courses Management Overhaul"
 
 ### Implementation for User Story 5
 
-- [ ] T012 [P] [US5] Add CSS rules to `src/Host/wwwroot/css/site.css`: add `.data-table tr:nth-child(even) { background: var(--color-bg); }` for alternating row colors; add `.data-table tbody tr:hover { background: var(--color-border-light, #f5f0ea); }` for hover highlight; ensure the table card wrapper (added in T006) renders with `--color-surface` (#ffffff) background providing clear contrast against `--page-bg` (#f5ead8)
+- [X] T012 [P] [US5] Add CSS rules to `src/Host/wwwroot/css/site.css`: add `.data-table tr:nth-child(even) { background: var(--color-bg); }` for alternating row colors; add `.data-table tbody tr:hover { background: var(--color-border-light, #f5f0ea); }` for hover highlight; ensure the table card wrapper (added in T006) renders with `--color-surface` (#ffffff) background providing clear contrast against `--page-bg` (#f5ead8)
 
 **Checkpoint**: Table is visually distinct with card surface, clear headers, alternating rows, and hover states.
 
@@ -127,11 +127,11 @@ description: "Task list for Admin Courses Management Overhaul"
 
 **Purpose**: Verification, cleanup, and E2E validation.
 
-- [ ] T013 Run `dotnet build src/Host` and confirm zero build errors
-- [ ] T014 Run `dotnet test tests/ArchitectureTests` and confirm module boundary tests pass
-- [ ] T015 Run the application (`dotnet run --project src/Host`) and validate all 7 scenarios from `quickstart.md` manually
-- [ ] T016 [P] Verify responsive layout on mobile viewport (≤480px): filters stack vertically, table scrolls horizontally, pagination buttons remain tappable
-- [ ] T017 Verify empty state displays when no courses match search/filter, with actionable guidance message
+- [X] T013 Run `dotnet build src/Host` and confirm zero build errors
+- [X] T014 Run `dotnet test tests/ArchitectureTests` and confirm module boundary tests pass
+- [X] T015 Run the application (`dotnet run --project src/Host`) and validate all 7 scenarios from `quickstart.md` manually
+- [X] T016 [P] Verify responsive layout on mobile viewport (≤480px): filters stack vertically, table scrolls horizontally, pagination buttons remain tappable
+- [X] T017 Verify empty state displays when no courses match search/filter, with actionable guidance message
 
 ---
 
