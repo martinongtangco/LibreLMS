@@ -525,6 +525,12 @@ body.role-admin [data-role-link="admin"] {
   background: var(--color-bg);
 }
 
+.btn-sm {
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  min-height: auto;
+}
+
 /* ── Progress Bar (Organic pill) ───────────────────────────────────────── */
 .progress-track {
   width: 100%;
@@ -769,6 +775,14 @@ body.role-admin [data-role-link="admin"] {
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.data-table tbody tr:nth-child(even) {
+  background: var(--color-bg);
+}
+
+.data-table tbody tr:hover {
+  background: var(--border-light, #f5f0ea);
 }
 
 /* ── Headings (Organic) ────────────────────────────────────────────────── */
