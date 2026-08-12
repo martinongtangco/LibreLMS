@@ -1,6 +1,8 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using LibreLms.Host.ManagementAuth;
 using LibreLms.Modules.Catalog.Application;
 using LibreLms.Modules.Catalog.Endpoints;
 using LibreLms.Modules.Scorm.Application;
@@ -67,6 +69,9 @@ public class CreateCourseModel : PageModel
                 return Page();
             }
 
+            var orgIdStr = User.FindFirstValue(OrgClaimTypes.OrganizationId);
+            Guid? orgId = Guid.TryParse(orgIdStr, out var parsedOrgId) ? parsedOrgId : (Guid?)null;
+
             var course = await _catalogService.CreateAsync(
                 new CreateCourseRequest(
                     Title,
@@ -74,7 +79,7 @@ public class CreateCourseModel : PageModel
                     FullDescription,
                     Category,
                     Duration,
-                    null
+                    orgId
                 ));
 
             // Handle SCORM
@@ -95,7 +100,7 @@ public class CreateCourseModel : PageModel
             }
 
             CreatedCourseId = course.Id;
-            return RedirectToPage("/Admin/Courses", new { success = true });
+            return RedirectToPage("./Index", new { success = true });
         }
         catch (Exception ex)
         {

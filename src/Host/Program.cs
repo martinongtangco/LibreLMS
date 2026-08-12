@@ -152,8 +152,17 @@ courses.MapGet("/", async (CourseCatalogService service, string? search, string?
 });
 
 // POST /api/courses — Admin-only course creation
-courses.MapPost("/", [Authorize(Roles = "SuperUser,OrgAdmin")] async (CourseCatalogService service, [FromBody] LibreLms.Modules.Catalog.Endpoints.CreateCourseRequest request) =>
+courses.MapPost("/", [Authorize(Roles = "SuperUser,OrgAdmin")] async (CourseCatalogService service, [FromBody] LibreLms.Modules.Catalog.Endpoints.CreateCourseRequest request, HttpContext httpContext) =>
 {
+    // Use authenticated user's OrganizationId when the request doesn't provide one
+    if (!request.OrganizationId.HasValue)
+    {
+        var orgIdStr = httpContext.User.FindFirst(LibreLms.Host.ManagementAuth.OrgClaimTypes.OrganizationId)?.Value;
+        if (Guid.TryParse(orgIdStr, out var parsedOrgId))
+        {
+            request = request with { OrganizationId = parsedOrgId };
+        }
+    }
     var course = await service.CreateAsync(request);
     return Results.Created($"/api/courses/{course.Id}", new CourseDto(course.Id, course.Title, course.ShortDescription, course.Category, course.Duration));
 });

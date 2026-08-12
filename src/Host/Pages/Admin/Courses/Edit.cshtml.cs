@@ -39,7 +39,7 @@ public class EditCourseModel : PageModel
         var course = await _catalogService.GetByIdAsync(courseId);
         if (course is null)
         {
-            return RedirectToPage("/Admin/Courses", new { error = "Course not found." });
+            return RedirectToPage("./Index", new { error = "Course not found." });
         }
 
         Title = course.Title;
@@ -103,11 +103,11 @@ public class EditCourseModel : PageModel
                 }
             }
 
-            return RedirectToPage("/Admin/Courses", new { success = true });
+            return RedirectToPage("./Index", new { success = true });
         }
         catch (KeyNotFoundException)
         {
-            return RedirectToPage("/Admin/Courses", new { error = "Course not found." });
+            return RedirectToPage("./Index", new { error = "Course not found." });
         }
         catch (Exception ex)
         {
