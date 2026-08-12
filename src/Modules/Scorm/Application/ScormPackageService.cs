@@ -28,25 +28,66 @@ public class ScormPackageService
             .FirstOrDefaultAsync(p => p.CourseId == courseId);
     }
 
-    /// <summary>Find the launch path for a course (content directory + launch file).</summary>
-    public async Task<string?> FindLaunchPath(Guid courseId)
+    /// <summary>List SCORM packages not yet associated with any course (available pool).</summary>
+    public async Task<IEnumerable<ScormPackage>> ListAvailableAsync()
     {
-        var package = await GetPackageByCourseIdAsync(courseId);
-        return package is not null ? $"/{package.ContentDirectory}/{package.LaunchPath}" : null;
+        return await _context.ScormPackages
+            .Where(p => p.CourseId == null)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
     }
 
-    /// <summary>
-    /// Upload a SCORM ZIP package, validate it, extract content, and create a ScormPackage entity.
-    /// </summary>
-    /// <param name="zipStream">The uploaded ZIP file stream.</param>
-    /// <param name="courseId">The course to associate this package with.</param>
-    /// <returns>The created ScormPackage, or null with an error message.</returns>
-    public async Task<(ScormPackage? Package, string? Error)> UploadAsync(Stream zipStream, Guid courseId)
+    /// <summary>Associate an available (unassociated) SCORM package with a course.</summary>
+    public async Task AssociateWithCourseAsync(Guid packageId, Guid courseId)
     {
-        // Check for existing package
+        var package = await _context.ScormPackages.FindAsync(packageId);
+        if (package is null)
+            throw new KeyNotFoundException($"SCORM package {packageId} not found.");
+        if (package.CourseId != null)
+            throw new InvalidOperationException("SCORM package is already associated with a course.");
+
+        package.CourseId = courseId;
+        await _context.SaveChangesAsync();
+    }
+
+    /// <summary>Replace the SCORM package for a course: delete old content and upload new.</summary>
+    public async Task<(ScormPackage? Package, string? Error)> ReplacePackageAsync(Guid courseId, Stream zipStream)
+    {
+        // Delete existing package and its content
         var existing = await GetPackageByCourseIdAsync(courseId);
         if (existing is not null)
-            return (null, "A SCORM package already exists for this course.");
+        {
+            DeleteContentDirectory(existing.ContentDirectory);
+            _context.ScormPackages.Remove(existing);
+            await _context.SaveChangesAsync();
+        }
+
+        // Upload new package
+        return await UploadAsync(zipStream, courseId);
+    }
+
+    /// <summary>Delete a SCORM package and its content directory.</summary>
+    public async Task DeleteAsync(Guid packageId)
+    {
+        var package = await _context.ScormPackages.FindAsync(packageId);
+        if (package is null)
+            throw new KeyNotFoundException($"SCORM package {packageId} not found.");
+
+        DeleteContentDirectory(package.ContentDirectory);
+        _context.ScormPackages.Remove(package);
+        await _context.SaveChangesAsync();
+    }
+
+    /// <summary>Upload a SCORM ZIP package without associating it with a course (adds to available pool).</summary>
+    public async Task<(ScormPackage? Package, string? Error)> UploadAsync(Stream zipStream, Guid? courseId)
+    {
+        // If courseId is provided, check for existing package
+        if (courseId.HasValue)
+        {
+            var existing = await GetPackageByCourseIdAsync(courseId.Value);
+            if (existing is not null)
+                return (null, "A SCORM package already exists for this course.");
+        }
 
         // Read ZIP and validate
         using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
@@ -72,7 +113,6 @@ public class ScormPackageService
         {
             if (entry.FullName.EndsWith('/'))
             {
-                // Directory entry
                 var dirPath = Path.Combine(contentFullPath, entry.FullName);
                 Directory.CreateDirectory(dirPath);
             }
@@ -102,4 +142,21 @@ public class ScormPackageService
 
         return (package, null);
     }
+
+    private void DeleteContentDirectory(string contentDirectory)
+    {
+        var fullPath = Path.Combine(_wwwRootPath, contentDirectory);
+        if (Directory.Exists(fullPath))
+        {
+            Directory.Delete(fullPath, true);
+        }
+    }
+
+    /// <summary>Find the launch path for a course (content directory + launch file).</summary>
+    public async Task<string?> FindLaunchPath(Guid courseId)
+    {
+        var package = await GetPackageByCourseIdAsync(courseId);
+        return package is not null ? $"/{package.ContentDirectory}/{package.LaunchPath}" : null;
+    }
+
 }

@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "7fbd032b-7dd2-4a9e-8690-26bf6fd027d2",
+  "title": "Implement User Story 1: Add SCORM status column to the Admin/Courses listing page.",
+  "objective": "Implement User Story 1: Add SCORM status column to the Admin/Courses listing page.\n\nBranch: story/025-admin-courses-management\nConstitution: III (Module Boundaries)\n\nFiles to modify:\n\n1. src/Host/Pages/Admin/Courses/Index.cshtml.cs\n- Inject ScormPackageService into the constructor\n- Add HasScorm bool to CourseDisplay record\n- In OnGetAsync, after building Courses list, check each course against ScormPackageService.GetPackageByCourseIdAsync to populate HasScorm\n- Add Dictionary<Guid, bool> HasScormPerCourse for the view to use in delete confirmation\n- In OnPostDeleteAsync, expose HasScorm data\n\n2. src/Host/Pages/Admin/Courses/Index.cshtml\n- Add a SCORM column between Visibility and Actions columns\n- Show a green badge SCORM for courses with SCORM, empty for those without\n- Add data-has-scorm=true attribute to delete forms for courses with SCORM\n- Update delete confirmation JS to show SCORM warning: This course has SCORM content. Deleting will also permanently delete the SCORM package and its extracted files.\n\nExisting ScormPackageService has method: GetPackageByCourseIdAsync(Guid courseId) returning Task<ScormPackage?>\n\nIMPORTANT: Read the current files first to understand the existing code before editing.",
+  "status": "completed",
+  "createdAt": "2026-08-12T08:58:19.379Z",
+  "updatedAt": "2026-08-12T09:18:24.786Z",
+  "runs": [
+    {
+      "runId": "1de25ce4-3a35-4643-992e-235d275fa7f3",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/1de25ce4-3a35-4643-992e-235d275fa7f3",
+      "status": "complete",
+      "startedAt": "2026-08-12T08:58:19.396Z",
+      "completedAt": "2026-08-12T09:18:24.786Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "1de25ce4-3a35-4643-992e-235d275fa7f3",
+      "key": "us1",
+      "status": "failed",
+      "startedAt": "2026-08-12T08:58:19.455Z",
+      "updatedAt": "2026-08-12T09:07:26.059Z",
+      "artifactPaths": [
+        "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-58-19-499Z_019ff531-a5eb-7c21-a8ab-d988abcdf4b7.jsonl"
+      ],
+      "runId": "4edc02ab",
+      "agent": "worker",
+      "task": "Implement User Story 1: Add SCORM status column to the Admin/Courses listing page.\n\nBranch: story/025-admin-courses-management\nConstitution: III (Module Boundaries)\n\nFiles to modify:\n\n1. src/Host/Pages/Admin/Courses/Index.cshtml.cs\n- Inject ScormPackageService into the constructor\n- Add HasScorm bool to CourseDisplay record\n- In OnGetAsync, after building Courses list, check each course against ScormPackageService.GetPackageByCourseIdAsync to populate HasScorm\n- Add Dictionary<Guid, bool> HasScormPerCourse for the view to use in delete confirmation\n- In OnPostDeleteAsync, expose HasScorm data\n\n2. src/Host/Pages/Admin/Courses/Index.cshtml\n- Add a SCORM column between Visibility and Actions columns\n- Show a green badge SCORM for courses with SCORM, empty for those without\n- Add data-has-scorm=true attribute to delete forms for courses with SCORM\n- Update delete confirmation JS to show SCORM warning: This course has SCORM content. Deleting will also permanently delete the SCORM package and its extracted files.\n\nExisting ScormPackageService has method: GetPackageByCourseIdAsync(Guid courseId) returning Task<ScormPackage?>\n\nIMPORTANT: Read the current files first to understand the existing code before editing.",
+      "completedAt": "2026-08-12T09:07:26.059Z",
+      "sessionPath": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-58-19-499Z_019ff531-a5eb-7c21-a8ab-d988abcdf4b7.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-08-12T09:07:26.059Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "1de25ce4-3a35-4643-992e-235d275fa7f3",
+      "key": "us2",
+      "status": "failed",
+      "startedAt": "2026-08-12T08:58:19.586Z",
+      "updatedAt": "2026-08-12T09:07:26.105Z",
+      "artifactPaths": [
+        "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-58-19-616Z_019ff531-a660-76a1-b314-d4e436790bbc.jsonl"
+      ],
+      "runId": "71130cfe",
+      "agent": "worker",
+      "task": "Implement User Story 2: Add SCORM options to the course creation form.\n\nBranch: story/025-admin-courses-management\nConstitution: III (Module Boundaries)\n\nFiles to modify:\n\n1. src/Host/Pages/Admin/Courses/Create.cshtml.cs\n- Inject ScormPackageService and IWebHostEnvironment alongside existing CourseCatalogService\n- Add [BindProperty]: ScormMode (string: none/upload/associate), ScormFile (IFormFile?), ScormPackageId (Guid?)\n- Add AvailableScormPackages property (list of ScormPackage summaries for dropdown)\n- In OnGetAsync: call ScormPackageService.ListAvailableAsync() to populate AvailableScormPackages\n- In OnPostAsync: (a) create course, (b) if ScormMode=upload call ScormPackageService.UploadAsync(file.OpenReadStream(), courseId), (c) if ScormMode=associate call ScormPackageService.AssociateWithCourseAsync(ScormPackageId.Value, courseId), (d) redirect\n\n2. src/Host/Pages/Admin/Courses/Create.cshtml\n- After Duration field, add SCORM section with radio button group:\n  (1) No SCORM content (default), (2) Upload new SCORM package, (3) Associate existing SCORM\n- Show file input hidden by default, shown when upload selected\n- Show dropdown of available SCORM packages hidden by default, shown when associate selected\n- Add minimal JS to toggle visibility based on radio selection\n- Add 50MB upload size note\n\nAvailable ScormPackageService methods:\n- ListAvailableAsync(): returns IEnumerable<ScormPackage>\n- UploadAsync(Stream zipStream, Guid? courseId): returns (ScormPackage?, string? error)\n- AssociateWithCourseAsync(Guid packageId, Guid courseId)\n\nIMPORTANT: Read the current files first to understand the existing code before editing.",
+      "completedAt": "2026-08-12T09:07:26.105Z",
+      "sessionPath": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-58-19-616Z_019ff531-a660-76a1-b314-d4e436790bbc.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-08-12T09:07:26.105Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "1de25ce4-3a35-4643-992e-235d275fa7f3",
+      "key": "us3",
+      "status": "failed",
+      "startedAt": "2026-08-12T08:58:19.701Z",
+      "updatedAt": "2026-08-12T09:07:25.801Z",
+      "artifactPaths": [
+        "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-58-19-731Z_019ff531-a6d3-7946-a1f7-c6cd08bbcba0.jsonl"
+      ],
+      "runId": "053c1a07",
+      "agent": "worker",
+      "task": "Implement User Story 3: Add SCORM management to the course edit form.\n\nBranch: story/025-admin-courses-management\nConstitution: III (Module Boundaries)\n\nFiles to modify:\n\n1. src/Host/Pages/Admin/Courses/Edit.cshtml.cs\n- Inject ScormPackageService alongside existing CourseCatalogService\n- Add [BindProperty]: ScormFile (IFormFile?), ScormMode (string?)\n- Add CurrentScormPackage property (ScormPackage?) for display\n- In OnGetAsync: load course by ID, populate fields, also load current SCORM via ScormPackageService.GetPackageByCourseIdAsync(courseId)\n- In OnPostAsync: (a) call CourseCatalogService.UpdateAsync(courseId, new UpdateCourseRequest(...)), (b) if ScormFile provided and course has SCORM, call ScormPackageService.ReplacePackageAsync(courseId, ScormFile.OpenReadStream()), (c) if ScormFile provided and no SCORM, call ScormPackageService.UploadAsync(ScormFile.OpenReadStream(), courseId), (d) redirect to Index with success\n\n2. src/Host/Pages/Admin/Courses/Edit.cshtml\n- Keep existing form for Title, ShortDescription, FullDescription, Category, Duration\n- Add SCORM section after Duration:\n  - If CurrentScormPackage exists: show ManifestTitle and CreatedAt, with Upload new SCORM to replace file input\n  - If no SCORM: show Upload SCORM package file input\n- Enforce 50MB max file size\n\nAvailable ScormPackageService methods:\n- GetPackageByCourseIdAsync(Guid courseId): returns Task<ScormPackage?>\n- ReplacePackageAsync(Guid courseId, Stream zipStream): returns (ScormPackage?, string? error)\n- UploadAsync(Stream zipStream, Guid? courseId): returns (ScormPackage?, string? error)\n\nIMPORTANT: Read the current files first to understand the existing code before editing.",
+      "completedAt": "2026-08-12T09:07:25.801Z",
+      "sessionPath": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-58-19-731Z_019ff531-a6d3-7946-a1f7-c6cd08bbcba0.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-08-12T09:07:25.801Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "1de25ce4-3a35-4643-992e-235d275fa7f3",
+      "key": "us6",
+      "status": "failed",
+      "startedAt": "2026-08-12T08:58:19.804Z",
+      "updatedAt": "2026-08-12T09:18:24.757Z",
+      "artifactPaths": [
+        "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-58-19-835Z_019ff531-a73b-7daa-a0de-3bca9333f564.jsonl"
+      ],
+      "runId": "ac719e81",
+      "agent": "worker",
+      "task": "Implement User Story 6: Repurpose Admin/Upload page as SCORM pool manager.\n\nBranch: story/025-admin-courses-management\nConstitution: III (Module Boundaries)\n\nFiles to modify:\n\n1. src/Host/Pages/Admin/Upload.cshtml.cs\n- Remove course dropdown and CourseCatalogService/CourseVisibilityService dependencies\n- Inject ScormPackageService directly\n- Add AvailablePackages property (list of ScormPackage summaries: Id, ManifestTitle, CreatedAt)\n- In OnGetAsync: call ScormPackageService.ListAvailableAsync() to populate packages\n- In OnPostAsync: handle file upload WITHOUT courseId - call ScormPackageService.UploadAsync(file.OpenReadStream(), null) to add to available pool\n- Add OnPostDeleteAsync(Guid packageId): call ScormPackageService.DeleteAsync(packageId)\n\n2. src/Host/Pages/Admin/Upload.cshtml\n- Remove course selection dropdown entirely\n- Upload form with single file input for SCORM ZIP\n- Section below titled Available SCORM Packages listing unassociated packages with ManifestTitle, CreatedAt, and Delete button for each\n- Show pool count (e.g., 3 packages available)\n- Add 50MB upload size note\n- Empty state when no packages available\n\nAvailable ScormPackageService methods:\n- ListAvailableAsync(): returns IEnumerable<ScormPackage>\n- UploadAsync(Stream zipStream, Guid? courseId): returns (ScormPackage?, string? error)\n- DeleteAsync(Guid packageId)\n\nIMPORTANT: Read the current files first to understand the existing code before editing.",
+      "completedAt": "2026-08-12T09:18:24.757Z",
+      "sessionPath": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-58-19-835Z_019ff531-a73b-7daa-a0de-3bca9333f564.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-08-12T09:18:24.757Z",
+        "status": "failed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/1de25ce4-3a35-4643-992e-235d275fa7f3/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/1de25ce4-3a35-4643-992e-235d275fa7f3/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-58-19-499Z_019ff531-a5eb-7c21-a8ab-d988abcdf4b7.jsonl"
+    },
+    {
+      "kind": "output",
+      "path": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-58-19-616Z_019ff531-a660-76a1-b314-d4e436790bbc.jsonl"
+    },
+    {
+      "kind": "output",
+      "path": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-58-19-731Z_019ff531-a6d3-7946-a1f7-c6cd08bbcba0.jsonl"
+    },
+    {
+      "kind": "output",
+      "path": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-58-19-835Z_019ff531-a73b-7daa-a0de-3bca9333f564.jsonl"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-07-15-717Z_019ff502-e605-70bf-8a06-fac2e9ed8ba9.jsonl",
+  "summary": "Workflow completed with 4 child run(s). Return: [\n  {\n    \"key\": \"us1\",\n    \"ok\": false,\n    \"agent\": \"worker\",\n    \"runId\": \"4edc02ab\",\n    \"output\": \"\",\n    \"error\": \"Context size has been exceeded.\\n\\nOutput artifact: /workspace/.pi/subagents/artifacts/4edc02ab_worker_0_output.md\",\n    \"artifactPaths\": [\n      \"/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-58-19-499Z_019ff531-a5eb-7c21-a8ab-d988abcdf4b7.jsonl\"\n    ],\n    \"results\": [\n      {\n        \"index\": 0,\n        \"agent\": \"worker\",\n        \"task\": \"You are a delegated subagent running from a fork of the parent session. Treat the inherited conversation as reference-only context, not a live thread to continue. Do not continue or answer prior messages as if they are waiting for a reply. Your sole job is to execute the task below and return a focused result for that task using your tools.\\n\\nTask:\\nImplement User Story 1: Add SCORM status column to the Admin/Courses listing page.\\n\\nBranch: story/025-admin-courses-management\\nConstitution: III (Module Boundaries)\\ Trace: 8 event(s)."
+}

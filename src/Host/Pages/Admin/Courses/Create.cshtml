@@ -56,7 +56,53 @@
             <small class="form-hint">e.g., 3 hours, 2 days</small>
         </div>
 
+        <div class="form-group mb-lg">
+            <label class="form-label">SCORM Content</label>
+
+            <div class="radio-group" style="display:flex; flex-direction:column; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
+                <label style="display:flex; align-items:center; gap: var(--spacing-sm);">
+                    <input type="radio" name="ScormMode" value="none" checked onchange="toggleScormOptions()" />
+                    No SCORM content
+                </label>
+                <label style="display:flex; align-items:center; gap: var(--spacing-sm);">
+                    <input type="radio" name="ScormMode" value="upload" onchange="toggleScormOptions()" />
+                    Upload new SCORM package
+                </label>
+                <label style="display:flex; align-items:center; gap: var(--spacing-sm);">
+                    <input type="radio" name="ScormMode" value="associate" onchange="toggleScormOptions()" />
+                    Associate existing SCORM package
+                </label>
+            </div>
+
+            <div id="scormUploadSection" style="display:none; margin-top: var(--spacing-sm);">
+                <input type="file" name="ScormFile" accept=".zip" class="form-file" />
+                <small class="form-hint">Upload a SCORM 1.2 ZIP package (max 50MB).</small>
+            </div>
+
+            <div id="scormAssociateSection" style="display:none; margin-top: var(--spacing-sm);">
+                <select name="ScormPackageId" class="form-select">
+                    <option value="">— Select a SCORM package —</option>
+                    @foreach (var pkg in Model.AvailableScormPackages)
+                    {
+                        <option value="@pkg.Id">@pkg.ManifestTitle <small>(@pkg.CreatedAt)</small></option>
+                    }
+                </select>
+                @if (Model.AvailableScormPackages.Count == 0)
+                {
+                    <small class="form-hint">No available SCORM packages. <a asp-page="/Admin/Upload">Upload one first</a>.</small>
+                }
+            </div>
+        </div>
+
         <button type="submit" class="btn btn-primary">Create Course</button>
         <a asp-page="/Admin/Courses" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
+
+<script>
+function toggleScormOptions() {
+    var mode = document.querySelector('input[name="ScormMode"]:checked').value;
+    document.getElementById('scormUploadSection').style.display = mode === 'upload' ? 'block' : 'none';
+    document.getElementById('scormAssociateSection').style.display = mode === 'associate' ? 'block' : 'none';
+}
+</script>

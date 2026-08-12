@@ -8,8 +8,8 @@ namespace LibreLms.Modules.Scorm.Domain;
 /// </summary>
 public class ScormPackage : Entity<Guid>
 {
-    /// <summary>FK to the catalog course this package belongs to.</summary>
-    public Guid CourseId { get; set; }
+    /// <summary>FK to the catalog course this package belongs to. Null = available pool (unassociated).</summary>
+    public Guid? CourseId { get; set; }
 
     /// <summary>Title extracted from imsmanifest.xml.</summary>
     public string ManifestTitle { get; set; } = string.Empty;

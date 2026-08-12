@@ -45,6 +45,27 @@
             <small class="form-hint">e.g., 3 hours, 2 days</small>
         </div>
 
+        <div class="form-group mb-lg">
+            <label class="form-label">SCORM Content</label>
+
+            @if (Model.CurrentScormPackage != null)
+            {
+                <div class="card" style="margin-bottom: var(--spacing-sm); padding: var(--spacing-sm);">
+                    <p><strong>@Model.CurrentScormPackage.ManifestTitle</strong></p>
+                    <small class="form-hint">Uploaded @Model.CurrentScormPackage.CreatedAt.ToString("yyyy-MM-dd")</small>
+                </div>
+                <label class="form-label">Upload new SCORM to replace</label>
+                <input type="file" name="ScormFile" accept=".zip" class="form-file" />
+                <small class="form-hint">Uploading a new package will replace the existing SCORM content (max 50MB).</small>
+            }
+            else
+            {
+                <label class="form-label">Upload SCORM package</label>
+                <input type="file" name="ScormFile" accept=".zip" class="form-file" />
+                <small class="form-hint">Upload a SCORM 1.2 ZIP package (max 50MB). Leave empty to keep current state.</small>
+            }
+        </div>
+
         <button type="submit" class="btn btn-primary">Save Changes</button>
         <a asp-page="/Admin/Courses" class="btn btn-secondary">Cancel</a>
     </form>

@@ -1,21 +1,15 @@
 @page
 @model LibreLms.Host.Pages.Admin.ScormUploadModel
 @{
-    ViewData["Title"] = "Upload SCORM Package";
+    ViewData["Title"] = "SCORM Package Pool";
 }
 
-<h1 class="mb-lg">Upload SCORM Package</h1>
+<h1 class="mb-lg">SCORM Package Pool</h1>
 
 @if (Model.SuccessMessage is not null)
 {
     <div class="card card-success">
         <h3>@Model.SuccessMessage</h3>
-        @if (Model.UploadedCourseId.HasValue)
-        {
-            <p class="mt-sm">
-                <a asp-page="/Courses/Detail" asp-route-id="@Model.UploadedCourseId" class="btn btn-primary">View Course</a>
-            </p>
-        }
     </div>
 }
 
@@ -27,34 +21,54 @@
     </div>
 }
 
-<div id="upload-result"></div>
-
 <div class="card">
-    <form method="post"
-          enctype="multipart/form-data"
-          hx-post="."
-          hx-encoding="multipart/form-data"
-          hx-target="#upload-result"
-          hx-indicator=".htmx-indicator">
-        <div class="form-group">
-            <label class="form-label">Course</label>
-            <select name="courseId" class="form-select">
-                <option value="">— Select a course —</option>
-                @foreach (var course in Model.Courses)
-                {
-                    <option value="@course.Id">@course.Title <small>(@course.OrganizationName)</small></option>
-                }
-            </select>
-            <small class="form-hint">Select the course from the catalog to associate with this SCORM package. Organization shown in parentheses.</small>
-        </div>
-
+    <h3>Upload SCORM Package</h3>
+    <form method="post" enctype="multipart/form-data">
         <div class="form-group mb-lg">
             <label class="form-label">SCORM Package (.zip)</label>
-            <input type="file" name="package" accept=".zip" class="form-file" />
-            <small class="form-hint">Upload a SCORM 1.2 ZIP package containing imsmanifest.xml.</small>
+            <input type="file" name="package" accept=".zip" class="form-file" required />
+            <small class="form-hint">Upload a SCORM 1.2 ZIP package containing imsmanifest.xml (max 50MB). The package will be added to the available pool.</small>
         </div>
 
-        <button type="submit" class="btn btn-primary">Upload Package</button>
-        <div class="htmx-indicator text-muted">⏳ Uploading...</div>
+        <button type="submit" class="btn btn-primary">Upload to Pool</button>
     </form>
+</div>
+
+<div class="card" style="margin-top: var(--spacing-md);">
+    <h3>Available SCORM Packages (@Model.AvailablePackages.Count)</h3>
+
+    @if (Model.AvailablePackages.Count == 0)
+    {
+        <div class="empty-state">
+            No available SCORM packages. Upload a package above to add it to the pool.
+        </div>
+    }
+    else
+    {
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Uploaded</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pkg in Model.AvailablePackages)
+                    {
+                        <tr>
+                            <td>@pkg.ManifestTitle</td>
+                            <td>@pkg.CreatedAt</td>
+                            <td>
+                                <form method="post" asp-page-handler="Delete" asp-route-packageId="@pkg.Id" style="display:inline;" onsubmit="return confirm('Delete this SCORM package and its extracted files?');">
+                                    <button type="submit" class="btn btn-sm btn-secondary" style="background:#c62828; color:white;">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>
