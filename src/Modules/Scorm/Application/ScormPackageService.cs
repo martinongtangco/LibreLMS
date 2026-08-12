@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using Microsoft.EntityFrameworkCore;
+using LibreLms.Contracts.Scorm;
 using LibreLms.Modules.Scorm.Domain;
 using LibreLms.Modules.Scorm.Infrastructure;
 
@@ -7,8 +8,9 @@ namespace LibreLms.Modules.Scorm.Application;
 
 /// <summary>
 /// Service for SCORM package operations: upload, manifest parsing, content extraction.
+/// Implements IScormPackageService (Scorm.Contracts) for cross-module access per Constitution Principle III.
 /// </summary>
-public class ScormPackageService
+public class ScormPackageService : IScormPackageService
 {
     private readonly ScormDbContext _context;
     private readonly ManifestParser _manifestParser;
@@ -28,6 +30,10 @@ public class ScormPackageService
             .FirstOrDefaultAsync(p => p.CourseId == courseId);
     }
 
+    /// <summary>Contract: get package as object for cross-module callers.</summary>
+    Task<object?> IScormPackageService.GetPackageByCourseIdAsync(Guid courseId)
+        => Task.FromResult<object?>(GetPackageByCourseIdAsync(courseId).Result);
+
     /// <summary>List SCORM packages not yet associated with any course (available pool).</summary>
     public async Task<IEnumerable<ScormPackage>> ListAvailableAsync()
     {
@@ -36,6 +42,10 @@ public class ScormPackageService
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }
+
+    /// <summary>Contract: list available as object[] for cross-module callers.</summary>
+    Task<IEnumerable<object>> IScormPackageService.ListAvailableAsync()
+        => Task.FromResult<IEnumerable<object>>(ListAvailableAsync().Result.Cast<object>());
 
     /// <summary>Associate an available (unassociated) SCORM package with a course.</summary>
     public async Task AssociateWithCourseAsync(Guid packageId, Guid courseId)
@@ -64,6 +74,45 @@ public class ScormPackageService
 
         // Upload new package
         return await UploadAsync(zipStream, courseId);
+    }
+
+    /// <summary>Contract: replace package with object return for cross-module callers.</summary>
+    async Task<(object? Package, string? Error)> IScormPackageService.ReplacePackageAsync(Guid courseId, Stream zipStream)
+    {
+        var result = await ReplacePackageAsync(courseId, zipStream);
+        return (result.Package, result.Error);
+    }
+
+    /// <summary>Check if a course has an associated SCORM package.</summary>
+    public async Task<bool> HasPackageAsync(Guid courseId)
+    {
+        return await _context.ScormPackages.AnyAsync(p => p.CourseId == courseId);
+    }
+
+    /// <summary>Get the content directory path for a course's SCORM package, if any.</summary>
+    public async Task<string?> GetContentDirectoryAsync(Guid courseId)
+    {
+        var package = await GetPackageByCourseIdAsync(courseId);
+        return package?.ContentDirectory;
+    }
+
+    /// <summary>Delete the SCORM package associated with a course (entity + content directory).</summary>
+    public async Task DeletePackageForCourseAsync(Guid courseId)
+    {
+        var package = await GetPackageByCourseIdAsync(courseId);
+        if (package is not null)
+        {
+            DeleteContentDirectory(package.ContentDirectory);
+            _context.ScormPackages.Remove(package);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    /// <summary>Contract: upload with object return for cross-module callers.</summary>
+    async Task<(object? Package, string? Error)> IScormPackageService.UploadAsync(Stream zipStream, Guid? courseId)
+    {
+        var result = await UploadAsync(zipStream, courseId);
+        return (result.Package, result.Error);
     }
 
     /// <summary>Delete a SCORM package and its content directory.</summary>

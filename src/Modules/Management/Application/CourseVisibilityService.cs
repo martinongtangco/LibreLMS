@@ -1,10 +1,9 @@
-using System.IO;
 using Microsoft.EntityFrameworkCore;
 using LibreLms.Contracts.Management;
+using LibreLms.Contracts.Scorm;
 using LibreLms.Modules.Catalog.Infrastructure;
 using LibreLms.Modules.Management.Domain;
 using LibreLms.Modules.Management.Infrastructure;
-using LibreLms.Modules.Scorm.Infrastructure;
 
 namespace LibreLms.Modules.Management.Application;
 
@@ -35,8 +34,7 @@ public class CourseVisibilityService(
     ManagementDbContext managementCtx,
     CatalogDbContext catalogCtx,
     IOrganizationLookup orgLookup,
-    ScormDbContext scormCtx,
-    string webRootPath)
+    IScormPackageService scormPackageService)
 {
     /// <summary>
     /// Get all visible courses for an organization.
@@ -204,23 +202,11 @@ public class CourseVisibilityService(
             .ToListAsync();
         managementCtx.CourseVisibilityOverrides.RemoveRange(overrides);
 
-        // Delete associated SCORM package and its content directory
-        var scormPackage = await scormCtx.ScormPackages
-            .FirstOrDefaultAsync(p => p.CourseId == courseId);
-        if (scormPackage is not null)
-        {
-            // Delete content directory from filesystem
-            var contentFullPath = Path.Combine(webRootPath, scormPackage.ContentDirectory);
-            if (Directory.Exists(contentFullPath))
-            {
-                Directory.Delete(contentFullPath, true);
-            }
-            scormCtx.ScormPackages.Remove(scormPackage);
-        }
+        // Delete associated SCORM package and its content directory (via contract)
+        await scormPackageService.DeletePackageForCourseAsync(courseId);
 
         catalogCtx.Courses.Remove(course);
         await managementCtx.SaveChangesAsync();
         await catalogCtx.SaveChangesAsync();
-        await scormCtx.SaveChangesAsync();
     }
 }

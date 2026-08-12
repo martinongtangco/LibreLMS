@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using LibreLms.Contracts.Management;
 using LibreLms.Modules.Management.Application;
@@ -15,11 +14,7 @@ public static class ManagementModuleExtensions
         services.AddScoped<TreeLayoutService>();
         services.AddScoped<OrganizationService>();
         services.AddScoped<UserService>();
-        services.AddScoped<CourseVisibilityService>(sp =>
-        {
-            var webEnv = sp.GetRequiredService<IWebHostEnvironment>();
-            return ActivatorUtilities.CreateInstance<CourseVisibilityService>(sp, webEnv.WebRootPath);
-        });
+        services.AddScoped<CourseVisibilityService>();
         services.AddScoped<DashboardService>();
         services.AddScoped<AdminEnrollmentService>();
         return services;
