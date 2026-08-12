@@ -101,6 +101,12 @@ As an admin viewing the course listing, I want the table to have clear visual di
 - What happens if multiple admins edit the same course simultaneously? (Last save wins, or show a conflict message)
 - What happens when pagination is at the last page and a course is deleted? (Should navigate to the previous page)
 - What happens when a course has no category assigned? (Should display a default like "Uncategorized" rather than blank)
+- What happens when the admin uploads an invalid SCORM ZIP (missing imsmanifest.xml)? (Should show a clear error and keep the form intact)
+- What happens when no unassociated SCORM packages are available? (Should show "No available SCORM packages" in the dropdown with a link to upload)
+- What happens when a course with SCORM is deleted? (Both the Course and its ScormPackage should be deleted, including content directory cleanup)
+- What happens when SCORM content extraction fails mid-upload? (Should roll back partial extraction and show an error)
+- What happens when a course with SCORM is deleted? (Should show a confirmation warning that the SCORM package and its content will also be deleted)
+- What happens when the available SCORM pool grows stale? (Admins should be able to delete unassociated SCORM packages from the Upload page)
 
 ## Requirements *(mandatory)*
 
@@ -124,11 +130,34 @@ As an admin viewing the course listing, I want the table to have clear visual di
 - **FR-016**: The page MUST display an empty state message when no courses match the current search/filter criteria, with guidance on how to adjust filters
 - **FR-017**: The page MUST be accessible to users with SuperUser or OrgAdmin roles only
 
+### SCORM Integration Requirements
+
+- **FR-018**: The course creation form MUST provide three SCORM options: (1) No SCORM content, (2) Upload new SCORM package, (3) Associate existing unassociated SCORM package
+- **FR-019**: When "Upload new SCORM" is selected, the form MUST accept a ZIP file containing a valid SCORM 1.2 package (with imsmanifest.xml)
+- **FR-020**: When "Associate existing SCORM" is selected, the form MUST display a dropdown of SCORM packages not yet associated with any course
+- **FR-021**: Creating a course with SCORM upload MUST create both the Course and ScormPackage entities in a single transaction
+- **FR-022**: Creating a course with SCORM association MUST link the Course to the selected ScormPackage and set its CourseId
+- **FR-023**: A ScormPackage MUST have a nullable CourseId — it can exist without a course association (in the "available pool")
+- **FR-024**: The unique index on ScormPackage.CourseId MUST allow null values (filtered index) — only non-null CourseIds are unique
+- **FR-025**: SCORM content (launch/play) MUST be blocked when the ScormPackage has no associated CourseId (is null)
+- **FR-026**: The separate Admin/Upload page MUST be updated to upload SCORM packages without requiring a course — adding to the available pool
+- **FR-027**: The course edit form MUST allow adding SCORM to a course that has none, or replacing existing SCORM with a new upload
+- **FR-028**: When replacing SCORM on an existing course, the old ScormPackage MUST be deleted (including its content directory) before the new one is created
+- **FR-029**: When deleting a course that has SCORM content, the UI MUST show a confirmation warning that the SCORM package and its extracted files will also be deleted
+- **FR-030**: The Admin/Upload page MUST be repurposed to upload SCORM packages to the available pool without requiring course association; association is done through the Courses pages
+- **FR-031**: The Admin/Upload page MUST list available (unassociated) SCORM packages with a delete option for pool cleanup
+- **FR-032**: SCORM ZIP uploads MUST be limited to 50MB
+- **FR-033**: SCORM packages MUST use single-SCO launch (first SCO from manifest) — multi-SCO sequencing is out of scope per constitution
+
 ### Key Entities
 
 - **Course**: Represents a learning course with title, short description, full description, category, duration, owning organization, and creation timestamp.
 - **Visibility Override**: Represents an admin's decision to hide an inherited course within a specific organization scope.
 - **Course Listing Entry**: The display representation of a course in the admin listing, containing title, category, organization name, source, and visibility status.
+
+## Key Entities (continued)
+
+- **ScormPackage**: Represents an uploaded SCORM 1.2 package with CourseId (nullable FK to Course), ManifestTitle (from imsmanifest.xml), LaunchPath (relative HTML path), ContentDirectory (server-relative path to extracted files), and CreatedAt. When CourseId is null, the package is in the "available pool" awaiting association. When CourseId is set, the package belongs to that course. Non-null CourseId values must be unique (one SCORM per course).
 
 ## Success Criteria *(mandatory)*
 
@@ -141,6 +170,43 @@ As an admin viewing the course listing, I want the table to have clear visual di
 - **SC-005**: Table header background has a visibly distinct contrast from the page background, confirmed by visual inspection on at least desktop and mobile viewports
 - **SC-006**: Pagination loads the next page of results within 1 second when there are 100+ courses
 - **SC-007**: The empty state message provides clear, actionable guidance when no courses match current filters
+- **SC-008**: Admins can create a course with SCORM content in a single flow (under 60 seconds from form to confirmation)
+- **SC-009**: SCORM packages without a course association are visible in the "Associate existing SCORM" dropdown but cannot be launched directly
+- **SC-010**: Replacing SCORM on an existing course preserves all course metadata while updating only the SCORM content
+
+### User Story 6 - Upload SCORM During Course Creation (Priority: P1)
+
+As an admin, I want to upload a SCORM package or associate an existing SCORM package when creating a new course, so that I can complete the course setup in a single flow instead of navigating between separate Course and SCORM upload pages.
+
+**Why this priority**: Currently, creating a course and uploading SCORM are disjoint flows — the admin creates a course, then navigates to a separate Upload page to attach SCORM. This is confusing and error-prone. Integrating SCORM into course creation streamlines the workflow.
+
+**Independent Test**: Can be fully tested by navigating to Admin/Courses/Create, choosing to upload a SCORM ZIP or associate an existing SCORM package, completing the form, and confirming both the course and SCORM are created/linked correctly.
+
+**Acceptance Scenarios**:
+
+1. **Given** an admin is on the course creation form, **When** they select "No SCORM content" and submit, **Then** the course is created without a SCORM package
+2. **Given** an admin is on the course creation form, **When** they select "Upload new SCORM" and choose a ZIP file, **Then** the course is created and the SCORM package is uploaded and associated in one operation
+3. **Given** unassociated SCORM packages exist in the system, **When** the admin selects "Associate existing SCORM" and chooses from the dropdown, **Then** the course is created and linked to that SCORM package
+4. **Given** a course was created with SCORM, **When** the admin views the course listing, **Then** the course shows as having SCORM content
+5. **Given** a SCORM package exists but is not associated with any course, **When** the admin tries to launch it directly, **Then** they cannot — SCORM content is only accessible through a course
+
+---
+
+### User Story 7 - SCORM Management in Course Edit (Priority: P2)
+
+As an admin, I want to manage SCORM association when editing an existing course, so that I can add SCORM content to a course that was created without it, or replace its SCORM package.
+
+**Why this priority**: Courses created without SCORM should be able to have SCORM added later. Admins also need to replace SCORM content if the content is updated.
+
+**Independent Test**: Navigate to Admin/Courses/Edit for a course without SCORM, upload a SCORM ZIP, save, and confirm the course now has SCORM content.
+
+**Acceptance Scenarios**:
+
+1. **Given** a course has no SCORM package, **When** the admin edits the course and uploads a SCORM ZIP, **Then** the SCORM package is created and associated with the course
+2. **Given** a course has a SCORM package, **When** the admin edits the course and uploads a new SCORM ZIP, **Then** the old SCORM package is replaced with the new one
+3. **Given** a course has a SCORM package, **When** the admin views the edit form, **Then** the current SCORM package information is displayed (title, upload date)
+
+---
 
 ## Assumptions
 
@@ -153,3 +219,7 @@ As an admin viewing the course listing, I want the table to have clear visual di
 - Courses can be deleted regardless of enrollment status; a warning may be shown for courses with active enrollments
 - Pagination default page size will be 10-20 courses per page
 - The page follows standard web patterns for form submissions (redirect after post to prevent duplicate submissions)
+- **SCORM-Course relationship**: A course can exist without SCORM, but a SCORM package cannot be consumed (launched/studied) without being associated with a course
+- **SCORM independence**: If two courses use the same SCORM content, each upload creates a new, independent ScormPackage entity with its own content directory copy — packages are never shared between courses
+- **SCORM association pool**: SCORM packages can be uploaded independently of a course (CourseId is null), forming a pool of available packages that can be associated during course creation
+- **One SCORM per course**: A course can have at most one SCORM package at a time (uploading a new one replaces the existing)
