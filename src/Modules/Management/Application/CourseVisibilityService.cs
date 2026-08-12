@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using LibreLms.Contracts.Management;
+using LibreLms.Contracts.Scorm;
 using LibreLms.Modules.Catalog.Infrastructure;
 using LibreLms.Modules.Management.Domain;
 using LibreLms.Modules.Management.Infrastructure;
@@ -32,7 +33,8 @@ public record VisibilityOverrideDto(
 public class CourseVisibilityService(
     ManagementDbContext managementCtx,
     CatalogDbContext catalogCtx,
-    IOrganizationLookup orgLookup)
+    IOrganizationLookup orgLookup,
+    IScormPackageService scormPackageService)
 {
     /// <summary>
     /// Get all visible courses for an organization.
@@ -186,7 +188,7 @@ public class CourseVisibilityService(
     }
 
     /// <summary>
-    /// Delete a course by ID.
+    /// Delete a course by ID, including associated SCORM package and its content.
     /// </summary>
     public async Task DeleteCourseAsync(Guid courseId)
     {
@@ -199,6 +201,9 @@ public class CourseVisibilityService(
             .Where(o => o.CourseId == courseId)
             .ToListAsync();
         managementCtx.CourseVisibilityOverrides.RemoveRange(overrides);
+
+        // Delete associated SCORM package and its content directory (via contract)
+        await scormPackageService.DeletePackageForCourseAsync(courseId);
 
         catalogCtx.Courses.Remove(course);
         await managementCtx.SaveChangesAsync();

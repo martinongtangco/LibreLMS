@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using LibreLms.Contracts.Scorm;
 using LibreLms.Modules.Scorm.Application;
 using LibreLms.Modules.Scorm.Infrastructure;
 
@@ -22,12 +23,15 @@ public static class ScormModuleExtensions
     /// </summary>
     public static IServiceCollection ConfigureScormModule(this IServiceCollection services, string wwwRootPath)
     {
-        // Replace the default ScormPackageService registration with one that captures wwwRootPath
+        // Register ScormPackageService with wwwRootPath, as both concrete type and IScormPackageService contract
         services.AddScoped<ScormPackageService>(sp =>
             new ScormPackageService(
                 sp.GetRequiredService<ScormDbContext>(),
                 sp.GetRequiredService<ManifestParser>(),
                 wwwRootPath));
+        // Register the contract interface for cross-module access (Constitution Principle III)
+        services.AddScoped<IScormPackageService>(sp =>
+            sp.GetRequiredService<ScormPackageService>());
         return services;
     }
 }

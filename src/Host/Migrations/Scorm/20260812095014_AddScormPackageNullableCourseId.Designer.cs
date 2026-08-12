@@ -4,6 +4,7 @@ using LibreLms.Modules.Scorm.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Host.Migrations.Scorm
 {
     [DbContext(typeof(ScormDbContext))]
-    partial class ScormDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260812095014_AddScormPackageNullableCourseId")]
+    partial class AddScormPackageNullableCourseId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

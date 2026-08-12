@@ -7,5 +7,6 @@ public record CreateCourseRequest(
     string FullDescription,
     string Category,
     string Duration,
-    Guid? OrganizationId
+    Guid? OrganizationId,
+    Guid? ScormPackageId = null
 );

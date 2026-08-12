@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "bed30631-1b38-418f-85c2-5b8bea7b87a1",
+  "title": "return runs.all([",
+  "objective": "return runs.all([",
+  "status": "failed",
+  "createdAt": "2026-08-12T08:53:58.923Z",
+  "updatedAt": "2026-08-12T08:53:59.011Z",
+  "runs": [
+    {
+      "runId": "6093d9bf-8e75-47ea-80e6-3f31e3fa8942",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6093d9bf-8e75-47ea-80e6-3f31e3fa8942",
+      "status": "failed",
+      "startedAt": "2026-08-12T08:53:58.942Z",
+      "completedAt": "2026-08-12T08:53:59.010Z"
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6093d9bf-8e75-47ea-80e6-3f31e3fa8942/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6093d9bf-8e75-47ea-80e6-3f31e3fa8942/events.jsonl",
+      "description": "Lifecycle events"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/workspace",
+  "ownerSessionId": "/home/vscode/.pi/agent/sessions/--workspace--/2026-08-12T08-07-15-717Z_019ff502-e605-70bf-8a06-fac2e9ed8ba9.jsonl",
+  "summary": "workflowScript must be valid JavaScript.\nIf task text contains Markdown fences or backticks, use an array joined with \"\\n\" or escaped strings instead of a raw backtick template literal.\n\nOriginal SyntaxError:\nworkflow-script.js:6\n    task: \"Implement User Story 1: Add SCORM status column to the Admin/Courses listing page.\\n\\nBranch: story/025-admin-courses-management\\nSpec: specs/025-admin-courses-management\\nConstitution: III (Module Boundaries)\\n\\nFiles to modify:\\n\\n1. src/Host/Pages/Admin/Courses/Index.cshtml.cs\\n- Inject ScormPackageService into the constructor\\n- Add HasScorm bool to CourseDisplay record\\n- In OnGetAsync, after building Courses list, check each course against ScormPackageService.GetPackageByCourseIdAsync to populate HasScorm\\n- Add Dictionary<Guid, bool> HasScormPerCourse for the view to use in delete confirmation\\n- In OnPostDeleteAsync, expose HasScorm data\\n\\n2. src/Host/Pages/Admin/Courses/Index.cshtml\\n- Add a \\\"SCORM\\\" column between Visibility and Actions columns\\n- Show a green badge \\\"SCORM\\\" for courses with SCORM, empty for those without\\n- Add data-has-scorm=\\\"true\\\" attribute to delete forms for courses with SCORM\\n- Update delete confirmation JS to show SCORM warning: \"This course has SCORM content. Deleting will also permanently delete the SCORM package and its extracted files.\"\\n\\nExisting ScormPackageService has method: GetPackageByCourseIdAsync(Guid courseId) returning Task<ScormPackage?>\\n\\nIMPORTANT: Read the current files first to understand the existing code before editing.\"\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                       "
+}

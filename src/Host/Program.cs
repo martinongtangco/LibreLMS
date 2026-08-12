@@ -152,7 +152,7 @@ courses.MapGet("/", async (CourseCatalogService service, string? search, string?
 });
 
 // POST /api/courses — Admin-only course creation
-courses.MapPost("/", [Authorize(Roles = "Admin")] async (CourseCatalogService service, [FromBody] LibreLms.Modules.Catalog.Endpoints.CreateCourseRequest request) =>
+courses.MapPost("/", [Authorize(Roles = "SuperUser,OrgAdmin")] async (CourseCatalogService service, [FromBody] LibreLms.Modules.Catalog.Endpoints.CreateCourseRequest request) =>
 {
     var course = await service.CreateAsync(request);
     return Results.Created($"/api/courses/{course.Id}", new CourseDto(course.Id, course.Title, course.ShortDescription, course.Category, course.Duration));
@@ -243,14 +243,11 @@ scorm.MapPost("/{courseId:guid}/launch", [Authorize] async (
 });
 
 // POST /api/scorm/upload
-scorm.MapPost("/upload", [Authorize] async (
+scorm.MapPost("/upload", [Authorize(Roles = "SuperUser,OrgAdmin")] async (
     ScormPackageService packageService,
     HttpContext httpContext,
     IFormCollection form) =>
 {
-    var isAdmin = httpContext.User.IsInRole("Admin");
-    if (!isAdmin)
-        return Results.Forbid();
 
     var file = form.Files.GetFile("package");
     if (file is null || file.Length == 0)

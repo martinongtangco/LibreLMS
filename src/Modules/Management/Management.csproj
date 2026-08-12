@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
       <PrivateAssets>all</PrivateAssets>
@@ -20,6 +21,7 @@
     <ProjectReference Include="..\Management.Contracts\Management.Contracts.csproj" />
     <ProjectReference Include="..\Enrollment\Enrollment.csproj" />
     <ProjectReference Include="..\Catalog\Catalog.csproj" />
+    <ProjectReference Include="..\Scorm.Contracts\Scorm.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

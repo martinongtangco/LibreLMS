@@ -83,6 +83,7 @@
                             <th>Organization</th>
                             <th>Source</th>
                             <th>Visibility</th>
+                            <th>SCORM</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -101,9 +102,15 @@
                                 <td>
                                     <span class="badge @(course.Visibility == "Hidden" ? "badge-category" : "badge-enrolled")">@course.Visibility</span>
                                 </td>
+                                <td>
+                                    @if (course.HasScorm)
+                                    {
+                                        <span class="badge badge-scorm">SCORM</span>
+                                    }
+                                </td>
                                 <td style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
                                     <a asp-page="Edit" asp-route-courseId="@course.CourseId" class="btn btn-sm btn-secondary">Edit</a>
-                                    <form method="post" asp-page-handler="Delete" asp-route-courseId="@course.CourseId" onsubmit="return confirm('Are you sure you want to delete this course?');">
+                                    <form method="post" asp-page-handler="Delete" asp-route-courseId="@course.CourseId" data-has-scorm="@course.HasScorm" onsubmit="return confirmDeleteCourse(this);">
                                         <button type="submit" class="btn btn-sm btn-secondary" style="background:#c62828; color:white;">Delete</button>
                                     </form>
                                 </td>
@@ -167,3 +174,13 @@
         return Model.SortDirection == "asc" ? "▲" : "▼";
     }
 }
+
+<script>
+function confirmDeleteCourse(form) {
+    var hasScorm = form.getAttribute('data-has-scorm') === 'True';
+    if (hasScorm) {
+        return confirm('This course has SCORM content. Deleting this course will also permanently delete the SCORM package and its extracted files. Are you sure?');
+    }
+    return confirm('Are you sure you want to delete this course?');
+}
+</script>

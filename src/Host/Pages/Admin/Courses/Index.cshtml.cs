@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using LibreLms.Modules.Catalog.Application;
 using LibreLms.Modules.Management.Application;
+using LibreLms.Modules.Scorm.Application;
 
 namespace LibreLms.Host.Pages.Admin.Courses;
 
@@ -11,16 +12,20 @@ public class IndexModel : PageModel
 {
     private readonly CourseCatalogService _catalogService;
     private readonly CourseVisibilityService _visibilityService;
+    private readonly ScormPackageService _scormService;
 
     public IndexModel(
         CourseCatalogService catalogService,
-        CourseVisibilityService visibilityService)
+        CourseVisibilityService visibilityService,
+        ScormPackageService scormService)
     {
         _catalogService = catalogService;
         _visibilityService = visibilityService;
+        _scormService = scormService;
     }
 
     public List<CourseDisplay> Courses { get; set; } = new();
+    public Dictionary<Guid, bool> HasScormPerCourse { get; set; } = new();
     public List<string> Categories { get; set; } = new();
     public string? Error { get; set; }
     public string? SuccessMessage { get; set; }
@@ -66,13 +71,21 @@ public class IndexModel : PageModel
             TotalCount = browseResult.TotalCount;
 
             // Apply in-memory sorting since BrowseAsync returns pre-paged results
-            // For sorting, we need to fetch all matching courses when sorting is requested
-            // Since BrowseAsync handles search+category+pagination, we sort the paged results
             items = ApplySorting(items);
 
             // For org names, use GetAllCoursesAsync which now resolves them properly
             var allCoursesWithOrgs = await _visibilityService.GetAllCoursesAsync();
             var orgLookup = allCoursesWithOrgs.ToDictionary(c => c.CourseId);
+
+            // Build SCORM lookup for all course IDs in this page
+            var courseIds = items.Select(i => i.Id).ToList();
+            var scormLookup = new Dictionary<Guid, bool>();
+            foreach (var courseId in courseIds)
+            {
+                var hasScorm = await _scormService.GetPackageByCourseIdAsync(courseId);
+                scormLookup[courseId] = hasScorm != null;
+            }
+            HasScormPerCourse = scormLookup;
 
             Courses = items.Select(item =>
             {
@@ -83,7 +96,8 @@ public class IndexModel : PageModel
                     item.Category,
                     hasOrg ? orgInfo?.OwningOrganizationName ?? "Unknown" : "Unknown",
                     "Local",
-                    "Visible"
+                    "Visible",
+                    scormLookup.TryGetValue(item.Id, out var hasScorm) && hasScorm
                 );
             }).ToList();
 
@@ -140,5 +154,6 @@ public record CourseDisplay(
     string Category,
     string OrganizationName,
     string Source,
-    string Visibility
+    string Visibility,
+    bool HasScorm = false
 );

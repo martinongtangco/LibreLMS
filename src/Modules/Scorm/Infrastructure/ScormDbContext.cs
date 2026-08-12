@@ -18,8 +18,9 @@ public class ScormDbContext(DbContextOptions<ScormDbContext> options) : DbContex
             entity.ToTable("ScormPackages");
             entity.HasKey(e => e.Id);
 
-            entity.Property(e => e.CourseId).IsRequired();
-            entity.HasIndex(e => e.CourseId).IsUnique();
+            entity.Property(e => e.CourseId).IsRequired(false);
+            // Filtered unique index: only non-null CourseId values must be unique
+            entity.HasIndex(e => e.CourseId).IsUnique().HasFilter("[CourseId] IS NOT NULL");
 
             entity.Property(e => e.ManifestTitle)
                 .IsRequired()
