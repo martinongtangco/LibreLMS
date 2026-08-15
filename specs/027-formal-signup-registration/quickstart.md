@@ -113,3 +113,19 @@ The new specs extract verification/reset links from `GET /api/dev/outbox` (see
 1. `dotnet build` output shown; app restarted; "Now listening" log shown.
 2. Architecture tests 14/14; new + full Playwright suite passing output shown.
 3. Post-merge to `master`: rebuild, restart, re-run Playwright; passing output shown.
+
+## Scenario results (T044, 2026-08-15 — branch `story/027-formal-signup-registration`)
+
+Walked all six scenarios against the running app (Development, `http://localhost:5000`):
+
+| Scenario | Result | Evidence |
+|---|---|---|
+| 1. Dev outbox endpoints | PASS | `GET /api/dev/outbox` → 200 JSON (newest-first, `{to,purpose,subject,body,sentAtUtc}`); `GET /Dev/Outbox` → 200 HTML |
+| 2. Sign-up → verify → sign-in | PASS | curl + `signup.spec.ts` + `verify-email.spec.ts` (3/3 active tests): unverified account created, Verification+Welcome in outbox, login blocked until link opened, link single-use, then sign-in works |
+| 3. Validation rejections | PASS | curl walk of all 8 rejection rows (specific messages) + `signup-validation.spec.ts` (10/10) incl. 11th-attempt throttle |
+| 4. Forgot password | PASS | curl walk (neutral for registered/unknown, link reset, session kill, old pw dead) + `forgot-password.spec.ts` (5/5) incl. 6th-request throttle and FR-017 pre-reset context signed out |
+| 5. Seeded logins + legacy upgrade | PASS | alice (learner) & admin@example.com (orgAdmin) sign in with legacy `password123`; hash upgraded unsalted-SHA256→PBKDF2 on first login (verified via DB probe: PBKDF2 format stored); `01-auth.spec.ts` 5/5 |
+| 6. Automated E2E | PASS | Full suite: **72 passed, 1 skipped** (documented expired-link skip), **2 failed = pre-existing on master** (02-course-browse category counts vs. accumulated dev-DB state; proven via master worktree on :5010). Unit: ArchitectureTests 14/14 (baseline 12/14), Enrollment 15/15, Catalog 7/7+12 skipped, Scorm 1/1. Build: 0 errors |
+
+Environment note: this .NET 10 install lacks `KeyDerivation` (see plan.md Drift #2) and
+`[BindProperty]` query binding on parameterless `OnGet` (Drift #6).
