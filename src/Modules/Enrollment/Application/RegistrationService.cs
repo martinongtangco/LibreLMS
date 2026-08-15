@@ -226,6 +226,114 @@ public sealed class RegistrationService
         return new ResendResult(true, null);
     }
 
+    // ── US3: forgot / reset password (single-use 30 min links, stamp rotation) ──
+
+    private static readonly TimeSpan ResetTokenLifetime = TimeSpan.FromMinutes(30);
+
+    /// <summary>Token state as seen by a check (GET) or a failed consume (POST).</summary>
+    public enum ResetTokenState { Pending, Invalid, Expired, AlreadyUsed }
+
+    /// <summary>Outcome of a reset attempt: Success = new password stored + stamp rotated.</summary>
+    public enum ResetOutcome { Success, Invalid, Expired, AlreadyUsed }
+
+    public sealed record RequestResetResult(bool EmailSent, string? Message);
+
+    /// <summary>Always-neutral outcome for the reset form (FR-015): the same message
+    /// whether the email exists or not — no account enumeration.
+    /// <paramref name="EmailSent"/> is for diagnostics/tests only (the outbox is the source of truth).</summary>
+    public sealed record ResetPasswordResult(ResetOutcome Status, string? PasswordError);
+
+    /// <summary>
+    /// Forgot-password request (FR-014/FR-015): throttled to 5/hour per email
+    /// (every submission counts, before the lookup). Unknown email → neutral
+    /// no-op, no email. Known email → 30-minute single-use token (SHA-256 hex stored,
+    /// replacing any pending reset token) + PasswordReset email with the absolute link.
+    /// </summary>
+    public async Task<RequestResetResult> RequestPasswordResetAsync(string email, string baseUrl)
+    {
+        var normalizedEmail = (email?.Trim() ?? string.Empty).ToLowerInvariant();
+
+        if (!_throttle.Allow(normalizedEmail, ThrottleFlow.PasswordReset))
+            return new RequestResetResult(false, "If the email is registered, a password-reset email may have been sent. Please wait before requesting another.");
+
+        var student = await _context.Students
+            .FirstOrDefaultAsync(s => s.Email == normalizedEmail);
+
+        if (student is null)
+            return new RequestResetResult(false, "If the email is registered, a password-reset email has been sent.");
+
+        var token = CreateToken();
+        student.ResetTokenHash = HashToken(token);
+        student.ResetTokenExpiresAt = DateTimeOffset.UtcNow + ResetTokenLifetime;
+        await _context.SaveChangesAsync();
+
+        await _emailSender.SendAsync(new OutboundEmail(
+            normalizedEmail,
+            EmailPurpose.PasswordReset,
+            "Reset your Libre LMS password",
+            BuildResetBody(student.Name, BuildLink(baseUrl, "/Account/ResetPassword?token=" + token))));
+
+        return new RequestResetResult(true, "If the email is registered, a password-reset email has been sent.");
+    }
+
+    /// <summary>
+    /// Non-consuming peek at a reset token's state — the reset page's GET uses this to
+    /// decide what to render without burning the single-use token (only the POST
+    /// through ResetPasswordAsync consumes).
+    /// </summary>
+    public async Task<ResetTokenState> CheckResetTokenAsync(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            return ResetTokenState.Invalid;
+
+        var student = await _context.Students
+            .FirstOrDefaultAsync(s => s.ResetTokenHash == HashToken(token!));
+
+        if (student is null)
+            return ResetTokenState.Invalid;
+        if (student.ResetTokenExpiresAt is null)
+            return ResetTokenState.AlreadyUsed;
+        if (student.ResetTokenExpiresAt.Value < DateTimeOffset.UtcNow)
+            return ResetTokenState.Expired;
+
+        return ResetTokenState.Pending; // unexpired and unconsumed
+    }
+
+    /// <summary>
+    /// Consume a reset link (FR-016/FR-017/FR-018): validates the token state
+    /// (Invalid / Expired / AlreadyUsed / pending), enforces the credential policy on
+    /// the NEW password (against the account's own name/email), stores the new PBKDF2
+    /// hash, consumes the token, and rotates the SecurityStamp — which invalidates all
+    /// pre-existing sessions via the cookie OnValidatePrincipal re-check (FR-018).
+    /// </summary>
+    public async Task<ResetPasswordResult> ResetPasswordAsync(string token, string newPassword)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            return new ResetPasswordResult(ResetOutcome.Invalid, null);
+
+        var student = await _context.Students
+            .FirstOrDefaultAsync(s => s.ResetTokenHash == HashToken(token!));
+
+        if (student is null)
+            return new ResetPasswordResult(ResetOutcome.Invalid, null);
+        if (student.ResetTokenExpiresAt is null)
+            return new ResetPasswordResult(ResetOutcome.AlreadyUsed, null);
+        if (student.ResetTokenExpiresAt.Value < DateTimeOffset.UtcNow)
+            return new ResetPasswordResult(ResetOutcome.Expired, null);
+
+        // Policy on the new password, checked against the account's own name/email.
+        var failures = _policy.Evaluate(newPassword, student.Name, student.Email);
+        if (failures.Count > 0)
+            return new ResetPasswordResult(ResetOutcome.Invalid, string.Join(" ", failures));
+
+        student.PasswordHash = _hasher.Hash(newPassword);
+        student.ResetTokenExpiresAt = null; // consumed (hash kept for AlreadyUsed)
+        student.SecurityStamp = Guid.NewGuid(); // FR-018: rotate → kill all sessions
+        await _context.SaveChangesAsync();
+
+        return new ResetPasswordResult(ResetOutcome.Success, null);
+    }
+
     /// <summary>
     /// Credential check for the web host's login (spec 027 US2/US3): neutral
     /// "Invalid email or password." for wrong email AND wrong password (no
@@ -320,6 +428,18 @@ public sealed class RegistrationService
         After you verify your email, you can sign in at {{loginUrl}}.
 
         — The Libre LMS team
+        """;
+
+    /// <summary>Password-reset email body (contracts/email-messages.md §3).</summary>
+    private static string BuildResetBody(string name, string absoluteLink) =>
+        $$"""
+        Hi {{name}},
+
+        we received a request to reset your password. Open this link to choose a new one:
+
+        {{absoluteLink}}
+
+        This link expires in 30 minutes and works once. If you did not request a reset, you can ignore this email — your password will not change.
         """;
 
     /// <summary>Minimal well-formedness check: exactly one '@', non-empty local part and
