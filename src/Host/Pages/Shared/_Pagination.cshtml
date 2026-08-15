@@ -8,26 +8,32 @@
 @if (totalPages > 1)
 {
     <nav class="pagination" style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1.5rem; padding: 0.5rem 0;">
-        <button class="btn btn-sm btn-ghost"
-                @(pageNumber == 1 ? "disabled" : "")
-                hx-get="@($"Courses/Index?handler=CourseList&search={System.Uri.EscapeDataString(search ?? "")}&category={System.Uri.EscapeDataString(category ?? "")}&page={pageNumber - 1}")"
-                hx-target="#course-list"
-                hx-indicator=".htmx-indicator"
-                hx-include="#filter-form">
-            ← Previous
-        </button>
+        @* Hide (not just disable) the Previous button on the first page (bug 028) *@
+        @if (pageNumber > 1)
+        {
+            <button class="btn btn-sm btn-ghost"
+                    hx-get="@($"/Courses/Index?handler=CourseList&search={System.Uri.EscapeDataString(search ?? "")}&category={System.Uri.EscapeDataString(category ?? "")}&page={pageNumber - 1}")"
+                    hx-target="#course-list"
+                    hx-indicator=".htmx-indicator"
+                    hx-include="#filter-form">
+                ← Previous
+            </button>
+        }
 
         <span class="text-muted" style="font-size: 0.875rem;">
             Page @pageNumber of @totalPages (@totalCount total)
         </span>
 
-        <button class="btn btn-sm btn-ghost"
-                @(pageNumber >= totalPages ? "disabled" : "")
-                hx-get="@($"Courses/Index?handler=CourseList&search={System.Uri.EscapeDataString(search ?? "")}&category={System.Uri.EscapeDataString(category ?? "")}&page={pageNumber + 1}")"
-                hx-target="#course-list"
-                hx-indicator=".htmx-indicator"
-                hx-include="#filter-form">
-            Next →
-        </button>
+        @* Hide (not just disable) the Next button on the last page (bug 028) *@
+        @if (pageNumber < totalPages)
+        {
+            <button class="btn btn-sm btn-ghost"
+                    hx-get="@($"/Courses/Index?handler=CourseList&search={System.Uri.EscapeDataString(search ?? "")}&category={System.Uri.EscapeDataString(category ?? "")}&page={pageNumber + 1}")"
+                    hx-target="#course-list"
+                    hx-indicator=".htmx-indicator"
+                    hx-include="#filter-form">
+                Next →
+            </button>
+        }
     </nav>
 }
