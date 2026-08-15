@@ -21,6 +21,25 @@ public class Student : Entity<Guid>
     /// <summary>Backs the Settings page's "Theme" selector. Stored/displayed only — dark-theme tokens do not exist yet.</summary>
     public string ThemePreference { get; set; } = "System";
 
+    /// <summary>Self-service sign-ups start unverified; admin-created and seeded accounts are verified (spec 027).</summary>
+    public bool IsEmailVerified { get; set; } = true;
+
+    /// <summary>Randomly assigned at account creation; rotated on password reset so all
+    /// pre-existing sessions are invalidated (spec 027 / ADR-0006).</summary>
+    public Guid SecurityStamp { get; set; } = Guid.NewGuid();
+
+    /// <summary>SHA-256 hex of the pending verification token; null when no verification is pending.</summary>
+    public string? VerificationTokenHash { get; set; }
+
+    /// <summary>Expiry of the pending verification link (24 hours from issue); null together with the token.</summary>
+    public DateTimeOffset? VerificationTokenExpiresAt { get; set; }
+
+    /// <summary>SHA-256 hex of the pending password-reset token; null when no reset is pending.</summary>
+    public string? ResetTokenHash { get; set; }
+
+    /// <summary>Expiry of the pending reset link (30 minutes from issue); null together with the token.</summary>
+    public DateTimeOffset? ResetTokenExpiresAt { get; set; }
+
     public Student()
     {
         Id = Guid.NewGuid();

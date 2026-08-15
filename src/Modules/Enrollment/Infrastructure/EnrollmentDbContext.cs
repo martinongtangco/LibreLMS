@@ -52,6 +52,26 @@ public class EnrollmentDbContext(DbContextOptions<EnrollmentDbContext> options) 
                 .IsRequired()
                 .HasMaxLength(50)
                 .HasDefaultValue("System");
+
+            entity.Property(e => e.IsEmailVerified)
+                .IsRequired()
+                .HasDefaultValue(true);
+
+            entity.Property(e => e.SecurityStamp)
+                .IsRequired()
+                .HasDefaultValue(Guid.Empty);
+
+            entity.Property(e => e.VerificationTokenHash)
+                .HasMaxLength(64);
+
+            entity.Property(e => e.VerificationTokenExpiresAt)
+                .IsRequired(false);
+
+            entity.Property(e => e.ResetTokenHash)
+                .HasMaxLength(64);
+
+            entity.Property(e => e.ResetTokenExpiresAt)
+                .IsRequired(false);
         });
 
         builder.Entity<LibreLms.Modules.Enrollment.Domain.Enrollment>(entity =>

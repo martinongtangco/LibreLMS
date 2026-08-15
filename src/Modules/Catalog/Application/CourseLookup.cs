@@ -12,11 +12,44 @@ public class CourseLookup(CatalogDbContext context) : ICourseLookup
 {
     public async Task<CourseSummary?> GetCourseAsync(Guid courseId)
     {
-        var course = await context.Courses
+        return await context.Courses
             .Where(c => c.Id == courseId)
-            .Select(c => new CourseSummary(c.Id, c.Title))
+            .Select(c => new CourseSummary(c.Id, c.Title, c.Category, c.OrganizationId))
             .FirstOrDefaultAsync();
+    }
 
-        return course;
+    public async Task<int> CountAsync()
+    {
+        return await context.Courses.CountAsync();
+    }
+
+    public async Task<int> CountByOrgAsync(Guid organizationId)
+    {
+        return await context.Courses.CountAsync(c => c.OrganizationId == organizationId);
+    }
+
+    public async Task<IList<CourseSummary>> GetCoursesAsync(IEnumerable<Guid> courseIds)
+    {
+        var ids = courseIds.ToList();
+        return await context.Courses
+            .Where(c => ids.Contains(c.Id))
+            .Select(c => new CourseSummary(c.Id, c.Title, c.Category, c.OrganizationId))
+            .ToListAsync();
+    }
+
+    public async Task<IList<CourseSummary>> ListByOrgsAsync(IEnumerable<Guid> organizationIds)
+    {
+        var orgIds = organizationIds.ToList();
+        return await context.Courses
+            .Where(c => orgIds.Contains(c.OrganizationId))
+            .Select(c => new CourseSummary(c.Id, c.Title, c.Category, c.OrganizationId))
+            .ToListAsync();
+    }
+
+    public async Task<IList<CourseSummary>> ListAllAsync()
+    {
+        return await context.Courses
+            .Select(c => new CourseSummary(c.Id, c.Title, c.Category, c.OrganizationId))
+            .ToListAsync();
     }
 }
