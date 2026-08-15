@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using LibreLms.Modules.Catalog.Infrastructure;
-using LibreLms.Modules.Enrollment.Infrastructure;
+using LibreLms.Contracts.Catalog;
+using LibreLms.Contracts.Enrollment;
 using LibreLms.Modules.Management.Infrastructure;
 
 namespace LibreLms.Modules.Management.Application;
@@ -41,20 +41,24 @@ public record RecentActivityDto(
 
 /// <summary>
 /// Service for aggregating dashboard metrics at different organizational scopes.
-/// Uses raw SQL queries for performance (SC-004: 3-second render requirement).
+/// Spec 027 (R9): cross-module facts come from contracts (IUserLookup, IEnrollmentAdmin,
+/// ICourseLookup) — only Management-owned data (organizations) comes from ManagementDbContext.
+/// Counts keep the pre-existing semantics exactly (all Student rows, org subtree = sum of
+/// per-org counts).
 /// </summary>
 public class DashboardService(
     ManagementDbContext managementCtx,
-    EnrollmentDbContext enrollmentCtx,
-    CatalogDbContext catalogCtx)
+    IUserLookup userLookup,
+    IEnrollmentAdmin enrollmentAdmin,
+    ICourseLookup courseLookup)
 {
     /// <summary>Get system-wide metrics (SuperUser only).</summary>
     public async Task<SystemMetricsDto> GetSystemMetricsAsync()
     {
         var totalOrgs = await managementCtx.Organizations.CountAsync(o => !o.IsDeleted);
-        var totalLearners = await enrollmentCtx.Students.CountAsync();
-        var totalCourses = await catalogCtx.Courses.CountAsync();
-        var totalEnrollments = await enrollmentCtx.Enrollments.CountAsync();
+        var totalLearners = await userLookup.CountLearnersAsync();
+        var totalCourses = await courseLookup.CountAsync();
+        var totalEnrollments = await enrollmentAdmin.CountEnrollmentsAsync();
 
         // Completion rate is tracked in Scorm module via CourseAttempts
         // For now, use a placeholder calculation
@@ -75,19 +79,19 @@ public class DashboardService(
             .Select(o => o.Name)
             .FirstOrDefaultAsync();
 
-        var learnerCount = await enrollmentCtx.Students
-            .CountAsync(s => descendantIds.Contains(s.OrganizationId));
+        // Subtree = sum of the per-org counts (dev scale: a handful of orgs).
+        var learnerCounts = await userLookup.GetLearnerCountsByOrgAsync();
+        var learnerCount = learnerCounts
+            .Where(c => descendantIds.Contains(c.OrganizationId))
+            .Sum(c => c.Count);
 
-        var courseCount = await catalogCtx.Courses
-            .CountAsync(c => descendantIds.Contains(c.OrganizationId));
-
-        var enrollmentCount = await enrollmentCtx.Enrollments
-            .Join(
-                enrollmentCtx.Students,
-                e => e.StudentId,
-                s => s.Id,
-                (e, s) => new { Enrollment = e, Student = s })
-            .CountAsync(x => descendantIds.Contains(x.Student.OrganizationId));
+        var courseCount = 0;
+        var enrollmentCount = 0;
+        foreach (var id in descendantIds)
+        {
+            courseCount += await courseLookup.CountByOrgAsync(id);
+            enrollmentCount += await enrollmentAdmin.CountEnrollmentsAsync(id);
+        }
 
         return new OrgMetricsDto(
             descendantIds.Count - 1, // Exclude the org itself from the count
@@ -101,18 +105,18 @@ public class DashboardService(
     /// <summary>Get personal metrics for a learner.</summary>
     public async Task<PersonalMetricsDto> GetPersonalMetricsAsync(Guid studentId)
     {
-        var student = await enrollmentCtx.Students.FindAsync(studentId);
-        if (student is null)
+        var learnerName = await userLookup.GetUserNameAsync(studentId);
+        if (learnerName is null)
             throw new KeyNotFoundException("Student not found.");
 
-        var enrolledCount = await enrollmentCtx.Enrollments
-            .CountAsync(e => e.StudentId == studentId);
+        var enrollments = await enrollmentAdmin.GetStudentEnrollmentsAsync(studentId);
+        var enrolledCount = enrollments.Count;
 
         // Completed courses would require checking Scorm attempts
         var completedCount = 0;
         var avgScore = 0.0;
 
-        return new PersonalMetricsDto(enrolledCount, completedCount, avgScore, student.Name);
+        return new PersonalMetricsDto(enrolledCount, completedCount, avgScore, learnerName);
     }
 
     /// <summary>Get recent activity entries.</summary>
@@ -120,45 +124,18 @@ public class DashboardService(
     {
         var activities = new List<RecentActivityDto>();
 
-        // Recent enrollments: query enrollments+students from EnrollmentDbContext,
-        // then look up course titles from CatalogDbContext in memory (cross-context joins
-        // are not supported by EF Core).
-        var recentEnrollmentData = await enrollmentCtx.Enrollments
-            .Join(
-                enrollmentCtx.Students,
-                e => e.StudentId,
-                s => s.Id,
-                (e, s) => new { Enrollment = e, Student = s })
-            .OrderByDescending(x => x.Enrollment.EnrolledAt)
-            .Take(limit)
-            .ToListAsync();
-
-        // Load course titles for the enrolled course IDs
-        var courseIds = recentEnrollmentData.Select(x => x.Enrollment.CourseId).ToList();
-        var courseTitles = new Dictionary<Guid, string>();
-        if (courseIds.Count > 0)
+        // Recent enrollments via the Enrollment module's contract (course titles resolved there)
+        var recentEnrollments = await enrollmentAdmin.GetRecentEnrollmentsAsync(limit);
+        foreach (var e in recentEnrollments)
         {
-            var courses = await catalogCtx.Courses
-                .Where(c => courseIds.Contains(c.Id))
-                .ToDictionaryAsync(c => c.Id, c => c.Title);
-
-            courseTitles = courses;
-        }
-
-        foreach (var e in recentEnrollmentData)
-        {
-            var courseTitle = courseTitles.TryGetValue(e.Enrollment.CourseId, out var title)
-                ? title
-                : $"Course ({e.Enrollment.CourseId})";
-
             activities.Add(new RecentActivityDto(
-                $"{e.Student.Name} enrolled in {courseTitle}",
-                e.Enrollment.EnrolledAt,
+                $"{e.StudentName} enrolled in {e.CourseTitle}",
+                e.EnrolledAt,
                 "enrollment"
             ));
         }
 
-        // Recent organizations
+        // Recent organizations (Management-owned)
         var recentOrgs = await managementCtx.Organizations
             .Where(o => !o.IsDeleted)
             .OrderByDescending(o => o.CreatedAt)

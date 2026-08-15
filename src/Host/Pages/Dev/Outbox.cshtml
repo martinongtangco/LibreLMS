@@ -1,0 +1,66 @@
+@page
+@model LibreLms.Host.Pages.Dev.OutboxModel
+@{
+    ViewData["Title"] = "Dev Outbox";
+}
+
+<h1>Dev Outbox</h1>
+
+<p class="text-faint">
+    Mock transactional emails recorded by this development instance (newest first).
+    Links in the body are clickable. The outbox is in-memory and is lost on restart.
+</p>
+
+@if (Model.Emails.Count > 0)
+{
+    <form method="post" asp-page-handler="Clear" onsubmit="return confirm('Clear all recorded emails?');">
+        <button type="submit" class="btn btn-secondary">Clear outbox</button>
+    </form>
+}
+
+@if (Model.Emails.Count == 0)
+{
+    <div class="empty-state">No emails recorded yet.</div>
+}
+else
+{
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>To</th>
+                    <th>Purpose</th>
+                    <th>Subject</th>
+                    <th>Body</th>
+                    <th>Sent (UTC)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var entry in Model.Emails)
+                {
+                    <tr>
+                        <td class="email-cell">@entry.Email.To</td>
+                        <td>@entry.Email.Purpose</td>
+                        <td>@entry.Email.Subject</td>
+                        <td>
+                            <div class="outbox-body">
+                                @foreach (var segment in OutboxModel.LinkSegments(entry.Email.Body))
+                                {
+                                    if (segment.IsLink)
+                                    {
+                                        <a href="@segment.Text" target="_blank" rel="noopener">@segment.Text</a>
+                                    }
+                                    else
+                                    {
+                                        @segment.Text
+                                    }
+                                }
+                            </div>
+                        </td>
+                        <td>@entry.SentAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

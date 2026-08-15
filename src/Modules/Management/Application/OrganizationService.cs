@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using LibreLms.Modules.Catalog.Infrastructure;
-using LibreLms.Modules.Enrollment.Infrastructure;
+using LibreLms.Contracts.Catalog;
+using LibreLms.Contracts.Enrollment;
 using LibreLms.Modules.Management.Domain;
 using LibreLms.Modules.Management.Endpoints;
 using LibreLms.Modules.Management.Infrastructure;
@@ -11,10 +11,12 @@ namespace LibreLms.Modules.Management.Application;
 /// Service for managing organization hierarchy operations.
 /// Handles CRUD, subtree traversal, deletion safety checks, and chart data generation.
 /// </summary>
+/// <summary>Spec 027 (R9): user/course counts come from contracts (IUserLookup,
+/// ICourseLookup) — only Management-owned data comes from ManagementDbContext.</summary>
 public class OrganizationService(
     ManagementDbContext context,
-    EnrollmentDbContext enrollmentCtx,
-    CatalogDbContext catalogCtx,
+    IUserLookup userLookup,
+    ICourseLookup courseLookup,
     TreeLayoutService layoutService)
 {
     /// <summary>Create a new organization.</summary>
@@ -187,19 +189,18 @@ public class OrganizationService(
         // Compute user and course counts per organization
         var orgIds = orgs.Select(o => o.Id).ToList();
 
-        // User counts: Students.OrganizationId → count
-        var userCounts = await enrollmentCtx.Students
-            .Where(s => orgIds.Contains(s.OrganizationId))
-            .GroupBy(s => s.OrganizationId)
-            .Select(g => new { OrganizationId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(k => k.OrganizationId, v => v.Count);
-
-        // Course counts: Courses.OrganizationId → count
-        var courseCounts = await catalogCtx.Courses
+        // User counts per org (cross-module contract), filtered to the charted orgs
+        var allUserCounts = await userLookup.GetLearnerCountsByOrgAsync();
+        var userCounts = allUserCounts
             .Where(c => orgIds.Contains(c.OrganizationId))
-            .GroupBy(c => c.OrganizationId)
-            .Select(g => new { OrganizationId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(k => k.OrganizationId, v => v.Count);
+            .ToDictionary(c => c.OrganizationId, c => c.Count);
+
+        // Course counts per org (cross-module contract; dev scale: one count per org)
+        var courseCounts = new Dictionary<Guid, int>();
+        foreach (var orgId in orgIds)
+        {
+            courseCounts[orgId] = await courseLookup.CountByOrgAsync(orgId);
+        }
 
         // Build DTOs from layout results
         return layoutResults
@@ -289,11 +290,9 @@ public class OrganizationService(
         if (org is null)
             throw new KeyNotFoundException("Organization not found.");
 
-        var userCount = await enrollmentCtx.Students
-            .CountAsync(s => s.OrganizationId == id);
+        var userCount = await userLookup.CountLearnersAsync(id);
 
-        var courseCount = await catalogCtx.Courses
-            .CountAsync(c => c.OrganizationId == id);
+        var courseCount = await courseLookup.CountByOrgAsync(id);
 
         return (org, userCount, courseCount);
     }

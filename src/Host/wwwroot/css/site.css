@@ -585,6 +585,14 @@ body.role-admin [data-role-link="admin"] {
   color: var(--color-text-faint);
 }
 
+/* ── Dev Outbox (Development-only mock email viewer) ─────────────────────────── */
+.outbox-body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 420px;
+  font-size: var(--font-size-sm);
+}
+
 /* ── Footer ────────────────────────────────────────────────────────────── */
 .footer {
   text-align: center;

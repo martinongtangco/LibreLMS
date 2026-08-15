@@ -1,7 +1,5 @@
-using System.Security.Cryptography;
-using System.Text;
+using LibreLms.Modules.Enrollment.Application;
 using LibreLms.Modules.Enrollment.Domain;
-using LibreLms.Modules.Enrollment.Infrastructure;
 using LibreLms.SharedKernel;
 
 namespace LibreLms.Modules.Enrollment.Infrastructure;
@@ -12,13 +10,8 @@ public static class EnrollmentSeeder
     /// <summary>Root organization ID — must match the ID created by ManagementSeeder.</summary>
     private static readonly Guid RootOrgId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
-    /// <summary>Hash a password using SHA256 for seeding purposes.</summary>
-    private static string HashPassword(string password)
-    {
-        using var sha256 = SHA256.Create();
-        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-        return Convert.ToBase64String(hash);
-    }
+    /// <summary>Hash a password with PBKDF2 for seeding (spec 027: FR-006 salted one-way).</summary>
+    private static string HashPassword(string password) => new PasswordHasher().Hash(password);
 
     // Canonical seed data: email → expected role.
     // Always enforce these roles — never trust stale DB state.
@@ -28,11 +21,13 @@ public static class EnrollmentSeeder
         { "bob@example.com", RoleNames.Learner },
         { "carol@example.com", RoleNames.Learner },
         { "admin@example.com", RoleNames.OrgAdmin },
+        { "admin@librelms.local", RoleNames.SuperUser },
     };
 
     public static void Seed(EnrollmentDbContext context)
     {
         var passwordHash = HashPassword("password123");
+        var adminPasswordHash = HashPassword("Admin@12345");
 
         var students = new[]
         {
@@ -44,6 +39,7 @@ public static class EnrollmentSeeder
                 PasswordHash = passwordHash,
                 Roles = RoleNames.Learner,
                 OrganizationId = RootOrgId,
+                IsEmailVerified = true,
                 CreatedAt = DateTimeOffset.UtcNow
             },
             new Student
@@ -54,6 +50,7 @@ public static class EnrollmentSeeder
                 PasswordHash = passwordHash,
                 Roles = RoleNames.Learner,
                 OrganizationId = RootOrgId,
+                IsEmailVerified = true,
                 CreatedAt = DateTimeOffset.UtcNow
             },
             new Student
@@ -64,6 +61,7 @@ public static class EnrollmentSeeder
                 PasswordHash = passwordHash,
                 Roles = RoleNames.Learner,
                 OrganizationId = RootOrgId,
+                IsEmailVerified = true,
                 CreatedAt = DateTimeOffset.UtcNow
             },
             new Student
@@ -74,6 +72,20 @@ public static class EnrollmentSeeder
                 PasswordHash = passwordHash,
                 Roles = RoleNames.OrgAdmin,
                 OrganizationId = RootOrgId,
+                IsEmailVerified = true,
+                CreatedAt = DateTimeOffset.UtcNow
+            },
+            // Default SuperUser (moved here from ManagementSeeder in spec 027 so the
+            // Management module no longer creates Enrollment-owned rows).
+            new Student
+            {
+                Id = Guid.Parse("00000000-0000-0000-0000-000000000100"),
+                Name = "System Administrator",
+                Email = "admin@librelms.local",
+                PasswordHash = adminPasswordHash,
+                Roles = RoleNames.SuperUser,
+                OrganizationId = RootOrgId,
+                IsEmailVerified = true,
                 CreatedAt = DateTimeOffset.UtcNow
             }
         };

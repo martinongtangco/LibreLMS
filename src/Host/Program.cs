@@ -41,6 +41,16 @@ builder.Services.AddEnrollmentModule();
 builder.Services.AddScormModule();
 builder.Services.AddManagementModule();
 
+// Spec 027: transactional email seam (mock implementation + developer outbox).
+// The outbox is an in-memory dev artifact (Constitution VI); the sender never throws.
+builder.Services.AddSingleton<LibreLms.Host.Mail.DevEmailOutbox>();
+builder.Services.AddSingleton<LibreLms.SharedKernel.ITransactionalEmailSender, LibreLms.Host.Mail.MockEmailSender>();
+
+// Spec 027: self-service account lifecycle (used by Host's Account pages and the
+// cookie OnValidatePrincipal stamp re-check). Host is the composition root, so it
+// may register module-internal services directly (Constitution I/III).
+builder.Services.AddScoped<LibreLms.Modules.Enrollment.Application.RegistrationService>();
+
 // Register EF Core context for Scorm
 builder.Services.AddDbContext<ScormDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("Sql")));
 
@@ -72,6 +82,34 @@ builder.Services.AddAuthentication(options =>
 {
     options.LoginPath = "/Account/Login";
     options.AccessDeniedPath = "/Account/Login";
+
+    // Spec 027 FR-017 / ADR-0006: re-validate the account's SecurityStamp on every
+    // authenticated request. A password reset rotates the stamp, so all pre-existing
+    // sessions are invalidated at their next request. One indexed primary-key lookup
+    // per request — trivial at dev scale; a TTL cache was rejected because it would
+    // delay reset invalidation by up to the TTL (see ADR-0006).
+    options.Events.OnValidatePrincipal = async context =>
+    {
+        var principal = context.Principal;
+        var stampClaim = principal.FindFirst(LibreLms.Host.ManagementAuth.SecurityClaims.SecurityStamp)?.Value;
+        var idClaim = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        // Missing stamp claim (cookie issued before spec 027) or missing identity
+        // -> treat as anonymous; the user signs in once (documented, accepted).
+        if (string.IsNullOrEmpty(stampClaim) || !Guid.TryParse(idClaim, out var studentId))
+        {
+            context.RejectPrincipal();
+            return;
+        }
+
+        var registration = context.HttpContext.RequestServices.GetRequiredService<LibreLms.Modules.Enrollment.Application.RegistrationService>();
+        var currentStamp = await registration.GetSecurityStampAsync(studentId);
+        if (currentStamp is null ||
+            !string.Equals(currentStamp.Value.ToString("D"), stampClaim, StringComparison.OrdinalIgnoreCase))
+        {
+            context.RejectPrincipal();
+        }
+    };
 });
 
 // Authorization: Register org-scope handler and policies
@@ -114,10 +152,11 @@ using (var scope = app.Services.CreateScope())
     scormCtx.Database.Migrate();
     managementCtx.Database.Migrate();
 
-    // Seed organizations (root org + SuperUser)
+    // Seed organizations (root org only — the seeded SuperUser Student moved to
+    // EnrollmentSeeder in spec 027, so Management no longer touches Enrollment).
     if (!managementCtx.Organizations.Any())
     {
-        LibreLms.Modules.Management.Infrastructure.ManagementSeeder.Seed(managementCtx, enrollmentCtx);
+        LibreLms.Modules.Management.Infrastructure.ManagementSeeder.Seed(managementCtx);
     }
 
     // Seed catalog
@@ -395,7 +434,7 @@ users.MapPost("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperU
     try
     {
         var student = await service.CreateAsync(request.Name, request.Email, request.Password, request.Role, request.OrganizationId);
-        return Results.Created($"/api/users/{student.Id}", new LibreLms.Host.ManagementDtos.UserCreatedDto(student.Id, student.Name, student.Email, student.Roles, student.OrganizationId));
+        return Results.Created($"/api/users/{student.Id}", new LibreLms.Host.ManagementDtos.UserCreatedDto(student.Id, student.Name, student.Email, student.Role, student.OrganizationId));
     }
     catch (InvalidOperationException ex)
     {
@@ -414,7 +453,7 @@ users.MapPut("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles =
     try
     {
         var student = await service.UpdateAsync(id, request.Name, request.Role, request.OrganizationId);
-        return Results.Ok(new LibreLms.Host.ManagementDtos.UserUpdatedDto(student.Id, student.Name, student.Email, student.Roles, student.OrganizationId));
+        return Results.Ok(new LibreLms.Host.ManagementDtos.UserUpdatedDto(student.Id, student.Name, student.Email, student.Role, student.OrganizationId));
     }
     catch (KeyNotFoundException)
     {
@@ -641,7 +680,7 @@ adminEnrollments.MapPost("/", async (
     try
     {
         var enrollment = await service.EnrollAsync(request.StudentId, request.CourseId);
-        return Results.Created($"/api/admin/enrollments/{enrollment.Id}", new { enrollment.Id, enrollment.StudentId, enrollment.CourseId, enrollment.EnrolledAt });
+        return Results.Created($"/api/admin/enrollments/{enrollment.EnrollmentId}", new { enrollment.EnrollmentId, enrollment.StudentId, enrollment.CourseId, enrollment.EnrolledAt });
     }
     catch (KeyNotFoundException ex) { return Results.NotFound(new { error = ex.Message }); }
     catch (InvalidOperationException ex) { return Results.Conflict(new { error = ex.Message }); }
@@ -665,6 +704,24 @@ adminEnrollments.MapDelete("/{id:guid}", async (
 {
     try { await service.CancelEnrollmentAsync(id); return Results.NoContent(); }
     catch (KeyNotFoundException) { return Results.NotFound(); }
+});
+
+// === Dev outbox (Development only — spec 027 FR-020) ===
+// Deterministic link-extraction surface for humans and Playwright E2E tests.
+app.MapGet("/api/dev/outbox", (LibreLms.Host.Mail.DevEmailOutbox outbox, IWebHostEnvironment env) =>
+{
+    if (!env.IsDevelopment())
+        return Results.NotFound();
+
+    var emails = outbox.List().Select(e => new
+    {
+        to = e.Email.To,
+        purpose = e.Email.Purpose.ToString(),
+        subject = e.Email.Subject,
+        body = e.Email.Body,
+        sentAtUtc = e.SentAtUtc.UtcDateTime.ToString("o")
+    });
+    return Results.Json(emails);
 });
 
 // Map Razor Pages

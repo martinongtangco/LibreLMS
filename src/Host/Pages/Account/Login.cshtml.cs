@@ -66,6 +66,11 @@ public class LoginModel : PageModel
             // Add OrganizationId claim for org-scoped authorization (T043)
             claims.Add(new Claim(OrgClaimTypes.OrganizationId, student.OrganizationId.ToString()));
 
+            // Add SecurityStamp claim (spec 027 / ADR-0006): re-validated on every request
+            // by OnValidatePrincipal; rotating the stamp on password reset invalidates
+            // all pre-existing sessions (FR-017).
+            claims.Add(new Claim(SecurityClaims.SecurityStamp, student.SecurityStamp.ToString("D")));
+
             var claimsIdentity = new ClaimsIdentity(claims, "Cookie");
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
