@@ -48,40 +48,28 @@ public class CourseIndexModel : PageModel
     public async Task<PartialViewResult> OnGetCourseListAsync(
         string? search,
         string? category,
-        int page = 1)
+        [FromQuery] int page = 1)
     {
+        // [FromQuery] is required: without it, ASP.NET Core infers the binding source
+        // for an optional value-type parameter (int page = 1) as Form, so the page
+        // query-string value sent by HTMX hx-get requests was never bound (bug 028).
+
         // Trim search term
         search = search?.Trim();
         if (string.IsNullOrWhiteSpace(search))
             search = null;
 
-        // If search or category is being sent (meaning they changed), reset to page 1
-        // If only page changed (no search/category params or empty), use provided page
-        var effectivePage = page;
-
-        // Cap page number to valid range
-        // First get total count to determine max page
+        // Cap the requested page to the valid range (1..totalPages).
+        // Filter changes (search/category) arrive as page=1 because the search input and
+        // category select include the hidden #page-reset field (name="page" value="1")
+        // via hx-include — so filtering always restarts at page 1, while pagination
+        // requests carry the actual target page in the query string.
         var browseResult = await _catalogService.BrowseAsync(search, category, 1, PageSize);
         var totalPages = browseResult.TotalCount > 0
             ? (int)Math.Ceiling((double)browseResult.TotalCount / PageSize)
             : 1;
 
-        effectivePage = Math.Max(1, Math.Min(page, totalPages));
-
-        // If search or category changed, force page 1
-        if (search != null || category != null)
-        {
-            // When search or category is in the request, we're filtering — reset to page 1
-            // But we need to differentiate: if the user is paginating (no filter change),
-            // they should keep their page. The way to tell: if the request includes
-            // a page-reset hidden field set to "1", it means the user changed a filter.
-            // HTMX will send page=1 for filter changes (from hidden field) and actual page for pagination.
-            // We'll let the caller handle this: if page is explicitly 1, use it; otherwise use the capped value.
-            if (page == 1)
-                effectivePage = 1;
-            else
-                effectivePage = Math.Max(1, Math.Min(page, totalPages));
-        }
+        var effectivePage = Math.Max(1, Math.Min(page, totalPages));
 
         var result = await GetPagedCourses(search, category, effectivePage, PageSize);
 

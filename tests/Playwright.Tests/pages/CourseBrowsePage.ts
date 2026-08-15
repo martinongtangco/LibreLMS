@@ -13,6 +13,9 @@ export class CourseBrowsePage extends BasePage {
   readonly categorySelect: Locator;
   readonly clearButton: Locator;
   readonly courseList: Locator;
+  readonly nextButton: Locator;
+  readonly previousButton: Locator;
+  readonly pageIndicator: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -21,6 +24,9 @@ export class CourseBrowsePage extends BasePage {
     this.categorySelect = page.locator('select[name="category"]');
     this.clearButton = page.getByRole('link', { name: 'Clear' });
     this.courseList = page.locator('#course-list');
+    this.nextButton = this.courseList.locator('nav.pagination button', { hasText: 'Next' });
+    this.previousButton = this.courseList.locator('nav.pagination button', { hasText: 'Previous' });
+    this.pageIndicator = this.courseList.locator('nav.pagination .text-muted');
   }
 
   /**
@@ -96,5 +102,32 @@ export class CourseBrowsePage extends BasePage {
    */
   async getCourseCount(): Promise<number> {
     return await this.courseList.locator('.card').count();
+  }
+
+  // ── Pagination (bug 028) ──────────────────────────────────────────
+
+  /**
+   * Click the Next page button and wait for the HTMX swap to settle.
+   * Precondition: the button is visible (not on the last page).
+   */
+  async clickNext(): Promise<void> {
+    await this.nextButton.click();
+    await this.waitForHtmxSettle(15_000);
+  }
+
+  /**
+   * Click the Previous page button and wait for the HTMX swap to settle.
+   * Precondition: the button is visible (not on the first page).
+   */
+  async clickPrevious(): Promise<void> {
+    await this.previousButton.click();
+    await this.waitForHtmxSettle(15_000);
+  }
+
+  /**
+   * Return the pagination indicator text, e.g. "Page 2 of 2 (13 total)".
+   */
+  async getPageIndicatorText(): Promise<string> {
+    return (await this.pageIndicator.innerText()).trim();
   }
 }
