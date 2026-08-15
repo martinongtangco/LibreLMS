@@ -165,14 +165,32 @@ public class EnrollmentServiceTests : IDisposable
 /// <summary>Minimal mock of ICourseLookup for unit tests.</summary>
 public class MockCourseLookup : ICourseLookup
 {
-    private readonly Dictionary<Guid, string> _courses = new();
+    private readonly Dictionary<Guid, CourseSummary> _courses = new();
 
-    public void AddCourse(Guid id, string title) => _courses[id] = title;
+    public void AddCourse(Guid id, string title) => _courses[id] = new CourseSummary(id, title, "General", Guid.NewGuid());
 
     public Task<CourseSummary?> GetCourseAsync(Guid id)
     {
-        if (_courses.TryGetValue(id, out var title))
-            return Task.FromResult<CourseSummary?>(new CourseSummary(id, title));
+        if (_courses.TryGetValue(id, out var course))
+            return Task.FromResult<CourseSummary?>(course);
         return Task.FromResult<CourseSummary?>(null);
     }
+
+    public Task<int> CountAsync() => Task.FromResult(_courses.Count);
+
+    public Task<int> CountByOrgAsync(Guid organizationId) => Task.FromResult(_courses.Values.Count(c => c.OrganizationId == organizationId));
+
+    public Task<IList<CourseSummary>> GetCoursesAsync(IEnumerable<Guid> courseIds)
+    {
+        var ids = courseIds.ToHashSet();
+        return Task.FromResult<IList<CourseSummary>>(_courses.Values.Where(c => ids.Contains(c.Id)).ToList());
+    }
+
+    public Task<IList<CourseSummary>> ListByOrgsAsync(IEnumerable<Guid> organizationIds)
+    {
+        var orgs = organizationIds.ToHashSet();
+        return Task.FromResult<IList<CourseSummary>>(_courses.Values.Where(c => orgs.Contains(c.OrganizationId)).ToList());
+    }
+
+    public Task<IList<CourseSummary>> ListAllAsync() => Task.FromResult<IList<CourseSummary>>(_courses.Values.ToList());
 }

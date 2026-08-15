@@ -1,25 +1,19 @@
-using Microsoft.EntityFrameworkCore;
 using LibreLms.Contracts.Management;
-using LibreLms.Modules.Enrollment.Infrastructure;
+using EnrollmentIUserLookup = LibreLms.Contracts.Enrollment.IUserLookup;
+using EnrollmentUserScopeInfo = LibreLms.Contracts.Enrollment.UserScopeInfo;
 
 namespace LibreLms.Modules.Management.Application;
 
 /// <summary>
 /// Implements the cross-module IUserInfoLookup contract.
-/// Uses EnrollmentDbContext to look up user role and primary organization.
+/// Spec 027 (R9): delegates to the Enrollment module's IUserLookup contract —
+/// this module no longer touches EnrollmentDbContext directly.
 /// </summary>
-public class UserInfoLookup(EnrollmentDbContext context) : IUserInfoLookup
+public class UserInfoLookup(EnrollmentIUserLookup userLookup) : IUserInfoLookup
 {
     public async Task<UserScopeInfo?> GetUserScopeAsync(Guid userId)
     {
-        var student = await context.Students
-            .Where(s => s.Id == userId)
-            .Select(s => new { s.OrganizationId, s.Roles })
-            .FirstOrDefaultAsync();
-
-        if (student is null)
-            return null;
-
-        return new UserScopeInfo(student.OrganizationId, student.Roles);
+        EnrollmentUserScopeInfo? scope = await userLookup.GetUserScopeAsync(userId);
+        return scope is null ? null : new UserScopeInfo(scope.OrganizationId, scope.Role);
     }
 }

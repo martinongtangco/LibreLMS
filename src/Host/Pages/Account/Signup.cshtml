@@ -1,0 +1,77 @@
+@page
+@model SignupModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Create account";
+}
+
+<div class="login-container">
+    <div class="card">
+        @if (Model.Succeeded)
+        {
+            <h1 class="mb-lg">Check your email</h1>
+            <p>Your account has been created. A verification email has been sent to <strong>@Model.Email</strong> — open the link in it to verify your address.</p>
+            <p class="text-faint">You are not signed in yet. Once your email is verified you can sign in.</p>
+            <a asp-page="Login" class="btn btn-primary">Go to sign in</a>
+        }
+        else
+        {
+            <h1 class="mb-lg">Create account</h1>
+
+            @if (!string.IsNullOrEmpty(Model.GeneralError))
+            {
+                <div class="error-message mb-md">@Model.GeneralError</div>
+            }
+
+            <form method="post">
+                <div class="form-group">
+                    <label asp-for="Name" class="form-label">Full name</label>
+                    <input asp-for="Name" class="form-control" autocomplete="name" />
+                    @if (!string.IsNullOrEmpty(Model.NameError))
+                    {
+                        <div class="field-error">@Model.NameError</div>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Email" class="form-label">Email</label>
+                    <input asp-for="Email" type="email" class="form-control" autocomplete="email" />
+                    @if (!string.IsNullOrEmpty(Model.EmailError))
+                    {
+                        <div class="field-error">@Model.EmailError</div>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Password" class="form-label">Password</label>
+                    <input asp-for="Password" type="password" class="form-control" autocomplete="new-password" />
+                    @if (!string.IsNullOrEmpty(Model.PasswordError))
+                    {
+                        <div class="field-error">@Model.PasswordError</div>
+                    }
+                    <ul class="password-hints">
+                        <li>At least 12 characters</li>
+                        <li>At least one uppercase letter, one lowercase letter and one digit</li>
+                        <li>Must not contain your full name or email address</li>
+                        <li>Must not be a commonly used password</li>
+                    </ul>
+                </div>
+
+                <div class="form-group mb-lg">
+                    <label asp-for="ConfirmPassword" class="form-label">Confirm password</label>
+                    <input asp-for="ConfirmPassword" type="password" class="form-control" autocomplete="new-password" />
+                    @if (!string.IsNullOrEmpty(Model.ConfirmError))
+                    {
+                        <div class="field-error">@Model.ConfirmError</div>
+                    }
+                </div>
+
+                <button type="submit" class="btn btn-primary">Create account</button>
+            </form>
+
+            <p class="mt-md text-faint">
+                Already have an account? <a asp-page="Login">Sign in</a>
+            </p>
+        }
+    </div>
+</div>

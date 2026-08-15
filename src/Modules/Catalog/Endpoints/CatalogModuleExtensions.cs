@@ -10,6 +10,7 @@ public static class CatalogModuleExtensions
     public static IServiceCollection AddCatalogModule(this IServiceCollection services)
     {
         services.AddScoped<ICourseLookup, CourseLookup>();
+        services.AddScoped<ICourseAdmin, CourseAdmin>();
         services.AddScoped<CourseCatalogService>();
         return services;
     }

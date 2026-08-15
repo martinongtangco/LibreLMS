@@ -1,8 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using LibreLms.Modules.Catalog.Infrastructure;
-using LibreLms.Modules.Enrollment.Infrastructure;
-using LibreLms.Modules.Management.Infrastructure;
-using DomainEnrollment = LibreLms.Modules.Enrollment.Domain.Enrollment;
+using LibreLms.Contracts.Catalog;
+using LibreLms.Contracts.Enrollment;
+using LibreLms.Contracts.Management;
 
 namespace LibreLms.Modules.Management.Application;
 
@@ -26,41 +25,26 @@ public record BulkEnrollmentResult(
     List<string> ErrorMessages
 );
 
-/// <summary>Service for admin enrollment management (single and bulk).</summary>
+/// <summary>
+/// Service for admin enrollment management (single and bulk).
+/// Spec 027 (R9): all enrollment work delegates to the Enrollment module's IEnrollmentAdmin
+/// contract (learner facts via IUserLookup, course existence via ICourseLookup) — this
+/// module no longer touches EnrollmentDbContext or CatalogDbContext directly.
+/// Behavior is preserved: same exceptions, same skip/error semantics, same DTO shape.
+/// </summary>
 public class AdminEnrollmentService(
-    EnrollmentDbContext enrollmentCtx,
-    CatalogDbContext catalogCtx,
-    ManagementDbContext managementCtx)
+    IEnrollmentAdmin enrollmentAdmin,
+    IUserLookup userLookup,
+    ICourseLookup courseLookup,
+    IOrganizationLookup orgLookup)
 {
     /// <summary>Enroll a single learner in a course.</summary>
-    public async Task<DomainEnrollment> EnrollAsync(Guid studentId, Guid courseId)
+    public async Task<AdminEnrollResult> EnrollAsync(Guid studentId, Guid courseId)
     {
-        // Verify student exists
-        var student = await enrollmentCtx.Students.FindAsync(studentId);
-        if (student is null)
-            throw new KeyNotFoundException("Student not found.");
-
-        // Verify course exists
-        var course = await catalogCtx.Courses.FindAsync(courseId);
-        if (course is null)
-            throw new KeyNotFoundException("Course not found.");
-
-        // Check for duplicate enrollment
-        var existing = await enrollmentCtx.Enrollments
-            .AnyAsync(e => e.StudentId == studentId && e.CourseId == courseId);
-        if (existing)
+        var result = await enrollmentAdmin.EnrollAsync(studentId, courseId);
+        if (result.AlreadyEnrolled)
             throw new InvalidOperationException("Student is already enrolled in this course.");
-
-        var enrollment = new DomainEnrollment
-        {
-            StudentId = studentId,
-            CourseId = courseId,
-            EnrolledAt = DateTimeOffset.UtcNow
-        };
-
-        enrollmentCtx.Enrollments.Add(enrollment);
-        await enrollmentCtx.SaveChangesAsync();
-        return enrollment;
+        return result;
     }
 
     /// <summary>Bulk enroll learners in a course (up to 500).</summary>
@@ -69,8 +53,8 @@ public class AdminEnrollmentService(
         if (studentIds.Count > 500)
             throw new ArgumentException("Maximum 500 learners per bulk enrollment.", nameof(studentIds));
 
-        // Verify course exists
-        var course = await catalogCtx.Courses.FindAsync(courseId);
+        // Verify course exists (same up-front check as before)
+        var course = await courseLookup.GetCourseAsync(courseId);
         if (course is null)
             throw new KeyNotFoundException("Course not found.");
 
@@ -83,29 +67,21 @@ public class AdminEnrollmentService(
         {
             try
             {
-                var student = await enrollmentCtx.Students.FindAsync(studentId);
-                if (student is null)
+                var scope = await userLookup.GetUserScopeAsync(studentId);
+                if (scope is null)
                 {
                     skipped++;
                     errorMessages.Add($"Student {studentId} not found — skipped.");
                     continue;
                 }
 
-                var existing = await enrollmentCtx.Enrollments
-                    .AnyAsync(e => e.StudentId == studentId && e.CourseId == courseId);
-                if (existing)
+                var result = await enrollmentAdmin.EnrollAsync(studentId, courseId);
+                if (result.AlreadyEnrolled)
                 {
                     skipped++;
                     continue;
                 }
 
-                var enrollment = new DomainEnrollment
-                {
-                    StudentId = studentId,
-                    CourseId = courseId,
-                    EnrolledAt = DateTimeOffset.UtcNow
-                };
-                enrollmentCtx.Enrollments.Add(enrollment);
                 enrolled++;
             }
             catch (Exception ex)
@@ -115,180 +91,55 @@ public class AdminEnrollmentService(
             }
         }
 
-        if (enrolled > 0)
-            await enrollmentCtx.SaveChangesAsync();
-
         return new BulkEnrollmentResult(enrolled, skipped, errors, errorMessages);
     }
 
     /// <summary>Cancel an enrollment.</summary>
     public async Task CancelEnrollmentAsync(Guid enrollmentId)
     {
-        var enrollment = await enrollmentCtx.Enrollments.FindAsync(enrollmentId);
-        if (enrollment is null)
+        var removed = await enrollmentAdmin.UnenrollAsync(enrollmentId);
+        if (!removed)
             throw new KeyNotFoundException("Enrollment not found.");
-
-        enrollmentCtx.Enrollments.Remove(enrollment);
-        await enrollmentCtx.SaveChangesAsync();
     }
 
-    /// <summary>List enrollments scoped to organization subtree.</summary>
-    public async Task<IList<EnrollmentDto>> ListEnrollmentsAsync(IList<Guid> orgIds, string? studentName = null, string? courseTitle = null)
-    {
-        // Step 1: Query enrollments + students from EnrollmentDbContext (same context).
-        // Apply org-scope and student-name filters here.
-        var enrollmentQuery = enrollmentCtx.Enrollments
-            .Join(
-                enrollmentCtx.Students,
-                e => e.StudentId,
-                s => s.Id,
-                (e, s) => new { Enrollment = e, Student = s })
-            .Where(x => orgIds.Contains(x.Student.OrganizationId));
-
-        if (!string.IsNullOrWhiteSpace(studentName))
-        {
-            var term = studentName.ToLowerInvariant();
-            enrollmentQuery = enrollmentQuery.Where(x => x.Student.Name.ToLowerInvariant().Contains(term));
-        }
-
-        var enrollmentData = await enrollmentQuery
-            .OrderByDescending(x => x.Enrollment.EnrolledAt)
-            .ToListAsync();
-
-        // Step 2: Load courses from CatalogDbContext (separate context) by collected IDs.
-        var courseIds = enrollmentData.Select(x => x.Enrollment.CourseId).ToList();
-        var courseMap = new Dictionary<Guid, (Guid Id, string Title)>();
-        if (courseIds.Count > 0)
-        {
-            var courses = await catalogCtx.Courses
-                .Where(c => courseIds.Contains(c.Id))
-                .ToDictionaryAsync(c => c.Id, c => (c.Id, c.Title));
-
-            courseMap = courses;
-        }
-
-        // Step 3: Join in memory and apply course-title filter.
-        var joined = enrollmentData.Where(e => courseMap.TryGetValue(e.Enrollment.CourseId, out var course))
-            .Select(e => new
-            {
-                e.Enrollment,
-                e.Student,
-                Course = courseMap[e.Enrollment.CourseId]
-            });
-
-        if (!string.IsNullOrWhiteSpace(courseTitle))
-        {
-            var term = courseTitle.ToLowerInvariant();
-            joined = joined.Where(x => x.Course.Title.ToLowerInvariant().Contains(term));
-        }
-
-        // Step 4: Build DTOs with org names from ManagementDbContext.
-        var orgCache = new Dictionary<Guid, string>();
-        var dtos = new List<EnrollmentDto>();
-
-        foreach (var r in joined)
-        {
-            var orgId = r.Student.OrganizationId;
-            if (!orgCache.TryGetValue(orgId, out var orgName))
-            {
-                var org = await managementCtx.Organizations
-                    .Where(o => o.Id == orgId && !o.IsDeleted)
-                    .Select(o => o.Name)
-                    .FirstOrDefaultAsync();
-                orgName = org ?? "Unknown";
-                orgCache[orgId] = orgName;
-            }
-
-            dtos.Add(new EnrollmentDto(
-                r.Enrollment.Id,
-                r.Student.Id,
-                r.Student.Name,
-                r.Student.Email,
-                r.Course.Id,
-                r.Course.Title,
-                orgName,
-                r.Enrollment.EnrolledAt
-            ));
-        }
-
-        return dtos;
-    }
-
-    /// <summary>List all enrollments (SuperUser).</summary>
+    /// <summary>List all enrollments (SuperUser) with learner and organization info.</summary>
     public async Task<IList<EnrollmentDto>> ListAllEnrollmentsAsync(string? studentName = null, string? courseTitle = null)
     {
-        // Step 1: Query enrollments + students from EnrollmentDbContext (same context).
-        // Apply student-name filter here.
-        var enrollmentQuery = enrollmentCtx.Enrollments
-            .Join(
-                enrollmentCtx.Students,
-                e => e.StudentId,
-                s => s.Id,
-                (e, s) => new { Enrollment = e, Student = s });
+        // Step 1: enrollments + course titles from the Enrollment module (contract)
+        var rows = await enrollmentAdmin.ListAsync(studentName, courseTitle);
 
-        if (!string.IsNullOrWhiteSpace(studentName))
-        {
-            var term = studentName.ToLowerInvariant();
-            enrollmentQuery = enrollmentQuery.Where(x => x.Student.Name.ToLowerInvariant().Contains(term));
-        }
+        // Step 2: learner names/emails in one batch (contract)
+        var students = await userLookup.GetUsersAsync(rows.Select(r => r.StudentId));
+        var studentMap = students.ToDictionary(s => s.Id);
 
-        var enrollmentData = await enrollmentQuery
-            .OrderByDescending(x => x.Enrollment.EnrolledAt)
-            .ToListAsync();
-
-        // Step 2: Load courses from CatalogDbContext (separate context) by collected IDs.
-        var courseIds = enrollmentData.Select(x => x.Enrollment.CourseId).ToList();
-        var courseMap = new Dictionary<Guid, (Guid Id, string Title)>();
-        if (courseIds.Count > 0)
-        {
-            var courses = await catalogCtx.Courses
-                .Where(c => courseIds.Contains(c.Id))
-                .ToDictionaryAsync(c => c.Id, c => (c.Id, c.Title));
-
-            courseMap = courses;
-        }
-
-        // Step 3: Join in memory and apply course-title filter.
-        var joined = enrollmentData.Where(e => courseMap.TryGetValue(e.Enrollment.CourseId, out var course))
-            .Select(e => new
-            {
-                e.Enrollment,
-                e.Student,
-                Course = courseMap[e.Enrollment.CourseId]
-            });
-
-        if (!string.IsNullOrWhiteSpace(courseTitle))
-        {
-            var term = courseTitle.ToLowerInvariant();
-            joined = joined.Where(x => x.Course.Title.ToLowerInvariant().Contains(term));
-        }
-
-        // Step 4: Build DTOs with org names from ManagementDbContext.
+        // Step 3: org names from the Management contract (own module boundary)
         var orgCache = new Dictionary<Guid, string>();
         var dtos = new List<EnrollmentDto>();
 
-        foreach (var r in joined)
+        foreach (var r in rows)
         {
-            var orgId = r.Student.OrganizationId;
+            if (!studentMap.TryGetValue(r.StudentId, out var student))
+                continue;
+
+            var scope = await userLookup.GetUserScopeAsync(r.StudentId);
+            var orgId = scope?.OrganizationId ?? Guid.Empty;
+
             if (!orgCache.TryGetValue(orgId, out var orgName))
             {
-                var org = await managementCtx.Organizations
-                    .Where(o => o.Id == orgId && !o.IsDeleted)
-                    .Select(o => o.Name)
-                    .FirstOrDefaultAsync();
-                orgName = org ?? "Unknown";
+                var org = await orgLookup.GetOrganizationAsync(orgId);
+                orgName = org?.Name ?? "Unknown";
                 orgCache[orgId] = orgName;
             }
 
             dtos.Add(new EnrollmentDto(
-                r.Enrollment.Id,
-                r.Student.Id,
-                r.Student.Name,
-                r.Student.Email,
-                r.Course.Id,
-                r.Course.Title,
+                r.EnrollmentId,
+                r.StudentId,
+                student.Name,
+                student.Email,
+                r.CourseId,
+                r.CourseTitle,
                 orgName,
-                r.Enrollment.EnrolledAt
+                r.EnrolledAt
             ));
         }
 

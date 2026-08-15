@@ -11,6 +11,14 @@ public static class EnrollmentModuleExtensions
     {
         services.AddScoped<EnrollmentService>();
         services.AddScoped<IEnrollmentLookup, EnrollmentLookup>();
+
+        // Spec 027: shared credential core (stateless — singleton) and cross-module
+        // account/enrollment contracts (scoped, over EnrollmentDbContext).
+        services.AddSingleton<PasswordHasher>();
+        services.AddSingleton<CredentialPolicy>();
+        services.AddScoped<IUserProvisioning, UserProvisioningService>();
+        services.AddScoped<IUserLookup, UserLookupService>();
+        services.AddScoped<IEnrollmentAdmin, EnrollmentAdminService>();
         return services;
     }
 }

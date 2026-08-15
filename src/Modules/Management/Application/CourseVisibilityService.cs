@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using LibreLms.Contracts.Catalog;
 using LibreLms.Contracts.Management;
 using LibreLms.Contracts.Scorm;
-using LibreLms.Modules.Catalog.Infrastructure;
 using LibreLms.Modules.Management.Domain;
 using LibreLms.Modules.Management.Infrastructure;
 
@@ -29,10 +29,15 @@ public record VisibilityOverrideDto(
     DateTimeOffset CreatedAt
 );
 
-/// <summary>Service for managing course visibility within organizational hierarchies.</summary>
+/// <summary>
+/// Service for managing course visibility within organizational hierarchies.
+/// Spec 027 (R9): catalog reads/deletes go through the Catalog contracts
+/// (ICourseLookup / ICourseAdmin) — this module no longer touches CatalogDbContext.
+/// </summary>
 public class CourseVisibilityService(
     ManagementDbContext managementCtx,
-    CatalogDbContext catalogCtx,
+    ICourseLookup courseLookup,
+    ICourseAdmin courseAdmin,
     IOrganizationLookup orgLookup,
     IScormPackageService scormPackageService)
 {
@@ -46,10 +51,8 @@ public class CourseVisibilityService(
         // Get all ancestor org IDs including the target org
         var ancestorIds = await orgLookup.GetAncestorOrgIdsAsync(orgId);
 
-        // Get all courses from the org and its ancestors
-        var allCourses = await catalogCtx.Courses
-            .Where(c => ancestorIds.Contains(c.OrganizationId))
-            .ToListAsync();
+        // Get all courses from the org and its ancestors (via contract)
+        var allCourses = await courseLookup.ListByOrgsAsync(ancestorIds);
 
         // Get the local org ID for comparison
         var localOrgId = orgId;
@@ -100,8 +103,8 @@ public class CourseVisibilityService(
     public async Task<CourseVisibilityOverride> SetVisibilityOverrideAsync(
         Guid orgId, Guid courseId, bool isHidden, Guid? createdBy)
     {
-        // Verify the course exists
-        var course = await catalogCtx.Courses.FindAsync(courseId);
+        // Verify the course exists (via contract)
+        var course = await courseLookup.GetCourseAsync(courseId);
         if (course is null)
             throw new KeyNotFoundException("Course not found.");
 
@@ -144,10 +147,14 @@ public class CourseVisibilityService(
             .Where(o => o.OrganizationId == orgId)
             .ToListAsync();
 
+        // Batch course lookup (via contract) instead of one query per override
+        var courses = await courseLookup.GetCoursesAsync(overrides.Select(o => o.CourseId));
+        var courseMap = courses.ToDictionary(c => c.Id);
+
         var result = new List<VisibilityOverrideDto>();
         foreach (var o in overrides)
         {
-            var course = await catalogCtx.Courses.FindAsync(o.CourseId);
+            courseMap.TryGetValue(o.CourseId, out var course);
             result.Add(new VisibilityOverrideDto(
                 o.Id,
                 o.CourseId,
@@ -167,7 +174,7 @@ public class CourseVisibilityService(
     /// </summary>
     public async Task<IList<CourseVisibilityDto>> GetAllCoursesAsync()
     {
-        var allCourses = await catalogCtx.Courses.ToListAsync();
+        var allCourses = await courseLookup.ListAllAsync();
         var orgNameCache = new Dictionary<Guid, string>();
         var result = new List<CourseVisibilityDto>();
 
@@ -189,10 +196,12 @@ public class CourseVisibilityService(
 
     /// <summary>
     /// Delete a course by ID, including associated SCORM package and its content.
+    /// The catalog delete itself goes through the ICourseAdmin contract.
     /// </summary>
     public async Task DeleteCourseAsync(Guid courseId)
     {
-        var course = await catalogCtx.Courses.FindAsync(courseId);
+        // Verify the course exists (same up-front check as before)
+        var course = await courseLookup.GetCourseAsync(courseId);
         if (course is null)
             throw new KeyNotFoundException("Course not found.");
 
@@ -201,12 +210,12 @@ public class CourseVisibilityService(
             .Where(o => o.CourseId == courseId)
             .ToListAsync();
         managementCtx.CourseVisibilityOverrides.RemoveRange(overrides);
+        await managementCtx.SaveChangesAsync();
 
         // Delete associated SCORM package and its content directory (via contract)
         await scormPackageService.DeletePackageForCourseAsync(courseId);
 
-        catalogCtx.Courses.Remove(course);
-        await managementCtx.SaveChangesAsync();
-        await catalogCtx.SaveChangesAsync();
+        // Delete the course via the Catalog module contract
+        await courseAdmin.DeleteAsync(courseId);
     }
 }

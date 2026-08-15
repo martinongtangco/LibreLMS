@@ -204,3 +204,93 @@ the mock, and migrations). This is the minimal structure the slice actually need
 No violations. The Constitution Check's only ⚠️ is the pre-existing baseline-RED
 boundary gate, which this slice *fixes* (workstream R9) rather than justifies; no
 principle is bent or waived.
+
+## Drift Log (implementation vs. this plan)
+
+Recorded at T045 (documentation reconciliation). "Plan" = the decisions/structure
+above; "Shipped" = what actually landed on `story/027-formal-signup-registration`.
+
+1. **ADR numbers 0004 + 0006, not 0004 + 0005.**
+   Plan §Constitution Check named ADRs "0004 (email seam) / 0005 (credential
+   baseline)". `docs/adr/0005-no-htmx-for-navigation.md` already existed on
+   `master`, so per Constitution IV (sequential numbering) the credential-baseline
+   ADR shipped as **0006-credential-security-baseline.md**. ADR-0004
+   (transactional-email-seam) is unchanged.
+
+2. **PBKDF2 via `Rfc2898DeriveBytes`, not `KeyDerivation.Pbkdf2`.**
+   This environment's .NET 10 reference pack lacks
+   `System.Security.Cryptography.KeyDerivation` (reproduced in a minimal
+   net10.0 app). `PasswordHasher` uses `Rfc2898DeriveBytes`
+   (PBKDF2-HMAC-SHA256, 210k iterations, 16-byte salt, 32-byte hash) with
+   `#pragma warning disable SYSLIB0060`. Output format
+   `PBKDF2$210000$<saltB64>$<hashB64>` is unchanged. Recorded in ADR-0006.
+
+3. **No SecurityStamp re-validation cache (plan said "≤60 s in-process cache
+   optional").**
+   Shipped: one indexed primary-key lookup per request in
+   `OnValidatePrincipal`. A TTL cache was rejected because it would delay
+   FR-017 reset-invalidation by up to the TTL and make E2E nondeterministic.
+   Documented in ADR-0006.
+
+4. **Token-consumption state machine without a schema change (plan: "consume =
+   null the token columns").**
+   Shipped: consuming a link sets `*TokenExpiresAt = null` and **keeps** the hash,
+   so `AlreadyUsed` stays detectable (hash alone is unguessable). The hash is the
+   stable "was issued" marker; the nullable expiry is the "pending" marker.
+   Applies to both verification (24 h) and reset (30 min) tokens.
+
+5. **`Login` page gained an access-denied state (not in plan).**
+   A signed-in user bounced to `/Account/Login` by an `[Authorize]`
+   access-denied challenge now sees "Access denied — signed in as {name}" instead
+   of the form or a redirect. A redirect-to-home would loop (denied → login →
+   home) and break `08-rbac.spec.ts` expectations (URL must contain
+   `/Account/Login`). Behavior-preserving for the pre-existing RBAC suite.
+
+6. **Reset page token is an explicit `OnGet(string? token)` handler parameter.**
+   Empirically, `[BindProperty]` on a parameterless `OnGet` did not bind the
+   query string in this app (token arrived null, no DB query issued) while the
+   same pattern on POST forms works. The Verify page (explicit parameter) was the
+   working reference. Documented in the page-model XML doc.
+
+7. **Contract surface grew beyond the plan's minimal list** (all additions are
+   backward-compatible, existing members untouched):
+   - `IUserProvisioning.ListAsync(roleFilter)`; `IUserLookup.GetUserNameAsync`,
+     `GetUsersAsync`, `CountByRoleAsync`; `IEnrollmentAdmin.ListAsync(studentName,
+     courseTitle)`, `AdminEnrollResult.EnrolledAt`; `ICourseLookup.CountAsync`,
+     `CountByOrgAsync`, `GetCoursesAsync`, `ListByOrgsAsync`, `ListAllAsync`;
+     `CourseSummary` gained `Category` + `OrganizationId`; new `ICourseAdmin`.
+     These support the Management→contracts refactor (R9) and the admin pages.
+
+8. **`/api/dev/outbox` + `/Dev/Outbox` (plan: "dev outbox view").**
+   Both shipped: a JSON endpoint (used by the E2E specs to extract links) and a
+   Razor page for humans. Both Development-gated.
+
+9. **Two `02-course-browse` failures are pre-existing on `master`, not
+   regressions.** "selecting Programming category shows 4 courses" and "selecting
+   Tools category shows 2 courses" fail on this branch *and* on `master`
+   (verified via a `git worktree` run of `master` on :5010 against the same
+   accumulated dev DB — same 2 failures). They assert hardcoded category counts
+   that the dev DB's accumulated manual-test courses no longer satisfy. Left
+   untouched (out of scope for spec 027); full-suite delta vs. master is zero.
+
+10. **E2E "expired link" tests are skipped with reasons.** The 24 h / 30 min
+    expiry states require DB time manipulation; the Playwright project has no SQL
+    driver and no `sqlcmd` in the environment. `verify-email.spec.ts` and
+    `forgot-password.spec.ts` each carry a `test.skip` with the reason; the
+    Expired branch shares its lookup path with the covered already-used/invalid
+    cases.
+
+11. **Execution strategy:** the parent agent wrote the production code in planned
+    waves (subagent file-writing children were abandoned — fork-context `worker`
+    exceeded context size and fresh-context `delegate` children on the local 27B
+    model exceeded timeouts). The two US1 E2E specs (T032/T033) were delegated to
+    `delegate` children with a 90 min timeout and completed green. T037/T041 E2E
+    specs were written by the parent.
+
+12. **Seeder reorg (plan: "EnrollmentSeeder seeds users").** `ManagementSeeder`
+    is orgs-only; `EnrollmentSeeder` seeds the five users + SuperUser
+    (`admin@librelms.local` / `Admin@12345`), PBKDF2 hashes, `IsEmailVerified=true`,
+    and **enforces canonical roles** on all seed emails every start (fixes stale
+    role state from prior runs). Root org id
+    `00000000-0000-0000-0000-000000000001` is the default org for self-service
+    sign-ups (`RegistrationService.DefaultOrganizationId`).

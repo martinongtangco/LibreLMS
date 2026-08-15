@@ -585,6 +585,14 @@ body.role-admin [data-role-link="admin"] {
   color: var(--color-text-faint);
 }
 
+/* ── Dev Outbox (Development-only mock email viewer) ─────────────────────────── */
+.outbox-body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 420px;
+  font-size: var(--font-size-sm);
+}
+
 /* ── Footer ────────────────────────────────────────────────────────────── */
 .footer {
   text-align: center;
@@ -609,6 +617,21 @@ body.role-admin [data-role-link="admin"] {
   padding: var(--spacing-md);
   border-radius: var(--border-radius-sm);
   margin-bottom: var(--spacing-md);
+}
+
+/* ── Form field errors + password hints (sign-up / reset, spec 027) ──────── */
+.field-error {
+  color: var(--color-error-border);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-xs, 4px);
+}
+
+.password-hints {
+  list-style: disc;
+  margin: var(--spacing-xs, 4px) 0 0 1.1rem;
+  padding: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-faint);
 }
 
 /* ── Alerts ────────────────────────────────────────────────────────────── */
