@@ -177,7 +177,7 @@ seeded users (`alice@example.com`, `admin@example.com` / `password123`) still si
 
 - [X] T044 [P] Run the complete validation: `dotnet build LibreLms.slnx` (show output), restart the app (restart-host-app skill; show "Now listening"), `dotnet test tests/ArchitectureTests` 14/14, FULL Playwright suite (`npx playwright test`) including the new signup/signup-validation/verify-email/forgot-password specs — walk all six quickstart scenarios manually and record results (Principle XIII gates 1+2; depends on all previous phases)
 - [X] T045 [P] Reconcile documentation with the final implementation: mark all completed checkboxes in `specs/027-formal-signup-registration/tasks.md`, note any drift from `specs/027-formal-signup-registration/plan.md` (structure/decisions), confirm ADRs 0004/0005 match what shipped
-- [ ] T046 Merge `story/027-formal-signup-registration` into `master` (merge commit), switch back to `master` (Constitution Principle XII), then post-merge regression: rebuild, restart, re-run the full Playwright suite and show passing output (Principle XIII gate 3; depends on T044, T045)
+- [X] T046 Merge `story/027-formal-signup-registration` into `master` (merge commit), switch back to `master` (Constitution Principle XII), then post-merge regression: rebuild, restart, re-run the full Playwright suite and show passing output (Principle XIII gate 3; depends on T044, T045)
 
 ---
 
