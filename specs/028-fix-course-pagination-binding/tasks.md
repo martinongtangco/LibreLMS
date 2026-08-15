@@ -1,10 +1,12 @@
 # Tasks: Fix Course Page Pagination
 
-## Story 1 - Fix `page` Query Binding (P1)
+## Story 1 - Make Next/Previous Actually Work (P1)
 
-- [x] T1.1 Identify root cause: `int page = 1` inferred as Form binding source; query-string `page` never bound (verified at runtime)
-- [ ] T1.2 Add `[FromQuery]` to `page` parameter in `OnGetCourseListAsync`
-- [ ] T1.3 Remove redundant filter-reset block; keep `Math.Max(1, Math.Min(page, totalPages))` capping
+- [x] T1.1 Identify root cause 1a: relative `hx-get="Courses/Index"` resolves to `/Courses/Courses/Index` → 404, no swap (verified via Playwright network capture)
+- [x] T1.2 Identify root cause 1b: `int page = 1` inferred as Form binding source; query-string `page` never bound (verified at runtime)
+- [ ] T1.3 Make both pagination `hx-get` URLs absolute in `_Pagination.cshtml`
+- [ ] T1.4 Add `[FromQuery]` to `page` parameter in `OnGetCourseListAsync`
+- [ ] T1.5 Remove redundant filter-reset block; keep `Math.Max(1, Math.Min(page, totalPages))` capping
 
 ## Story 2 - Hide Boundary Buttons (P2)
 

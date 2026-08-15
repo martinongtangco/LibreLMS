@@ -2,7 +2,13 @@
 
 ## Changes Required
 
-### 1. Fix `page` binding in the HTMX handler (Defect 1)
+### 1. Fix pagination button URLs (Defect 1a)
+- Change both `hx-get` attributes in `_Pagination.cshtml` from relative `Courses/Index?...`
+  to absolute `/Courses/Index?...` (relative URLs resolve against the current page's
+  directory, `/Courses/`, producing 404s from the browse page).
+- File: `src/Host/Pages/Shared/_Pagination.cshtml`
+
+### 2. Fix `page` binding in the HTMX handler (Defect 1b)
 - Add `[FromQuery]` to the `page` parameter of `OnGetCourseListAsync` so the query-string
   value sent by HTMX `hx-get` is bound (ASP.NET Core infers optional value-type parameters
   as `Form` source, which is why `page` was silently ignored).
@@ -12,13 +18,13 @@
   cap already handles it.
 - File: `src/Host/Pages/Courses/Index.cshtml.cs`
 
-### 2. Hide boundary pagination buttons (Defect 2)
+### 3. Hide boundary pagination buttons (Defect 2)
 - Render the Previous button only when `pageNumber > 1`.
 - Render the Next button only when `pageNumber < totalPages`.
 - Keep the page indicator span always rendered.
 - File: `src/Host/Pages/Shared/_Pagination.cshtml`
 
-### 3. E2E tests (Principle XIII)
+### 4. E2E tests (Principle XIII)
 - Extend `tests/Playwright.Tests/pages/CourseBrowsePage.ts` with pagination locators and
   actions (next/previous buttons, page indicator text, click helpers with HTMX settle waits).
 - Add `tests/Playwright.Tests/tests/11-course-pagination.spec.ts` covering:

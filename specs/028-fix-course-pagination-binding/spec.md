@@ -12,8 +12,33 @@
 
 Two independent defects in the Browse Courses page (spec 019, HTMX pagination):
 
-### Defect 1: `page` query parameter is never bound (pagination does nothing)
+### Defect 1a: pagination requests 404 — relative `hx-get` URL
 
+The Previous/Next buttons in `src/Host/Pages/Shared/_Pagination.cshtml` use a **relative**
+`hx-get` URL:
+
+```html
+hx-get="Courses/Index?handler=CourseList&...&page={pageNumber + 1}"
+```
+
+HTMX resolves relative URLs against the current document's directory. On the browse page
+(`/Courses/Index`) that directory is `/Courses/`, so the button actually requests
+`/Courses/Courses/Index?handler=CourseList&...` — a **404**. HTMX performs no swap on a
+failed request, so the list never changes: the user-visible "pagination does nothing".
+
+The search input and category select use absolute URLs (`hx-get="/Courses/Index?handler=CourseList"`),
+which is why filtering works while pagination does not.
+
+**Runtime evidence** (Playwright network capture of a real Next click):
+
+```
+REQ: GET http://localhost:5000/Courses/Courses/Index?handler=CourseList&search=&category=&page=2&search=&category=
+RES: 404
+```
+
+### Defect 1b: `page` query parameter is never bound (server-side)
+
+Even with a correct URL, pagination would still do nothing, because
 `OnGetCourseListAsync` in `src/Host/Pages/Courses/Index.cshtml.cs` declares:
 
 ```csharp
@@ -25,12 +50,11 @@ public async Task<PartialViewResult> OnGetCourseListAsync(
 
 ASP.NET Core infers the binding source for action parameters via `BindingSource.Infer`:
 **an optional value-type parameter with a default value (`int page = 1`) is inferred as
-`BindingSource.Form`, not `Query`.** The HTMX `hx-get` pagination requests send `page` as a
-query-string parameter, so the value provider is never consulted and the handler always runs
-with `page = 1`. Every Next/Previous click returns page 1 — the list never changes.
+`BindingSource.Form`, not `Query`.** The `page` query-string parameter is therefore never
+bound and the handler always runs with `page = 1`.
 
 The `search` and `category` parameters (reference types) are inferred as `Query` and bind
-correctly, which is why search/filter work while pagination silently does not.
+correctly.
 
 **Runtime evidence (against the running app on http://localhost:5000):**
 
@@ -80,7 +104,9 @@ actions that actually work.
 
 ## Implementation Notes
 
-- Fix for Defect 1: annotate the handler parameter `[FromQuery] int page = 1` so the binding
+- Fix for Defect 1a: make the pagination buttons' `hx-get` URLs absolute
+  (`/Courses/Index?...`), matching the search input / category select pattern.
+- Fix for Defect 1b: annotate the handler parameter `[FromQuery] int page = 1` so the binding
   source is explicit. The existing `Math.Max(1, Math.Min(page, totalPages))` capping stays.
   The redundant `if (search != null || category != null)` reset block in the handler becomes
   dead logic once binding works (the filter-change flow already forces `page=1` via the
@@ -92,6 +118,9 @@ actions that actually work.
 - No ADR required: root cause is a framework binding-inference pitfall, not a project design decision.
 - Known limitation (out of scope): for org-scoped users the page math uses the unfiltered
   `TotalCount` while visibility filtering happens in C# after paging (pre-existing, spec 019 design).
+- Related observation (out of scope, candidate for a follow-up bug): `Pages/Shared/_OrgContextMenu.cshtml`
+  also uses relative `hx-get` URLs (`Admin/Organizations/Chart/...`), which will 404 the same
+  way whenever the menu is rendered from a page whose directory is not `/`.
 - Stale seed-count failures in `02-course-browse.spec.ts` (Programming/Design category counts)
   predate this change (documented in spec 027 merge notes) and are not in scope.
 
