@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-15
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-15)
 
 **Input**: User report: "the Course page pagination doesn't do anything. Moving previous or next does nothing. there's 13 total fake courses, it displays 12, moving to next doesn't show the final 13th. Also if you're at the first page, previous button should not be visible. moving to the last page should make next button invisible too."
 
