@@ -52,6 +52,11 @@
             <button type="submit" class="btn btn-primary">Sign In</button>
         </form>
 
+        <p class="mt-md text-faint">
+            New here? <a asp-page="Signup">Create an account</a> ·
+            <a asp-page="ForgotPassword">Forgot your password?</a>
+        </p>
+
         @if (!string.IsNullOrEmpty(Model.UnverifiedEmail))
         {
             <form method="post" asp-page-handler="Resend" class="mt-lg">

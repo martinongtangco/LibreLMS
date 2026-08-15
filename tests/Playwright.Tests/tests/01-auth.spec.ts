@@ -55,6 +55,28 @@ test.describe('Authentication', () => {
     await expect(page.locator('.admin-link').first()).toBeVisible();
   });
 
+  test('login page shows no demo credentials and offers signup / forgot-password links (spec 027 US4)', async ({ page }) => {
+    await page.goto('/Account/Login');
+
+    // FR-023/FR-024: the demo-credentials hint and the seeded emails are gone.
+    await expect(page.getByText('Demo credentials')).toHaveCount(0);
+    await expect(page.getByText('password123')).toHaveCount(0);
+    await expect(page.getByText(/alice@example\.com/)).toHaveCount(0);
+    await expect(page.getByText(/admin@example\.com/)).toHaveCount(0);
+
+    // Self-service entry points are present and navigate.
+    const signupLink = page.getByRole('link', { name: 'Create an account' });
+    await expect(signupLink).toBeVisible();
+    await signupLink.click();
+    await expect(page).toHaveURL(/\/Account\/Signup/);
+
+    await page.goto('/Account/Login');
+    const forgotLink = page.getByRole('link', { name: 'Forgot your password?' });
+    await expect(forgotLink).toBeVisible();
+    await forgotLink.click();
+    await expect(page).toHaveURL(/\/Account\/ForgotPassword/);
+  });
+
   test('logout clears session', async ({ page }) => {
     // First log in as learner
     await page.goto('/Account/Login');
