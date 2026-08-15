@@ -7,12 +7,34 @@
 
 <div class="login-container">
     <div class="card">
+        @if (Model.AccessDenied)
+        {
+            <h1 class="mb-lg">Access denied</h1>
+            <p>You are signed in@(Model.SignedInAs is null ? string.Empty : $" as {Model.SignedInAs}") but your role does not allow access to that page.</p>
+            <a href="/Courses" class="btn btn-primary">Browse courses</a>
+            return;
+        }
+
         <h1 class="mb-lg">Login</h1>
 
-        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        @if (!string.IsNullOrEmpty(Model.Error))
         {
             <div class="error-message mb-md">
-                @Model.ErrorMessage
+                @Model.Error
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.UnverifiedEmail))
+        {
+            <div class="error-message mb-md">
+                Your email address has not been verified. Please check your email for the verification link.
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.ResendMessage))
+        {
+            <div class="error-message mb-md">
+                @Model.ResendMessage
             </div>
         }
 
@@ -30,8 +52,12 @@
             <button type="submit" class="btn btn-primary">Sign In</button>
         </form>
 
-        <p class="mt-md text-faint">
-            Demo credentials: alice@example.com / password123 (student) or admin@example.com / password123 (admin)
-        </p>
+        @if (!string.IsNullOrEmpty(Model.UnverifiedEmail))
+        {
+            <form method="post" asp-page-handler="Resend" class="mt-lg">
+                <input type="hidden" name="email" value="@Model.UnverifiedEmail" />
+                <button type="submit" class="btn btn-secondary">Resend verification email</button>
+            </form>
+        }
     </div>
 </div>

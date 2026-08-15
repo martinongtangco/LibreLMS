@@ -1,0 +1,23 @@
+@page
+@model VerifyModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Model.Success ? "Email verified" : "Verification problem";
+}
+
+<div class="login-container">
+    <div class="card">
+        @if (Model.Success)
+        {
+            <h1 class="mb-lg">Your email is verified</h1>
+            <p>Great — your address is confirmed. You can now sign in to Libre LMS.</p>
+            <a asp-page="Login" class="btn btn-primary">Go to sign in</a>
+        }
+        else
+        {
+            <h1 class="mb-lg">@Model.ErrorTitle</h1>
+            <p>@Model.ErrorBody</p>
+            <a asp-page="Login" class="btn btn-primary">Go to sign in</a>
+        }
+    </div>
+</div>

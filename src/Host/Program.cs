@@ -49,6 +49,7 @@ builder.Services.AddSingleton<LibreLms.SharedKernel.ITransactionalEmailSender, L
 // Spec 027: self-service account lifecycle (used by Host's Account pages and the
 // cookie OnValidatePrincipal stamp re-check). Host is the composition root, so it
 // may register module-internal services directly (Constitution I/III).
+builder.Services.AddSingleton<LibreLms.Modules.Enrollment.Application.EmailThrottle>();
 builder.Services.AddScoped<LibreLms.Modules.Enrollment.Application.RegistrationService>();
 
 // Register EF Core context for Scorm

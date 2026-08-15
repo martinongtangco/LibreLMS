@@ -10,15 +10,15 @@ namespace LibreLms.Modules.Enrollment.Application;
 /// </summary>
 public sealed class CredentialPolicy
 {
-    private const string BlocklistResourceSuffix = "Resources/common-passwords.txt";
-
     private readonly HashSet<string> _blocklist;
 
     public CredentialPolicy()
     {
         var blocklist = new HashSet<string>();
+        // The manifest name is RootNamespace-qualified and dot-separated
+        // (e.g. "Enrollment.Resources.common-passwords.txt"), so match on the tail only.
         var resource = typeof(CredentialPolicy).Assembly.GetManifestResourceNames()
-            .FirstOrDefault(n => n.EndsWith(BlocklistResourceSuffix, StringComparison.OrdinalIgnoreCase));
+            .FirstOrDefault(n => n.EndsWith(".common-passwords.txt", StringComparison.OrdinalIgnoreCase));
 
         if (resource is not null)
         {

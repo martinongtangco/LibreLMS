@@ -619,6 +619,21 @@ body.role-admin [data-role-link="admin"] {
   margin-bottom: var(--spacing-md);
 }
 
+/* ── Form field errors + password hints (sign-up / reset, spec 027) ──────── */
+.field-error {
+  color: var(--color-error-border);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-xs, 4px);
+}
+
+.password-hints {
+  list-style: disc;
+  margin: var(--spacing-xs, 4px) 0 0 1.1rem;
+  padding: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-faint);
+}
+
 /* ── Alerts ────────────────────────────────────────────────────────────── */
 .alert {
   padding: var(--spacing-md);
