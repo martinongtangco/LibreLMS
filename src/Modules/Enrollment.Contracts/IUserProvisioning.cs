@@ -18,7 +18,10 @@ public interface IUserProvisioning
     /// <summary>List all platform accounts (optionally filtered by exact role). SuperUser-scope listing.</summary>
     Task<IList<StudentProvisionedDto>> ListAsync(string? roleFilter = null);
 
-    Task<StudentProvisionedDto> UpdateAsync(Guid studentId, string? name, string? role, Guid? organizationId);
+    /// <summary>Update an account. Null arguments mean "no change" for that field.
+    /// <paramref name="avatarPath"/> is the display photo's URL path (null/empty = no change, spec 030).</summary>
+    Task<StudentProvisionedDto> UpdateAsync(Guid studentId, string? name, string? role, Guid? organizationId,
+        string? avatarPath = null);
     Task DeleteAsync(Guid studentId);
 
     /// <summary>Case-insensitive existence check (email is normalized before comparison).</summary>

@@ -1,22 +1,129 @@
 @page
 @model ProfileModel
 @{
-    ViewData["Title"] = "View Profile";
+    ViewData["Title"] = "My Profile";
 }
 
-<h1>View Profile</h1>
+<h1>My Profile</h1>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success mb-md" id="profile-success">@Model.SuccessMessage</div>
+}
+
+@if (!string.IsNullOrEmpty(Model.NameError))
+{
+    <div class="alert alert-danger mb-md" id="name-error">@Model.NameError</div>
+}
+
+@if (!string.IsNullOrEmpty(Model.PhotoError))
+{
+    <div class="alert alert-danger mb-md" id="photo-error">@Model.PhotoError</div>
+}
+
+@if (!Model.IsEmailVerified)
+{
+    <div class="alert alert-warning mb-md" id="verification-banner">
+        <p class="mb-sm">A verified email is required to save changes.</p>
+        <form method="post" asp-page-handler="Resend" style="display: inline;">
+            <button type="submit" class="btn btn-secondary" id="resend-verification-btn">Resend verification email</button>
+        </form>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ResendMessage))
+    {
+        <div class="alert @(Model.ResendSucceeded ? "alert-success" : "alert-warning") mb-md" id="resend-message">@Model.ResendMessage</div>
+    }
+}
 
 <div class="card profile-card">
+    <div class="profile-avatar-preview" id="profile-avatar-preview">
+        @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+        {
+            <img class="profile-avatar" id="profile-avatar-img" src="@Model.AvatarUrl" alt="Profile photo" />
+        }
+        else
+        {
+            <span class="profile-avatar profile-avatar-fallback" id="profile-avatar-initial">@Model.AvatarInitial</span>
+        }
+    </div>
+
     <div class="profile-row">
         <span class="profile-row-label">Name</span>
-        <span class="profile-row-value">@Model.Name</span>
+        <div class="profile-row-value">
+            <form method="post" asp-page-handler="Name" id="name-form" class="profile-name-form">
+                <input type="text" name="name" value="@Model.Name" maxlength="100" class="form-input" id="profile-name-input" />
+                <button type="submit" class="btn btn-primary" id="save-name-btn">Save</button>
+            </form>
+        </div>
     </div>
-    <div class="profile-row">
-        <span class="profile-row-label">Role</span>
-        <span class="profile-row-value">@Model.RoleLabel</span>
-    </div>
+
     <div class="profile-row">
         <span class="profile-row-label">Email</span>
         <span class="profile-row-value">@Model.Email</span>
     </div>
+
+    <div class="profile-row">
+        <span class="profile-row-label">Role</span>
+        <span class="profile-row-value">@Model.RoleLabel</span>
+    </div>
+</div>
+
+<div class="card mt-md">
+    <div class="settings-label">Display photo</div>
+    <form method="post" asp-page-handler="Photo" enctype="multipart/form-data" id="photo-form" class="profile-photo-form">
+        <input type="file" name="avatar" accept=".jpg,.jpeg,.png,.webp,.gif" id="photo-input" class="form-input" />
+        <button type="submit" class="btn btn-secondary" id="upload-photo-btn">Upload photo</button>
+    </form>
+</div>
+
+<div class="card mt-md" id="my-courses">
+    <h2>My Courses</h2>
+
+    @if (Model.CoursesError is not null)
+    {
+        <div class="alert alert-danger" id="courses-error">@Model.CoursesError</div>
+    }
+    else if (Model.CompletedCourses.Count == 0 && Model.EnrolledCourses.Count == 0)
+    {
+        <div class="empty-state" id="courses-empty">You haven't enrolled in any courses yet</div>
+    }
+    else
+    {
+        <div class="profile-courses-section" id="completed-courses">
+            <h3>Completed</h3>
+            @if (Model.CompletedCourses.Count == 0)
+            {
+                <p class="text-faint">No completed courses yet.</p>
+            }
+            else
+            {
+                foreach (var course in Model.CompletedCourses)
+                {
+                    <div class="profile-course-row">
+                        <span class="profile-course-title">@course.Title</span>
+                        <span class="profile-course-status tag tag-accent-2">@course.StatusLabel</span>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="profile-courses-section" id="enrolled-courses">
+            <h3>Enrolled</h3>
+            @if (Model.EnrolledCourses.Count == 0)
+            {
+                <p class="text-faint">No active enrollments.</p>
+            }
+            else
+            {
+                foreach (var course in Model.EnrolledCourses)
+                {
+                    <div class="profile-course-row">
+                        <span class="profile-course-title">@course.Title</span>
+                        <span class="profile-course-status tag tag-neutral">@course.StatusLabel</span>
+                    </div>
+                }
+            }
+        </div>
+    }
 </div>
