@@ -1558,3 +1558,147 @@ hr.separator {
   cursor: pointer;
   padding: 4px 0;
 }
+
+/* ==========================================================================
+   Spec 030 — Profile: nav avatar, verification banner, profile page
+   ========================================================================== */
+
+/* ── Nav avatar (spec 030 R3) — inside .account-control, before .account-name ── */
+.account-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block;
+  vertical-align: middle;
+  border: 1px solid var(--color-border-strong);
+  flex-shrink: 0;
+}
+
+.account-avatar-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border-strong);
+  flex-shrink: 0;
+}
+
+/* Q1=C: admin-role users hide the nav avatar while the nav is in the Admin view.
+   The role-pill JS toggles role-admin/role-learner on <body> (the single source
+   of truth for view-specific visibility); pure Learners never get role-admin. */
+body.role-admin .account-avatar {
+  display: none;
+}
+
+/* ── Warning alert variant (profile verification banner, spec 030) ── */
+.alert-warning {
+  background: var(--color-category-bg);
+  border-left: 4px solid var(--color-category-text);
+  color: var(--color-category-text);
+}
+
+/* ── Profile page (spec 030) ── */
+.profile-avatar-preview {
+  margin-bottom: 16px;
+}
+
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 1px solid var(--color-border);
+}
+
+.profile-avatar-fallback {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 1.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border);
+}
+
+.profile-name-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.profile-name-form .form-input {
+  width: 100%;
+  max-width: 280px;
+}
+
+.profile-photo-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.profile-courses-section {
+  margin-top: 16px;
+}
+
+.profile-course-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile-course-row:last-child {
+  border-bottom: none;
+}
+
+.profile-course-title {
+  font-weight: 500;
+}
+
+.profile-course-status {
+  margin-left: auto;
+}
+
+/* Mobile: keep the nav avatar proportional (the account name is hidden on
+   mobile, so the avatar becomes the identity marker there). */
+@media (max-width: 760px) {
+  .account-avatar,
+  .account-avatar-fallback {
+    width: 24px;
+    height: 24px;
+  }
+
+  .account-avatar-fallback {
+    font-size: 0.7rem;
+  }
+}
+
+@media (min-width: 761px) {
+  .account-avatar,
+  .account-avatar-fallback {
+    width: 28px;
+    height: 28px;
+  }
+
+  .account-avatar-fallback {
+    font-size: 0.75rem;
+  }
+}
