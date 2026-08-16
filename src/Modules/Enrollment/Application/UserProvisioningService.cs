@@ -144,5 +144,5 @@ public sealed class UserProvisioningService : IUserProvisioning
     }
 
     private static StudentProvisionedDto ToDto(Student s) =>
-        new(s.Id, s.Name, s.Email, s.Roles, s.OrganizationId, s.CreatedAt, s.IsEmailVerified);
+        new(s.Id, s.Name, s.Email, s.Roles, s.OrganizationId, s.CreatedAt, s.IsEmailVerified, s.AvatarPath);
 }

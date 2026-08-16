@@ -72,6 +72,9 @@ public class EnrollmentDbContext(DbContextOptions<EnrollmentDbContext> options) 
 
             entity.Property(e => e.ResetTokenExpiresAt)
                 .IsRequired(false);
+
+            entity.Property(e => e.AvatarPath)
+                .HasMaxLength(200);
         });
 
         builder.Entity<LibreLms.Modules.Enrollment.Domain.Enrollment>(entity =>

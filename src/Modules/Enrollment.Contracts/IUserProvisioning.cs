@@ -25,6 +25,7 @@ public interface IUserProvisioning
     Task<bool> ExistsByEmailAsync(string email);
 }
 
-/// <summary>Minimal account data exposed across module boundaries (never includes the credential).</summary>
+/// <summary>Minimal account data exposed across module boundaries (never includes the credential).
+/// <c>AvatarPath</c> is the display photo's URL path (e.g. "/avatars/&lt;guid&gt;.png") or null (spec 030).</summary>
 public record StudentProvisionedDto(Guid Id, string Name, string Email, string Role,
-    Guid OrganizationId, DateTimeOffset CreatedAt, bool IsEmailVerified);
+    Guid OrganizationId, DateTimeOffset CreatedAt, bool IsEmailVerified, string? AvatarPath = null);

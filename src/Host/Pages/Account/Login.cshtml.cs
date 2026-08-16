@@ -106,6 +106,11 @@ public class LoginModel : PageModel
         if (!string.IsNullOrWhiteSpace(student.Roles))
             claims.Add(new Claim(ClaimTypes.Role, student.Roles));
 
+        // Spec 030: the avatar URL path rides the cookie so the shared layout renders
+        // the display photo purely from claims (no DB access in the layout, R3).
+        if (!string.IsNullOrWhiteSpace(student.AvatarPath))
+            claims.Add(new Claim(AvatarClaimTypes.AvatarPath, student.AvatarPath));
+
         var identity = new ClaimsIdentity(claims, AuthScheme);
         await HttpContext.SignInAsync(
             AuthScheme,
