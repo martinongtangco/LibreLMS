@@ -1,17 +1,22 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace LibreLms.Host.Pages.Scorm;
 
+[Authorize]
 public class ScormLaunchModel : PageModel
 {
     private readonly HttpClient _httpClient;
     private readonly IWebHostEnvironment _env;
+    private readonly ILogger<ScormLaunchModel> _logger;
 
-    public ScormLaunchModel(IHttpClientFactory httpClientFactory, IWebHostEnvironment env)
+    public ScormLaunchModel(IHttpClientFactory httpClientFactory, IWebHostEnvironment env,
+        ILogger<ScormLaunchModel> logger)
     {
         _httpClient = httpClientFactory.CreateClient();
         _env = env;
+        _logger = logger;
     }
 
     [BindProperty(SupportsGet = true)] public Guid CourseId { get; set; }
@@ -25,7 +30,15 @@ public class ScormLaunchModel : PageModel
     {
         try
         {
-            var response = await _httpClient.PostAsync($"/api/scorm/{CourseId}/launch", null);
+            // The launch API is same-origin, so build an absolute URI from the incoming
+            // request (the app listens on both http://localhost:5000 and
+            // https://localhost:7095 — nothing hardcoded). The cookie header carries
+            // the caller's session so the API's [Authorize] sees the same student.
+            var baseUri = new Uri(Request.Scheme + "://" + Request.Host, UriKind.Absolute);
+            var launchUri = new Uri(baseUri, $"/api/scorm/{CourseId}/launch");
+            var request = new HttpRequestMessage(HttpMethod.Post, launchUri);
+            request.Headers.TryAddWithoutValidation("Cookie", Request.Headers.Cookie.ToString());
+            var response = await _httpClient.SendAsync(request);
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
@@ -57,8 +70,9 @@ public class ScormLaunchModel : PageModel
                 Error = "Failed to launch the SCORM course.";
             }
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "SCORM launch failed for course {CourseId}", CourseId);
             Error = "An error occurred while launching the course.";
         }
     }
