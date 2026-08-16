@@ -24,7 +24,7 @@ All paths are relative to the repository root (`/workspace`).
 
 **Purpose**: Create the implementation branch from master.
 
-- [ ] T001 Create branch `story/029-clickable-home-brand` from `master` and check it out
+- [X] T001 Create branch `story/029-clickable-home-brand` from `master` and check it out
 
 ---
 
@@ -38,14 +38,14 @@ All paths are relative to the repository root (`/workspace`).
 
 > **NOTE: Write this test FIRST, ensure it FAILS before implementation**
 
-- [ ] T002 [P] [US1] Create `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` with test "signed-out user on Login page: brand is a link to Home" — navigate to `/Account/Login`, assert the `.brand` element is an `<a>` targeting the site root, click it, expect URL `/Courses` with the course listing visible and no sign-in prompt (maps to US1 acceptance scenarios 1–3, SC-001)
+- [X] T002 [P] [US1] Create `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` with test "signed-out user on Login page: brand is a link to Home" — navigate to `/Account/Login`, assert the `.brand` element is an `<a>` targeting the site root, click it, expect URL `/Courses` with the course listing visible and no sign-in prompt (maps to US1 acceptance scenarios 1–3, SC-001)
 
 ### Implementation for User Story 1
 
-- [ ] T003 [US1] In `src/Host/Pages/Shared/_Layout.cshtml`, replace `<span class="brand">Libre LMS</span>` with `<a href="/" class="brand">Libre LMS</a>` (single edit in the shared navbar — outside the authenticated/anonymous split, so it covers both states)
-- [ ] T004 [US1] In `src/Host/wwwroot/css/site.css`, add `text-decoration: none;` to the existing `.navbar .brand` rule (anchors would otherwise show the UA underline)
-- [ ] T005 [US1] In `src/Host/wwwroot/css/site.css`, add `.navbar .brand:hover { color: #ffffff; }` near the existing nav-link hover rules — hover affordance consistent with `.navbar .nav-links a.nav-link:hover` (FR-004)
-- [ ] T006 [US1] Rebuild and restart the Host app (`./scripts/restart-app.sh --background` from repo root; kill stale `bin/Debug/net10.0/Host` + `dotnet run` processes first and confirm ports 5000/7095 are free — Razor views do not hot-reload), then verify the Login page renders the brand as a link
+- [X] T003 [US1] In `src/Host/Pages/Shared/_Layout.cshtml`, replace `<span class="brand">Libre LMS</span>` with `<a href="/" class="brand">Libre LMS</a>` (single edit in the shared navbar — outside the authenticated/anonymous split, so it covers both states)
+- [X] T004 [US1] In `src/Host/wwwroot/css/site.css`, add `text-decoration: none;` to the existing `.navbar .brand` rule (anchors would otherwise show the UA underline)
+- [X] T005 [US1] In `src/Host/wwwroot/css/site.css`, add `.navbar .brand:hover { color: #ffffff; }` near the existing nav-link hover rules — hover affordance consistent with `.navbar .nav-links a.nav-link:hover` (FR-004)
+- [X] T006 [US1] Rebuild and restart the Host app (`./scripts/restart-app.sh --background` from repo root; kill stale `bin/Debug/net10.0/Host` + `dotnet run` processes first and confirm ports 5000/7095 are free — Razor views do not hot-reload), then verify the Login page renders the brand as a link
 
 **Checkpoint**: T002 passes. A signed-out user on the Login page reaches Browse Courses in exactly one brand click (SC-001, FR-001/003/004/008). User Story 1 is fully functional and independently testable.
 
@@ -61,12 +61,12 @@ All paths are relative to the repository root (`/workspace`).
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T007 [P] [US2] Add test "signed-in learner on My Courses: brand click lands on Browse Courses" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (sign in via `utils/testUsers` learner credentials, go to `/MyCourses/Index`, click `.brand`, expect `/Courses`; account name still visible — signed-in state preserved)
-- [ ] T008 [P] [US2] Add test "signed-in admin (Admin role view) on admin Dashboard: brand click lands on Browse Courses, NOT the admin Dashboard" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (sign in as org admin, set Admin role view, go to `/Admin/Dashboard/Index`, click `.brand`, expect `/Courses` and assert the admin Dashboard is not shown) (maps to US2 acceptance scenarios 1–3, FR-006)
+- [X] T007 [P] [US2] Add test "signed-in learner on My Courses: brand click lands on Browse Courses" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (sign in via `utils/testUsers` learner credentials, go to `/MyCourses/Index`, click `.brand`, expect `/Courses`; account name still visible — signed-in state preserved)
+- [X] T008 [P] [US2] Add test "signed-in admin (Admin role view) on admin Dashboard: brand click lands on Browse Courses, NOT the admin Dashboard" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (sign in as org admin, set Admin role view, go to `/Admin/Dashboard/Index`, click `.brand`, expect `/Courses` and assert the admin Dashboard is not shown) (maps to US2 acceptance scenarios 1–3, FR-006)
 
 ### Implementation for User Story 2
 
-- [ ] T009 [US2] Verify no additional markup is required for signed-in users (the brand lives in the shared navbar outside the auth split — confirm T003's edit renders in both branches) and that no inline JS in `src/Host/Pages/Shared/_Layout.cshtml` (active-link, role switcher, hamburger, dropdown handlers) intercepts `.brand` clicks; confirm T007/T008 pass
+- [X] T009 [US2] Verify no additional markup is required for signed-in users (the brand lives in the shared navbar outside the auth split — confirm T003's edit renders in both branches) and that no inline JS in `src/Host/Pages/Shared/_Layout.cshtml` (active-link, role switcher, hamburger, dropdown handlers) intercepts `.brand` clicks; confirm T007/T008 pass
 
 **Checkpoint**: T007 and T008 pass. Brand click from learner and admin pages lands on Browse Courses with signed-in state preserved (FR-001, FR-006, SC-005).
 
@@ -82,12 +82,12 @@ All paths are relative to the repository root (`/workspace`).
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US3] Add test "anonymous visitor: root URL shows Browse Courses" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (navigate to `/`, expect final URL `/Courses` and the course listing visible)
-- [ ] T011 [P] [US3] Add test "signed-in user: root URL shows Browse Courses" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (sign in as learner, navigate to `/`, expect `/Courses` with the listing)
+- [X] T010 [P] [US3] Add test "anonymous visitor: root URL shows Browse Courses" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (navigate to `/`, expect final URL `/Courses` and the course listing visible)
+- [X] T011 [P] [US3] Add test "signed-in user: root URL shows Browse Courses" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (sign in as learner, navigate to `/`, expect `/Courses` with the listing)
 
 ### Implementation for User Story 3
 
-- [ ] T012 [US3] Verify the root redirect already exists in `src/Host/Program.cs` (`MapGet("/", () => Results.Redirect("/Courses"))`) — verification only, no edit expected; confirm T010/T011 pass unchanged
+- [X] T012 [US3] Verify the root redirect already exists in `src/Host/Program.cs` (`MapGet("/", () => Results.Redirect("/Courses"))`) — verification only, no edit expected; confirm T010/T011 pass unchanged
 
 **Checkpoint**: T010 and T011 pass with zero code changes (SC-003, US3 acceptance scenarios 1–2).
 
@@ -97,14 +97,14 @@ All paths are relative to the repository root (`/workspace`).
 
 **Purpose**: Cover the spec's edge cases and satisfy Constitution Principle XIII (compiles, E2E green, post-merge re-run) and Principle XII (return to master).
 
-- [ ] T013 [P] [US1] Add test "brand on Home is idempotent" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (on Browse Courses, click `.brand` — still on Browse Courses, clean load, no error/loop)
-- [ ] T014 [P] [US1] Add test "mobile 375px: brand visible and clickable on Login page (signed out)" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (375px viewport, brand visible outside the hamburger, click → `/Courses`) (FR-005)
-- [ ] T015 [P] [US2] Add test "access-denied login variant: brand present and navigates to Home" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (signed-in learner navigates to `/Admin/Dashboard/Index`, access-denied variant renders, click `.brand` → `/Courses`)
-- [ ] T016 [P] [US1] Add test "mobile: hamburger open, brand click resets nav state" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (375px, signed in, open hamburger, click `.brand` — lands on Browse Courses and the hamburger menu is closed) (FR-007)
-- [ ] T017 Run the full Playwright suite (`cd tests/Playwright.Tests && npx playwright test`) against the restarted app — all specs pass, no regressions (SC-005, Principle XIII gate 2)
-- [ ] T018 Run `dotnet test /workspace/tests/ArchitectureTests` — module boundary gate passes (Principle III)
-- [ ] T019 Run the manual quickstart.md scenarios (desktop 1280px + mobile 375px) — all 8 scenarios pass
-- [ ] T020 Commit all changes on `story/029-clickable-home-brand`, merge directly to `master` per user instruction, check out `master` again (Principle XII), then rebuild + restart and re-run the full Playwright suite on the merged code (Principle XIII gate 3 — post-merge regression)
+- [X] T013 [P] [US1] Add test "brand on Home is idempotent" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (on Browse Courses, click `.brand` — still on Browse Courses, clean load, no error/loop)
+- [X] T014 [P] [US1] Add test "mobile 375px: brand visible and clickable on Login page (signed out)" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (375px viewport, brand visible outside the hamburger, click → `/Courses`) (FR-005)
+- [X] T015 [P] [US2] Add test "access-denied login variant: brand present and navigates to Home" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (signed-in learner navigates to `/Admin/Dashboard/Index`, access-denied variant renders, click `.brand` → `/Courses`)
+- [X] T016 [P] [US1] Add test "mobile: hamburger open, brand click resets nav state" to `tests/Playwright.Tests/tests/11-brand-home-link.spec.ts` (375px, signed in, open hamburger, click `.brand` — lands on Browse Courses and the hamburger menu is closed) (FR-007)
+- [X] T017 Run the full Playwright suite (`cd tests/Playwright.Tests && npx playwright test`) against the restarted app — all specs pass, no regressions (SC-005, Principle XIII gate 2)
+- [X] T018 Run `dotnet test /workspace/tests/ArchitectureTests` — module boundary gate passes (Principle III)
+- [X] T019 Run the manual quickstart.md scenarios (desktop 1280px + mobile 375px) — all 8 scenarios pass
+- [X] T020 Commit all changes on `story/029-clickable-home-brand`, merge directly to `master` per user instruction, check out `master` again (Principle XII), then rebuild + restart and re-run the full Playwright suite on the merged code (Principle XIII gate 3 — post-merge regression)
 
 **Checkpoint**: All edge-case tests pass; full E2E suite and ArchitectureTests green on the branch AND after the merge to master.
 
