@@ -361,6 +361,28 @@ public sealed class RegistrationService
         return (true, student.Id, null);
     }
 
+    /// <summary>
+    /// Dev/E2E support (spec 030 R7): flip the account back to UNVERIFIED and re-issue a
+    /// fresh 24 h verification token, so the in-profile resend + outbox-verify flow is
+    /// fully exercisable against an otherwise verified (seeded) account. Returns false
+    /// when no account holds the (normalized) email. Used only by the Development-gated
+    /// /Dev/Unverify page — no production path calls it.
+    /// </summary>
+    public async Task<bool> SetUnverifiedAsync(string email)
+    {
+        var normalizedEmail = (email?.Trim() ?? string.Empty).ToLowerInvariant();
+        var student = await _context.Students.FirstOrDefaultAsync(s => s.Email == normalizedEmail);
+        if (student is null)
+            return false;
+
+        student.IsEmailVerified = false;
+        var token = CreateToken();
+        student.VerificationTokenHash = HashToken(token);
+        student.VerificationTokenExpiresAt = DateTimeOffset.UtcNow + VerificationTokenLifetime;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
     /// <summary>Whether the account exists and its email is verified (login gate, FR-011).</summary>
     public async Task<bool> IsEmailVerifiedAsync(Guid studentId)
     {
