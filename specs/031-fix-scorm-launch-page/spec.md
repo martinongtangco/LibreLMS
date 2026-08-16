@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-16
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-16)
 
 **Input**: User report: "I just uploaded a sample SCORM course from scorm.com which is a
 scorm2004. I created a Golf Explained Course and associated this SCORM course. Launching

@@ -18,7 +18,7 @@
 
 - [x] T003 [US1] Integrate T001+T002 on the branch; `dotnet build` the solution (show output); restart the Host app per the `restart-host-app` skill (show the "Now listening" log line); confirm `GET /Scorm/Launch/{courseId}` renders the iframe, not the error page.
 - [x] T004 [US1] Run the new spec + `14-profile-courses.spec.ts` with Playwright against the running app; show passing output. Then run the full Playwright suite; show passing output (fix any regressions).
-- [ ] T005 [US1] Run `dotnet test tests/ArchitectureTests` (Principle III gate); merge the branch to `master`; post-merge: rebuild, restart, re-run the Playwright suite; show passing output; return to `master` (Principle XII). Mark this spec/tasks complete.
+- [x] T005 [US1] Run `dotnet test tests/ArchitectureTests` (Principle III gate); merge the branch to `master`; post-merge: rebuild, restart, re-run the Playwright suite; show passing output; return to `master` (Principle XII). Mark this spec/tasks complete.
 
 ## Dependencies
 
