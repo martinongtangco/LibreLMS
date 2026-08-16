@@ -137,6 +137,12 @@ builder.Services.AddScoped<IAuthorizationHandler, OrgScopeAuthorizationHandler>(
 builder.Services.AddRazorPages();
 builder.Services.AddHttpClient();
 
+// Named client for the SCORM launch page's server-side call to the launch API:
+// redirect-following is off so auth outcomes (401/403/login redirects) are
+// observed as statuses instead of being followed into the login page's HTML.
+builder.Services.AddHttpClient("scorm-launch")
+    .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler { AllowAutoRedirect = false });
+
 var app = builder.Build();
 
 // Ensure database and tables exist, then seed data on startup
@@ -280,8 +286,11 @@ scorm.MapPost("/{courseId:guid}/launch", [Authorize] async (
     var studentId = GetStudentId(httpContext);
     var result = await sessionService.LaunchAsync(studentId, courseId);
 
+    // A real 403 JSON (not Results.Forbid()): with cookie authentication, Forbid()
+    // issues a 302 to AccessDeniedPath for authenticated users, which the launch
+    // page's client would follow into the login HTML and misparse as a 200.
     if (result.Error == "Student is not enrolled in this course.")
-        return Results.Forbid();
+        return Results.Json(new { error = result.Error }, statusCode: StatusCodes.Status403Forbidden);
 
     if (!result.Success)
         return Results.BadRequest(new { error = result.Error });

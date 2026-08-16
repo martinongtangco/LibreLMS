@@ -14,7 +14,9 @@ public class ScormLaunchModel : PageModel
     public ScormLaunchModel(IHttpClientFactory httpClientFactory, IWebHostEnvironment env,
         ILogger<ScormLaunchModel> logger)
     {
-        _httpClient = httpClientFactory.CreateClient();
+        // "scorm-launch" named client: AllowAutoRedirect = false (see Program.cs),
+        // so the 401/403/redirect statuses from the launch API stay observable.
+        _httpClient = httpClientFactory.CreateClient("scorm-launch");
         _env = env;
         _logger = logger;
     }

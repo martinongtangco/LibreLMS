@@ -58,6 +58,25 @@ would challenge the anonymous server-side request with a 302 to `/Account/Login`
 (handled as the generic failure branch). The fix MUST forward the request's `Cookie`
 header (same-origin, server-to-server call).
 
+### Companion defect 2: not-enrolled 403 never reaches the page (found during T003 verification)
+
+With the URI fixed, launching a course the learner is NOT enrolled in still showed the
+generic error. Root cause: the launch endpoint answers not-enrolled with
+`Results.Forbid()`, and with cookie authentication `Forbid()` issues a **302 to
+AccessDeniedPath** for an *authenticated* user — it does not return a 403 status.
+The page's `HttpClient` followed the redirect into the login page's HTML (HTTP 200) and
+threw `System.Text.Json.JsonException: '<' is an invalid start of a value` while parsing
+it (visible in the app log after the catch block started logging). The page's explicit
+403 branch ("You are not enrolled in this course.") was written against an intended
+contract the endpoint never honored.
+
+Fix (same spec, US1.3 / FR-003): the endpoint returns a real `403` with the error JSON
+body for not-enrolled, and the page's client sets `AllowAutoRedirect = false` so auth
+outcomes are observed as statuses instead of being followed into HTML. Observable
+contract change: `POST /api/scorm/{courseId}/launch` for an authenticated, not-enrolled
+student now returns `403 {"error": "Student is not enrolled in this course."}` instead
+of a 302 to the login page (the 302 was the defect; no caller relied on it).
+
 ### Out of scope for this spec (tracked separately)
 
 - **Shim injection**: the SCORM API shim endpoint (`/api/scorm/session/{id}/api.js`) is
@@ -161,8 +180,9 @@ renders the iframe (not the error branch) and that a new attempt appears in
 
 ## Assumptions
 
-- The launch API contract (`POST /api/scorm/{courseId}/launch` and its response shape)
-  is unchanged; only the page-side call is fixed.
+- The launch API request/response shape is unchanged; the only contract change is the
+  not-enrolled status (302 redirect → 403 JSON), which is the defect fix itself (see
+  "Companion defect 2").
 - Bug #2 (shim injection) is a separate spec; the E2E test for this spec asserts page
   rendering + attempt creation, NOT LMS runtime communication from within the course
   content.
