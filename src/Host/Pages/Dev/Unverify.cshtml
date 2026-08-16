@@ -1,0 +1,15 @@
+@page
+@model LibreLms.Host.Pages.Dev.UnverifyModel
+@{
+    ViewData["Title"] = "Dev Unverify";
+}
+
+<h1>Dev Unverify</h1>
+
+<p class="text-faint">
+    Development-only; flips the given account back to unverified and re-issues a 24 h verification
+    token so the in-profile verification gate + resend flow can be exercised (spec 030).
+    Invisible outside Development.
+</p>
+
+<p id="unverify-result">@Model.Message</p>
