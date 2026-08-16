@@ -135,7 +135,7 @@ Admin view (Q1 = C) — FR-008/009/010/011, per R3/R4/R5.
 - [X] T023 Run the four new E2E specs: `cd tests/Playwright.Tests && npx playwright test 12-profile-name 13-profile-verification-gate 14-profile-courses 15-profile-photo` — show passing output (XIII gate 2)
 - [X] T024 Full E2E regression: `npx playwright test` (entire suite, no regressions)
 - [X] T025 Walk through the manual quickstart scenarios 1–5 in `specs/030-editable-user-profile/quickstart.md` against the running dev app (includes `/Dev/Unverify` 404-when-signed-out, static avatar 404, and admin Learners list showing the renamed user)
-- [ ] T026 Merge to master + post-merge regression (XIII gate 3 + Constitution XII/XIII): from the branch, `git checkout master && git merge --no-ff story/030-editable-user-profile` with a descriptive merge message (spec 030); rebuild + restart on master; re-run the full Playwright suite on the merged code and show passing output; remain on `master` (Constitution XII)
+- [X] T026 Merge to master + post-merge regression (XIII gate 3 + Constitution XII/XIII): from the branch, `git checkout master && git merge --no-ff story/030-editable-user-profile` with a descriptive merge message (spec 030); rebuild + restart on master; re-run the full Playwright suite on the merged code and show passing output; remain on `master` (Constitution XII)
 
 ---
 
