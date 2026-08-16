@@ -92,7 +92,8 @@ public sealed class UserProvisioningService : IUserProvisioning
         return students.Select(ToDto).ToList();
     }
 
-    public async Task<StudentProvisionedDto> UpdateAsync(Guid studentId, string? name, string? role, Guid? organizationId)
+    public async Task<StudentProvisionedDto> UpdateAsync(Guid studentId, string? name, string? role, Guid? organizationId,
+        string? avatarPath = null)
     {
         var student = await _context.Students.FindAsync(studentId);
         if (student is null)
@@ -106,6 +107,10 @@ public sealed class UserProvisioningService : IUserProvisioning
 
         if (organizationId.HasValue)
             student.OrganizationId = organizationId.Value;
+
+        // Spec 030: null/empty = no change; the profile photo save is the only writer.
+        if (!string.IsNullOrWhiteSpace(avatarPath))
+            student.AvatarPath = avatarPath;
 
         await _context.SaveChangesAsync();
         return ToDto(student);
@@ -144,5 +149,5 @@ public sealed class UserProvisioningService : IUserProvisioning
     }
 
     private static StudentProvisionedDto ToDto(Student s) =>
-        new(s.Id, s.Name, s.Email, s.Roles, s.OrganizationId, s.CreatedAt, s.IsEmailVerified);
+        new(s.Id, s.Name, s.Email, s.Roles, s.OrganizationId, s.CreatedAt, s.IsEmailVerified, s.AvatarPath);
 }

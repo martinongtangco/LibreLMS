@@ -1,5 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 import { CourseBrowsePage } from '../pages/CourseBrowsePage';
+import { testUsers } from '../utils/testUsers';
 
 /**
  * Bug 028: Course page pagination did nothing.
@@ -10,17 +11,98 @@ import { CourseBrowsePage } from '../pages/CourseBrowsePage';
  * handler always returned page 1. Secondary issue: boundary Previous/Next
  * buttons were disabled but still visible.
  *
- * Seeded catalog: 13 courses, page size 12 → page 1 has 12 cards, page 2 has 1.
- * Tests run unauthenticated so the org-visibility filter doesn't affect counts.
+ * Catalog state: the canonical seeded catalog (CatalogSeeder) has exactly 10
+ * courses — a single page of 12 — which cannot exercise pagination. This spec
+ * was originally written against a live DB that happened to hold 13 courses
+ * (10 seeded + 3 accumulated test data), which made it brittle: it failed
+ * whenever the catalog drifted back to the canonical 10 (and it collided with
+ * 02-course-browse, which asserts the catalog is exactly the 10 seeded
+ * courses).
+ *
+ * The spec is now self-contained: beforeAll creates 13 filler courses titled
+ * "Pg028 Course NN" and afterAll deletes them. Every pagination test searches
+ * for "Pg028" first, so it always sees exactly 13 results (page 1 of 2:
+ * 12 + 1) regardless of what else is in the catalog and regardless of which
+ * other specs run in parallel. Tests run unauthenticated — learners have no
+ * org claim, so the whole catalog (including fillers) is visible to them.
  */
 
 const PAGE_SIZE = 12;
 const TOTAL_COURSES = 13;
+const BASE = 'http://localhost:5000';
+const ROOT_ORG = '00000000-0000-0000-0000-000000000001';
+const FILLER_SEARCH = 'Pg028';
 
+/** Zero-padded filler titles so title ordering is predictable. */
+const fillerTitle = (n: number) => `Pg028 Course ${String(n).padStart(2, '0')}`;
+
+test.describe.configure({ mode: 'serial' });
+
+/** Sign in as SuperUser and return an API request context with its cookies. */
+async function adminApi(playwright: { chromium: import('@playwright/test').Chromium }) {
+  const browser = await playwright.chromium.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(`${BASE}/Account/Login`);
+  await page.getByLabel('Email').fill(testUsers.superUser.email);
+  await page.getByLabel('Password').fill(testUsers.superUser.password);
+  await page.getByRole('button', { name: 'Sign In' }).click();
+  await page.waitForURL('**/Courses**', { timeout: 15000 });
+  return { browser, api: context.request };
+}
+
+/** Delete any stale fillers left behind by a previously interrupted run. */
+async function deleteFillers(api: import('@playwright/test').APIRequestContext) {
+  const { courses } = await (await api.get(`${BASE}/api/admin/courses`)).json();
+  for (const c of courses) {
+    if (typeof c.title === 'string' && c.title.startsWith(`${FILLER_SEARCH} Course`)) {
+      await api.delete(`${BASE}/api/admin/courses/${c.courseId}`);
+    }
+  }
+}
+
+test.beforeAll(async ({ playwright }) => {
+  const { browser, api } = await adminApi(playwright);
+  try {
+    await deleteFillers(api);
+    for (let n = 1; n <= TOTAL_COURSES; n++) {
+      const resp = await api.post(`${BASE}/api/courses`, {
+        data: {
+          title: fillerTitle(n),
+          shortDescription: 'Pagination test filler (spec 028, removed after the run).',
+          fullDescription:
+            'Temporary filler course created by 11-course-pagination.spec.ts so the ' +
+            '"Pg028" search yields exactly 13 results (two pages of 12 + 1). Deleted in afterAll.',
+          category: 'Tools',
+          duration: '1 hour',
+          organizationId: ROOT_ORG,
+        },
+      });
+      if (resp.status() !== 201) throw new Error(`Filler creation for ${fillerTitle(n)} returned ${resp.status()}`);
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
+test.afterAll(async ({ playwright }) => {
+  const { browser, api } = await adminApi(playwright);
+  try {
+    await deleteFillers(api);
+  } finally {
+    await browser.close();
+  }
+});
+
+/**
+ * Go to the browse page and narrow the listing to exactly the 13 fillers,
+ * so the tests are independent of the rest of the catalog.
+ */
 async function gotoBrowse(page: Page) {
   await page.goto('/Courses/Index');
   const browsePage = new CourseBrowsePage(page);
   await expect(browsePage.courseList.locator('.card').first()).toBeVisible();
+  await browsePage.searchFor(FILLER_SEARCH);
   return browsePage;
 }
 
@@ -99,6 +181,7 @@ test.describe('Course Pagination — boundary visibility (bug 028)', () => {
 
   test('search still filters and shows single-page results without a next button', async ({ page }) => {
     const browse = await gotoBrowse(page);
+    // Narrow to a single seeded course (does not match the Pg028 fillers)
     await browse.searchFor('C#');
 
     expect(await browse.getCourseCount()).toBe(1);

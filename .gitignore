@@ -497,3 +497,7 @@ docker-compose.override.local.yml
 
 # SCORM content (extracted at runtime, not checked in)
 src/Host/wwwroot/scorm-content/
+
+# User avatar uploads (spec 030 — GUID-keyed files, not checked in)
+src/Host/wwwroot/avatars/*
+!src/Host/wwwroot/avatars/.gitkeep

@@ -1,3 +1,5 @@
+@using System.Security.Claims
+@using LibreLms.Host.ManagementAuth
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -75,6 +77,24 @@
                         <button type="button" class="role-segment" data-value="learner">Learner</button>
                         <button type="button" class="role-segment" data-value="admin">Admin</button>
                     </div>
+                }
+
+                @* Display avatar (spec 030 R3) — sourced purely from the AvatarPath
+                   cookie claim (no service injection / DB access in the layout). For
+                   admin-role users the CSS rule ".role-admin .account-avatar" hides it
+                   while the nav is in the Admin view (Q1 = C). *@
+                @{
+                    var avatarPath = User.FindFirstValue(AvatarClaimTypes.AvatarPath);
+                    var displayName = User.Identity?.Name ?? string.Empty;
+                    var avatarInitial = displayName.Length > 0 ? char.ToUpperInvariant(displayName[0]).ToString() : "?";
+                }
+                @if (!string.IsNullOrEmpty(avatarPath))
+                {
+                    <img class="account-avatar" id="nav-avatar" src="@avatarPath" alt="" />
+                }
+                else
+                {
+                    <span class="account-avatar account-avatar-fallback" id="nav-avatar" aria-hidden="true">@avatarInitial</span>
                 }
 
                 @* Static name — does NOT change with role toggle *@

@@ -40,6 +40,10 @@ public class Student : Entity<Guid>
     /// <summary>Expiry of the pending reset link (30 minutes from issue); null together with the token.</summary>
     public DateTimeOffset? ResetTokenExpiresAt { get; set; }
 
+    /// <summary>URL path of the display photo (e.g. "/avatars/&lt;guid&gt;.png"); null = no photo
+    /// (the UI renders an initials placeholder). Set/cleared only by the profile photo save (spec 030).</summary>
+    public string? AvatarPath { get; set; }
+
     public Student()
     {
         Id = Guid.NewGuid();

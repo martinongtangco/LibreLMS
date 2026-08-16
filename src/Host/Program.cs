@@ -52,6 +52,10 @@ builder.Services.AddSingleton<LibreLms.SharedKernel.ITransactionalEmailSender, L
 builder.Services.AddSingleton<LibreLms.Modules.Enrollment.Application.EmailThrottle>();
 builder.Services.AddScoped<LibreLms.Modules.Enrollment.Application.RegistrationService>();
 
+// Spec 030: re-issue the auth cookie from a fresh Student row after a profile change
+// (name/photo save) so the nav shows the update immediately (R2 "RefreshSignIn").
+builder.Services.AddScoped<LibreLms.Host.ManagementAuth.AuthCookieRefresher>();
+
 // Register EF Core context for Scorm
 builder.Services.AddDbContext<ScormDbContext>(opts => ConfigureDbContext(opts, builder.Configuration.GetConnectionString("Sql")));
 
