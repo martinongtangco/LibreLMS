@@ -132,9 +132,9 @@
 
 **Purpose**: Close remaining acceptance, record the architectural decision, and satisfy the full Constitution XIII gate sequence.
 
-- [ ] T034 [P] Write ADR `docs/adr/0008-cross-module-sql-join-for-admin-listing.md` (context → decision → consequences, ≤1 page, Constitution IV): why `AdminListEnrollments` joins the Catalog-owned `Courses` table in T-SQL (course-title filter must precede paging; single shared database; compiled module boundary intact), and what was rejected (two-phase contract fetch, title denormalization)
-- [ ] T035 Full regression run (quickstart.md §1–§3): `dotnet build LibreLms.slnx`, `dotnet test` for ArchitectureTests + Catalog.Tests + Enrollment.Tests + Scorm.Tests, `npx playwright test` for specs 05, 07, 10, 11, 16 — all green, output captured (Constitution XIII gates 1–2)
-- [ ] T036 Cross-page page-size consistency check closing US3's final acceptance scenario: verify identical selector options/labels/default and indicator format across all three admin pages (Playwright cross-check appended to `16-admin-pagination.spec.ts` or the quickstart.md §4 manual pass)
+- [X] T034 [P] Write ADR `docs/adr/0008-cross-module-sql-join-for-admin-listing.md` (context → decision → consequences, ≤1 page, Constitution IV): why `AdminListEnrollments` joins the Catalog-owned `Courses` table in T-SQL (course-title filter must precede paging; single shared database; compiled module boundary intact), and what was rejected (two-phase contract fetch, title denormalization)
+- [X] T035 Full regression run (quickstart.md §1–§3): `dotnet build LibreLms.slnx`, `dotnet test` for ArchitectureTests + Catalog.Tests + Enrollment.Tests + Scorm.Tests, `npx playwright test` for specs 05, 07, 10, 11, 16 — all green, output captured (Constitution XIII gates 1–2)
+- [X] T036 Cross-page page-size consistency check closing US3's final acceptance scenario: verify identical selector options/labels/default and indicator format across all three admin pages (Playwright cross-check appended to `16-admin-pagination.spec.ts` or the quickstart.md §4 manual pass)
 - [ ] T037 Merge & post-merge regression (Constitution XII + XIII gate 3): merge `story/032-admin-pagination` → `master`, `git checkout master`, rebuild, restart the Host, re-run the Playwright admin suite (05, 07, 10, 11, 16) on merged code, capture passing output; session ends on `master`
 
 **Checkpoint**: Feature complete with all three Constitution XIII gates evidenced on merged code.

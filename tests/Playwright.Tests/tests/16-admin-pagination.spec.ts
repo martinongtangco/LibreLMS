@@ -1,4 +1,4 @@
-import { test, expect, Page, type APIRequestContext, type Browser } from '@playwright/test';
+import { test, expect, Page, type Locator, type APIRequestContext, type Browser } from '@playwright/test';
 import { AdminEnrollmentsPage } from '../pages/AdminEnrollmentsPage';
 import { AdminLearnersPage } from '../pages/AdminLearnersPage';
 import { AdminCoursesPage } from '../pages/AdminCoursesPage';
@@ -452,6 +452,109 @@ test.describe('Admin page-size toggle (spec 032, US3)', () => {
     await expect(page).toHaveURL(/pageSize=30/);
     await expect(page).toHaveURL(/pageNumber=1/);
     await expect(page).toHaveURL(/search=AdmPg032L/);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// T036 — cross-page consistency (US3 close-out): the shared
+// _AdminPagination partial must behave identically on Enrollments,
+// Learners, and Courses. Runs BEFORE the T032 block on purpose (serial
+// mode): its delete test removes T11, which would leave Courses on a
+// single page.
+// ────────────────────────────────────────────────────────────────────
+interface PaginationControls {
+  paginationNav: Locator;
+  previousLink: Locator;
+  nextLink: Locator;
+  pageIndicator: Locator;
+  pageSizeSelect: Locator;
+  gotoWithQuery(query: string): Promise<void>;
+  getRowCount(): Promise<number>;
+}
+
+const adminPages: Array<{
+  label: string;
+  query: string;
+  total: number;
+  create: (p: Page) => PaginationControls;
+}> = [
+  {
+    label: 'Enrollments',
+    query: `student=${encodeURIComponent(MARKER)}`,
+    total: LEARNER_COUNT,
+    create: (p) => new AdminEnrollmentsPage(p),
+  },
+  {
+    label: 'Learners',
+    query: `search=${encodeURIComponent(LEARNERS_MARKER)}`,
+    total: LEARNER_COUNT,
+    create: (p) => new AdminLearnersPage(p),
+  },
+  {
+    label: 'Courses',
+    query: `search=${encodeURIComponent(COURSES_MARKER)}`,
+    total: COURSES_FILLER_COUNT,
+    create: (p) => new AdminCoursesPage(p),
+  },
+];
+
+test.describe('Cross-page consistency (spec 032, US3 close-out)', () => {
+  test('all three admin pages render the identical shared controls', async ({ page }) => {
+    await loginAsSuperUser(page);
+    for (const target of adminPages) {
+      const controls = target.create(page);
+      await controls.gotoWithQuery(target.query);
+
+      await expect(controls.paginationNav).toBeVisible();
+      const options = await controls.pageSizeSelect.locator('option').allTextContents();
+      expect(options, `${target.label} page-size options`).toEqual(['10', '30', '50', '100']);
+      expect(await controls.pageSizeSelect.inputValue(), `${target.label} default size`).toBe('10');
+      expect(await controls.getRowCount(), `${target.label} page 1 rows`).toBe(10);
+      await expect(controls.pageIndicator, `${target.label} indicator`).toHaveText(
+        `Page 1 of 2 (${target.total} total)`,
+      );
+    }
+  });
+
+  test('previous/next boundary hiding is identical on all three pages', async ({ page }) => {
+    await loginAsSuperUser(page);
+    for (const target of adminPages) {
+      const controls = target.create(page);
+      await controls.gotoWithQuery(target.query);
+
+      await expect(controls.previousLink, `${target.label} p1 previous`).toHaveCount(0);
+      await expect(controls.nextLink, `${target.label} p1 next`).toHaveCount(1);
+
+      await controls.nextLink.click();
+      await page.waitForLoadState('networkidle');
+
+      expect(await controls.getRowCount(), `${target.label} p2 rows`).toBe(target.total - 10);
+      await expect(controls.pageIndicator, `${target.label} p2 indicator`).toHaveText(
+        `Page 2 of 2 (${target.total} total)`,
+      );
+      await expect(controls.nextLink, `${target.label} p2 next`).toHaveCount(0);
+      await expect(controls.previousLink, `${target.label} p2 previous`).toHaveCount(1);
+
+      // Return to page 1 for the next page's iteration.
+      await controls.previousLink.click();
+      await page.waitForLoadState('networkidle');
+    }
+  });
+
+  test('changing the page size to 30 behaves identically on all three pages', async ({ page }) => {
+    await loginAsSuperUser(page);
+    for (const target of adminPages) {
+      const controls = target.create(page);
+      await controls.gotoWithQuery(target.query);
+
+      await controls.pageSizeSelect.selectOption('30');
+      await page.waitForLoadState('networkidle');
+
+      expect(await controls.getRowCount(), `${target.label} size-30 rows`).toBe(target.total);
+      await expect(controls.paginationNav, `${target.label} size-30 nav`).toHaveCount(0);
+      await expect(page, `${target.label} size-30 url`).toHaveURL(/pageSize=30/);
+      await expect(page, `${target.label} size-30 page`).toHaveURL(/pageNumber=1/);
+    }
   });
 });
 
