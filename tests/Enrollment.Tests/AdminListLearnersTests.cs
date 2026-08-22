@@ -17,8 +17,8 @@ namespace Enrollment.Tests;
 /// </summary>
 public class AdminListLearnersTests : IAsyncLifetime
 {
-    private string _connectionString;
-    private EnrollmentDbContext _context;
+    private string _connectionString = string.Empty;
+    private EnrollmentDbContext _context = null!;
 
     // Ids of the 12 filler students created by InitializeAsync, in insertion order.
     private Guid _studentId01;
@@ -226,7 +226,7 @@ public class AdminListLearnersTests : IAsyncLifetime
     {
         var (rows, totalCount) = await CallSpAsync("adm.pg032l.05", null, 10, 1);
 
-        Assert.Equal(1, rows.Count);
+        Assert.Single(rows);
         Assert.Equal("AdmPg032L Alpha05", rows[0].Name);
         Assert.Equal(1, totalCount);
     }

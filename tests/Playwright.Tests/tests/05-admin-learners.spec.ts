@@ -40,10 +40,15 @@ test.describe('Admin Learners', () => {
     const tbody = page.locator('.data-table tbody');
     expect(await tbody.locator('tr').count()).toBeGreaterThanOrEqual(3);
 
-    // Verify each seeded learner name appears
+    // Verify each seeded learner name appears. Spec 032: the list is
+    // paginated (10 per page), so search each name to surface it regardless
+    // of page position (the page 1 row count above already proves listing).
     const seededNames = ['Alice Johnson', 'Bob Smith', 'Carol Davis'];
     for (const name of seededNames) {
-      await expect(tbody.getByText(name)).toBeVisible();
+      await page.getByPlaceholder('Search by name or email...').fill(name);
+      await page.getByRole('button', { name: 'Filter' }).click();
+      await page.waitForLoadState('networkidle');
+      await expect(page.locator('.data-table tbody').getByText(name)).toBeVisible();
     }
   });
 

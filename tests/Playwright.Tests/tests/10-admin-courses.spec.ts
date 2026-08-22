@@ -40,8 +40,9 @@ test.describe('Admin Courses Management', () => {
     // Create Course button
     await expect(page.getByRole('link', { name: 'Create Course' })).toBeVisible();
 
-    // Search input
-    const searchInput = page.locator('input[name="search"]');
+    // Search input (spec 032: row delete forms now carry hidden filter-state
+    // inputs, so target the visible filter box by placeholder, not by name)
+    const searchInput = page.getByPlaceholder('Search courses...');
     await expect(searchInput).toBeVisible();
 
     // Category filter dropdown

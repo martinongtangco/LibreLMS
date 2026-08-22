@@ -53,6 +53,11 @@ test.describe('Profile — editable display name (spec 030 US1)', () => {
         await adminSegment.click();
       }
       await adminPage.goto('/Admin/Learners/Index');
+      // Spec 032: the learner list is paginated (10 per page) — search
+      // surfaces the renamed user regardless of page position.
+      await adminPage.getByPlaceholder('Search by name or email...').fill('Alice J. Smith');
+      await adminPage.getByRole('button', { name: 'Filter' }).click();
+      await adminPage.waitForLoadState('networkidle');
       await expect(adminPage.locator('.data-table tbody').getByText('Alice J. Smith')).toBeVisible();
     } finally {
       if (adminContext) {
