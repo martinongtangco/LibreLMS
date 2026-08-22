@@ -16,6 +16,7 @@
 }
 
 <form method="get" class="filters">
+    <input type="hidden" name="pageNumber" value="1" />
     <input name="search" value="@Model.Search" placeholder="Search by name or email..." />
     <select name="org" class="form-select">
         @foreach (var item in Model.OrgFilter?.ToList() ?? Enumerable.Empty<SelectListItem>())
@@ -68,4 +69,9 @@ else
             </tbody>
         </table>
     </div>
+}
+
+@if (Model.Pagination != null)
+{
+    <partial name="_AdminPagination" model="Model.Pagination" />
 }

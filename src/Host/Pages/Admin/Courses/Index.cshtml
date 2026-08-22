@@ -2,7 +2,6 @@
 @model LibreLms.Host.Pages.Admin.Courses.IndexModel
 @{
     ViewData["Title"] = "Course Management";
-    var totalPages = Model.TotalCount > 0 ? (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize) : 1;
 }
 
 <h1>Course Management</h1>
@@ -66,7 +65,8 @@
                                    asp-route-sortDirection="@(Model.SortBy == "title" && Model.SortDirection == "asc" ? "desc" : "asc")"
                                    asp-route-pageNumber="1"
                                    asp-route-search="@Model.Search"
-                                   asp-route-category="@Model.Category">
+                                   asp-route-category="@Model.Category"
+                                   asp-route-pageSize="@Model.PageSize">
                                     Title @(GetSortIndicator("title"))
                                 </a>
                             </th>
@@ -76,7 +76,8 @@
                                    asp-route-sortDirection="@(Model.SortBy == "category" && Model.SortDirection == "asc" ? "desc" : "asc")"
                                    asp-route-pageNumber="1"
                                    asp-route-search="@Model.Search"
-                                   asp-route-category="@Model.Category">
+                                   asp-route-category="@Model.Category"
+                                   asp-route-pageSize="@Model.PageSize">
                                     Category @(GetSortIndicator("category"))
                                 </a>
                             </th>
@@ -111,6 +112,12 @@
                                 <td style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
                                     <a asp-page="Edit" asp-route-courseId="@course.CourseId" class="btn btn-sm btn-secondary">Edit</a>
                                     <form method="post" asp-page-handler="Delete" asp-route-courseId="@course.CourseId" data-has-scorm="@course.HasScorm" onsubmit="return confirmDeleteCourse(this);">
+                                        <input type="hidden" name="search" value="@Model.Search" />
+                                        <input type="hidden" name="category" value="@Model.Category" />
+                                        <input type="hidden" name="sortBy" value="@Model.SortBy" />
+                                        <input type="hidden" name="sortDirection" value="@Model.SortDirection" />
+                                        <input type="hidden" name="pageNumber" value="@Model.PageNumber" />
+                                        <input type="hidden" name="pageSize" value="@Model.PageSize" />
                                         <button type="submit" class="btn btn-sm btn-secondary" style="background:#c62828; color:white;">Delete</button>
                                     </form>
                                 </td>
@@ -120,48 +127,10 @@
                 </table>
             </div>
 
-            <!-- Pagination -->
-            @if (totalPages > 1)
+            <!-- Pagination (shared partial: page-size selector + Previous/Next, spec 032) -->
+            @if (Model.Pagination != null)
             {
-                <nav style="display: flex; align-items: center; justify-content: center; gap: var(--spacing-md); margin-top: var(--spacing-lg); padding: var(--spacing-sm) 0;">
-                    @if (Model.PageNumber > 1)
-                    {
-                        <a asp-page="Index"
-                           asp-route-pageNumber="@(Model.PageNumber - 1)"
-                           asp-route-search="@Model.Search"
-                           asp-route-category="@Model.Category"
-                           asp-route-sortBy="@Model.SortBy"
-                           asp-route-sortDirection="@Model.SortDirection"
-                           class="btn btn-sm btn-ghost">
-                            ← Previous
-                        </a>
-                    }
-                    else
-                    {
-                        <span class="btn btn-sm btn-ghost" style="pointer-events:none;opacity:0.5;">← Previous</span>
-                    }
-
-                    <span style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
-                        Page @Model.PageNumber of @totalPages (@Model.TotalCount total)
-                    </span>
-
-                    @if (Model.PageNumber < totalPages)
-                    {
-                        <a asp-page="Index"
-                           asp-route-pageNumber="@(Model.PageNumber + 1)"
-                           asp-route-search="@Model.Search"
-                           asp-route-category="@Model.Category"
-                           asp-route-sortBy="@Model.SortBy"
-                           asp-route-sortDirection="@Model.SortDirection"
-                           class="btn btn-sm btn-ghost">
-                            Next →
-                        </a>
-                    }
-                    else
-                    {
-                        <span class="btn btn-sm btn-ghost" style="pointer-events:none;opacity:0.5;">Next →</span>
-                    }
-                </nav>
+                <partial name="_AdminPagination" model="Model.Pagination" />
             }
         }
     </div>
