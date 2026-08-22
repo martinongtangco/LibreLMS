@@ -327,3 +327,100 @@ test.describe('Admin Learners pagination (spec 032, US2)', () => {
     expect(names).toContain('AdmPg032L Alpha11');
   });
 });
+
+// ────────────────────────────────────────────────────────────────────
+// T025 — US3: page-size toggle on Enrollments + Learners
+// (exact options 10/30/50/100, default 10, reset-to-page-1 on change,
+// retention while paging, URL-tamper fallbacks)
+// ────────────────────────────────────────────────────────────────────
+test.describe('Admin page-size toggle (spec 032, US3)', () => {
+  test('enrollments: selector offers exactly 10/30/50/100 with 10 selected by default', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}`);
+
+    const options = await enrollments.pageSizeSelect.locator('option').allTextContents();
+    expect(options).toEqual(['10', '30', '50', '100']);
+    expect(await enrollments.pageSizeSelect.inputValue()).toBe('10');
+  });
+
+  test('enrollments: changing size to 50 re-renders at page 1 with the new size', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}`);
+
+    await enrollments.pageSizeSelect.selectOption('50');
+    await page.waitForLoadState('networkidle');
+
+    // All 12 rows fit in one page of 50; the form reset to page 1 and kept the filter.
+    expect(await enrollments.getRowCount()).toBe(LEARNER_COUNT);
+    await expect(enrollments.paginationNav).toHaveCount(0);
+    await expect(page).toHaveURL(/pageSize=50/);
+    await expect(page).toHaveURL(/pageNumber=1/);
+    await expect(page).toHaveURL(/student=AdmPg032E/);
+  });
+
+  test('enrollments: page size is retained across Next/Previous', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}`);
+
+    await enrollments.nextLink.click();
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/pageSize=10/);
+    await expect(page).toHaveURL(/pageNumber=2/);
+
+    await enrollments.previousLink.click();
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/pageSize=10/);
+    await expect(page).toHaveURL(/pageNumber=1/);
+  });
+
+  test('enrollments: tampered pageSize=999 renders with size 10', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}&pageSize=999`);
+
+    expect(await enrollments.getRowCount()).toBe(10);
+    await expect(enrollments.pageIndicator).toHaveText(`Page 1 of 2 (${LEARNER_COUNT} total)`);
+    expect(await enrollments.pageSizeSelect.inputValue()).toBe('10');
+  });
+
+  test('enrollments: tampered pageSize=15 (legacy size) renders with size 10', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}&pageSize=15`);
+
+    expect(await enrollments.getRowCount()).toBe(10);
+    expect(await enrollments.pageSizeSelect.inputValue()).toBe('10');
+  });
+
+  test('enrollments: tampered pageNumber=99999 renders the last valid page', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}&pageNumber=99999`);
+
+    expect(await enrollments.getRowCount()).toBe(LEARNER_COUNT - 10);
+    await expect(enrollments.pageIndicator).toHaveText(`Page 2 of 2 (${LEARNER_COUNT} total)`);
+    await expect(enrollments.nextLink).toHaveCount(0);
+    await expect(enrollments.previousLink).toHaveCount(1);
+  });
+
+  test('learners: selector options match and 10 to 30 change re-renders at page 1', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const learners = new AdminLearnersPage(page);
+    await learners.gotoWithQuery(`search=${encodeURIComponent(LEARNERS_MARKER)}`);
+
+    const options = await learners.pageSizeSelect.locator('option').allTextContents();
+    expect(options).toEqual(['10', '30', '50', '100']);
+
+    await learners.pageSizeSelect.selectOption('30');
+    await page.waitForLoadState('networkidle');
+
+    expect(await learners.getRowCount()).toBe(LEARNER_COUNT);
+    await expect(learners.paginationNav).toHaveCount(0);
+    await expect(page).toHaveURL(/pageSize=30/);
+    await expect(page).toHaveURL(/pageNumber=1/);
+    await expect(page).toHaveURL(/search=AdmPg032L/);
+  });
+});

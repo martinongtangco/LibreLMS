@@ -98,8 +98,8 @@
 
 ### Tests for User Story 3 (write FIRST where possible)
 
-- [ ] T025 [US3] Append an `Admin page-size toggle` describe block to `tests/Playwright.Tests/tests/16-admin-pagination.spec.ts` covering Enrollments + Learners: exact option set and default 10, change 10→50 re-renders at page 1 with ≤50 rows, size retained across Next/Previous, URL tamper `pageSize=999`→10 and `pageSize=15`→10, `pageNumber=99999`→last page, nav hidden when `TotalPages <= 1` (depends: T014, T023 blocks exist; serializes the shared spec file)
-- [ ] T026 [US3] Validate US3 partial (Constitution XIII evidence): run the Playwright page-size block; verify the rendered selector markup is identical between the two pages (options, labels, default, indicator format per contracts/admin-pages-query.md interaction rules 2–4); commit (depends: T025)
+- [X] T025 [US3] Append an `Admin page-size toggle` describe block to `tests/Playwright.Tests/tests/16-admin-pagination.spec.ts` covering Enrollments + Learners: exact option set and default 10, change 10→50 re-renders at page 1 with ≤50 rows, size retained across Next/Previous, URL tamper `pageSize=999`→10 and `pageSize=15`→10, `pageNumber=99999`→last page, nav hidden when `TotalPages <= 1` (depends: T014, T023 blocks exist; serializes the shared spec file)
+- [X] T026 [US3] Validate US3 partial (Constitution XIII evidence): run the Playwright page-size block; verify the rendered selector markup is identical between the two pages (options, labels, default, indicator format per contracts/admin-pages-query.md interaction rules 2–4); commit (depends: T025)
 
 **Checkpoint**: Page-size toggle verified on Enrollments + Learners; the Courses-page half of US3's final acceptance closes at T036 after US4.
 
