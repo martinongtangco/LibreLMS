@@ -1,6 +1,7 @@
 import { test, expect, Page, type APIRequestContext, type Browser } from '@playwright/test';
 import { AdminEnrollmentsPage } from '../pages/AdminEnrollmentsPage';
 import { AdminLearnersPage } from '../pages/AdminLearnersPage';
+import { AdminCoursesPage } from '../pages/AdminCoursesPage';
 import { testUsers } from '../utils/testUsers';
 
 /**
@@ -20,9 +21,15 @@ import { testUsers } from '../utils/testUsers';
 const ROOT_ORG = '00000000-0000-0000-0000-000000000001';
 const MARKER = 'AdmPg032E'; // Enrollments story filler (learners + courses)
 const LEARNERS_MARKER = 'AdmPg032L'; // Learners story filler (accounts only)
+const COURSES_MARKER = 'AdmPg032C'; // Courses story filler (courses only)
 const FILLER_PASSWORD = 'Qw3rt!Pg032Filler';
 const LEARNER_COUNT = 12; // > one default page (10) so the controls render
-const COURSE_COUNT = 3;
+const COURSE_COUNT = 3; // Enrollments story: one enrollment each, 4 per course
+const COURSES_FILLER_COUNT = 11; // Courses story: 10 + 1 -> two pages, last page deletable
+
+const coursesFillerTitle = (n: number) => `${COURSES_MARKER} T${pad2(n)}`;
+const coursesFillerCategory = (n: number) =>
+  n % 2 === 0 ? `${COURSES_MARKER}-Even` : `${COURSES_MARKER}-Odd`;
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 const learnerName = (n: number) => `${MARKER} S${pad2(n)}`;
@@ -68,11 +75,12 @@ interface FillerIds {
   learnerIds: string[];
   accountIds: string[];
   courseIds: string[];
+  coursesFillerIds: string[];
 }
 
 /** Collect the ids of filler rows still present (from a previously interrupted run). */
 async function findStaleFillers(api: APIRequestContext): Promise<FillerIds> {
-  const ids: FillerIds = { learnerIds: [], accountIds: [], courseIds: [] };
+  const ids: FillerIds = { learnerIds: [], accountIds: [], courseIds: [], coursesFillerIds: [] };
 
   const usersResp = await api.get('/api/users');
   if (usersResp.ok()) {
@@ -88,9 +96,9 @@ async function findStaleFillers(api: APIRequestContext): Promise<FillerIds> {
   if (coursesResp.ok()) {
     const { courses } = await coursesResp.json();
     for (const c of courses) {
-      if (typeof c.title === 'string' && c.title.startsWith(`${MARKER} Course`)) {
-        ids.courseIds.push(c.courseId);
-      }
+      if (typeof c.title !== 'string') continue;
+      if (c.title.startsWith(`${COURSES_MARKER} T`)) ids.coursesFillerIds.push(c.courseId);
+      else if (c.title.startsWith(`${MARKER} Course`)) ids.courseIds.push(c.courseId);
     }
   }
 
@@ -117,6 +125,9 @@ async function deleteFillers(api: APIRequestContext) {
   for (const id of stale.courseIds) {
     await api.delete(`/api/admin/courses/${id}`);
   }
+  for (const id of stale.coursesFillerIds) {
+    await api.delete(`/api/admin/courses/${id}`);
+  }
 }
 
 test.beforeAll(async ({ playwright }) => {
@@ -124,7 +135,7 @@ test.beforeAll(async ({ playwright }) => {
   try {
     await deleteFillers(api);
 
-    const ids: FillerIds = { learnerIds: [], accountIds: [], courseIds: [] };
+    const ids: FillerIds = { learnerIds: [], accountIds: [], courseIds: [], coursesFillerIds: [] };
 
     for (let n = 1; n <= COURSE_COUNT; n++) {
       const resp = await api.post('/api/courses', {
@@ -182,6 +193,25 @@ test.beforeAll(async ({ playwright }) => {
       if (resp.status() !== 201) throw new Error(`Filler account ${accountName(n)}: HTTP ${resp.status()}`);
       const location = resp.headers()['location'] ?? '';
       ids.accountIds.push(location.split('/').pop() ?? '');
+    }
+
+    // Courses-story filler: 11 courses with crafted sort orders (categories
+    // alternate by index so category order != title order across the page
+    // boundary). T11 lands alone on the title-asc page 2 (deletion test).
+    for (let n = 1; n <= COURSES_FILLER_COUNT; n++) {
+      const resp = await api.post('/api/courses', {
+        data: {
+          title: coursesFillerTitle(n),
+          shortDescription: 'Pagination test filler (spec 032 US4, removed after the run).',
+          fullDescription: `Temporary filler course created by 16-admin-pagination.spec.ts. Deleted in afterAll.`,
+          category: coursesFillerCategory(n),
+          duration: '1 hour',
+          organizationId: ROOT_ORG,
+        },
+      });
+      if (resp.status() !== 201) throw new Error(`Filler course ${coursesFillerTitle(n)}: HTTP ${resp.status()}`);
+      const location = resp.headers()['location'] ?? '';
+      ids.coursesFillerIds.push(location.split('/').pop() ?? '');
     }
   } finally {
     await browser.close();
@@ -422,5 +452,116 @@ test.describe('Admin page-size toggle (spec 032, US3)', () => {
     await expect(page).toHaveURL(/pageSize=30/);
     await expect(page).toHaveURL(/pageNumber=1/);
     await expect(page).toHaveURL(/search=AdmPg032L/);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// T032 — US4: Admin > Courses pagination (server-side sort, page-size
+// toggle, filter+sort+pagination composition, delete step-back).
+// The deletion test runs LAST (serial mode) and removes T11.
+// ────────────────────────────────────────────────────────────────────
+test.describe('Admin Courses pagination (spec 032, US4)', () => {
+  test('shows one page of rows with pagination controls', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const courses = new AdminCoursesPage(page);
+    await courses.gotoWithQuery(`search=${encodeURIComponent(COURSES_MARKER)}`);
+
+    expect(await courses.getRowCount()).toBe(10); // default page size 10 of 11
+    await expect(courses.pageIndicator).toHaveText(`Page 1 of 2 (${COURSES_FILLER_COUNT} total)`);
+    await expect(courses.paginationNav).toBeVisible();
+  });
+
+  test('title sort orders the whole filtered set across pages', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const courses = new AdminCoursesPage(page);
+    await courses.gotoWithQuery(`search=${encodeURIComponent(COURSES_MARKER)}`);
+
+    // Default: title ascending — page 1 is T01..T10, page 2 is T11.
+    let titles = await courses.getCourseTitles();
+    expect(titles[0]).toBe(coursesFillerTitle(1));
+    expect(titles[9]).toBe(coursesFillerTitle(10));
+
+    await courses.nextLink.click();
+    await page.waitForLoadState('networkidle');
+    titles = await courses.getCourseTitles();
+    expect(titles).toEqual([coursesFillerTitle(11)]);
+
+    // Clicking the Title header toggles to descending (page resets to 1).
+    await courses.titleSortLink.click();
+    await page.waitForLoadState('networkidle');
+    titles = await courses.getCourseTitles();
+    expect(titles[0]).toBe(coursesFillerTitle(11));
+    expect(titles[9]).toBe(coursesFillerTitle(2));
+  });
+
+  test('category sort reorders the whole filtered set across pages', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const courses = new AdminCoursesPage(page);
+    await courses.gotoWithQuery(`search=${encodeURIComponent(COURSES_MARKER)}`);
+
+    // Category ascending: 5 Even rows then 6 Odd rows — the category order
+    // crosses the page boundary (page 1 ends mid-odd, page 2 is odd-only).
+    await courses.categorySortLink.click();
+    await page.waitForLoadState('networkidle');
+
+    let categories = await courses.getCategories();
+    expect(categories.slice(0, 5)).toEqual(Array(5).fill(`${COURSES_MARKER}-Even`));
+    expect(categories.slice(5)).toEqual(Array(5).fill(`${COURSES_MARKER}-Odd`));
+
+    await courses.nextLink.click();
+    await page.waitForLoadState('networkidle');
+    categories = await courses.getCategories();
+    expect(categories).toEqual([`${COURSES_MARKER}-Odd`]);
+  });
+
+  test('category filter composes with pagination', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const courses = new AdminCoursesPage(page);
+    // Odd category: T01, T03, T05, T07, T09, T11 — 6 rows, one page.
+    await courses.gotoWithQuery(
+      `search=${encodeURIComponent(COURSES_MARKER)}&category=${encodeURIComponent(`${COURSES_MARKER}-Odd`)}`,
+    );
+
+    expect(await courses.getRowCount()).toBe(6);
+    await expect(courses.paginationNav).toHaveCount(0);
+    const titles = await courses.getCourseTitles();
+    expect(titles).toContain(coursesFillerTitle(11));
+  });
+
+  test('page size toggle works on the courses page', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const courses = new AdminCoursesPage(page);
+    await courses.gotoWithQuery(`search=${encodeURIComponent(COURSES_MARKER)}`);
+
+    await courses.pageSizeSelect.selectOption('50');
+    await page.waitForLoadState('networkidle');
+
+    expect(await courses.getRowCount()).toBe(COURSES_FILLER_COUNT);
+    await expect(courses.paginationNav).toHaveCount(0);
+    await expect(page).toHaveURL(/pageSize=50/);
+    await expect(page).toHaveURL(/pageNumber=1/);
+    await expect(page).toHaveURL(/search=AdmPg032C/);
+  });
+
+  test('delete on the last page steps back when the page becomes empty', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const courses = new AdminCoursesPage(page);
+    // Title ascending: T11 sits alone on page 2.
+    await courses.gotoWithQuery(`search=${encodeURIComponent(COURSES_MARKER)}&pageNumber=2`);
+    expect(await courses.getRowCount()).toBe(1);
+    await expect(courses.pageIndicator).toHaveText(`Page 2 of 2 (${COURSES_FILLER_COUNT} total)`);
+
+    await courses.deleteRow(0);
+
+    // Page 2 is now empty -> the page steps back to page 1 (10 rows, one
+    // page, so the nav is hidden). The browser URL still carries the delete
+    // form's ReturnUrl (page 2), which is safe: the server clamps it to the
+    // last valid page on reload.
+    expect(await courses.getRowCount()).toBe(10);
+    await expect(courses.paginationNav).toHaveCount(0);
+    const titles = await courses.getCourseTitles();
+    expect(titles).toContain(coursesFillerTitle(1));
+    expect(titles).toContain(coursesFillerTitle(10));
+    expect(titles).not.toContain(coursesFillerTitle(11));
   });
 });
