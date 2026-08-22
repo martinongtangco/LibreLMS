@@ -11,10 +11,46 @@ export class AdminLearnersPage extends BasePage {
   readonly learnerTable: Locator;
   readonly createButton: Locator;
 
+  // Pagination (spec 032): shared _AdminPagination partial controls
+  readonly paginationNav: Locator;
+  readonly previousLink: Locator;
+  readonly nextLink: Locator;
+  readonly pageIndicator: Locator;
+  readonly pageSizeSelect: Locator;
+
   constructor(page: Page) {
     super(page);
     this.learnerTable = page.locator('.data-table');
     this.createButton = page.getByRole('button', { name: 'Create Learner' });
+    this.paginationNav = page.locator('nav.admin-pagination');
+    this.previousLink = page.locator('nav.admin-pagination a').filter({ hasText: 'Previous' });
+    this.nextLink = page.locator('nav.admin-pagination a').filter({ hasText: 'Next' });
+    this.pageIndicator = page.locator('nav.admin-pagination span');
+    this.pageSizeSelect = page.locator('select[name="pageSize"]');
+  }
+
+  /**
+   * Navigate to the Admin Learners page with a query string (no leading '?').
+   */
+  async gotoWithQuery(query: string): Promise<void> {
+    await this.page.goto(`/Admin/Learners/Index${query ? `?${query}` : ''}`);
+    await this.page.locator('h1', { hasText: 'Learner Management' }).waitFor({ state: 'visible' });
+  }
+
+  /**
+   * Number of rows currently rendered in the learner table.
+   */
+  async getRowCount(): Promise<number> {
+    return this.learnerTable.locator('tbody tr').count();
+  }
+
+  /**
+   * Set the name/email search and submit the filter form (resets to page 1).
+   */
+  async searchFor(term: string): Promise<void> {
+    await this.page.getByPlaceholder('Search by name or email...').fill(term);
+    await this.page.getByRole('button', { name: 'Filter' }).click();
+    await this.page.waitForLoadState('networkidle');
   }
 
   /**

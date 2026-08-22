@@ -1,5 +1,6 @@
 import { test, expect, Page, type APIRequestContext, type Browser } from '@playwright/test';
 import { AdminEnrollmentsPage } from '../pages/AdminEnrollmentsPage';
+import { AdminLearnersPage } from '../pages/AdminLearnersPage';
 import { testUsers } from '../utils/testUsers';
 
 /**
@@ -17,7 +18,8 @@ import { testUsers } from '../utils/testUsers';
  */
 
 const ROOT_ORG = '00000000-0000-0000-0000-000000000001';
-const MARKER = 'AdmPg032E';
+const MARKER = 'AdmPg032E'; // Enrollments story filler (learners + courses)
+const LEARNERS_MARKER = 'AdmPg032L'; // Learners story filler (accounts only)
 const FILLER_PASSWORD = 'Qw3rt!Pg032Filler';
 const LEARNER_COUNT = 12; // > one default page (10) so the controls render
 const COURSE_COUNT = 3;
@@ -26,6 +28,11 @@ const pad2 = (n: number) => String(n).padStart(2, '0');
 const learnerName = (n: number) => `${MARKER} S${pad2(n)}`;
 const learnerEmail = (n: number) => `adm.pg032e.${pad2(n)}@example.com`;
 const courseTitle = (n: number) => `${MARKER} Course ${n}`;
+const accountName = (n: number) => `${LEARNERS_MARKER} Alpha${pad2(n)}`;
+const accountEmail = (n: number) => `adm.pg032l.${pad2(n)}@example.com`;
+/** Same role pattern as the integration tests: 4 Learner, 4 OrgAdmin, 4 SuperUser. */
+const accountRole = (n: number): string =>
+  n % 3 === 1 ? 'Learner' : n % 3 === 2 ? 'OrgAdmin' : 'SuperUser';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -59,18 +66,21 @@ async function loginAsSuperUser(page: Page) {
 
 interface FillerIds {
   learnerIds: string[];
+  accountIds: string[];
   courseIds: string[];
 }
 
 /** Collect the ids of filler rows still present (from a previously interrupted run). */
 async function findStaleFillers(api: APIRequestContext): Promise<FillerIds> {
-  const ids: FillerIds = { learnerIds: [], courseIds: [] };
+  const ids: FillerIds = { learnerIds: [], accountIds: [], courseIds: [] };
 
   const usersResp = await api.get('/api/users');
   if (usersResp.ok()) {
     const { users } = await usersResp.json();
     for (const u of users) {
-      if (typeof u.name === 'string' && u.name.startsWith(MARKER)) ids.learnerIds.push(u.id);
+      if (typeof u.name !== 'string') continue;
+      if (u.name.startsWith(LEARNERS_MARKER)) ids.accountIds.push(u.id);
+      else if (u.name.startsWith(MARKER)) ids.learnerIds.push(u.id);
     }
   }
 
@@ -101,6 +111,9 @@ async function deleteFillers(api: APIRequestContext) {
   for (const id of stale.learnerIds) {
     await api.delete(`/api/users/${id}`);
   }
+  for (const id of stale.accountIds) {
+    await api.delete(`/api/users/${id}`);
+  }
   for (const id of stale.courseIds) {
     await api.delete(`/api/admin/courses/${id}`);
   }
@@ -111,7 +124,7 @@ test.beforeAll(async ({ playwright }) => {
   try {
     await deleteFillers(api);
 
-    const ids: FillerIds = { learnerIds: [], courseIds: [] };
+    const ids: FillerIds = { learnerIds: [], accountIds: [], courseIds: [] };
 
     for (let n = 1; n <= COURSE_COUNT; n++) {
       const resp = await api.post('/api/courses', {
@@ -153,6 +166,22 @@ test.beforeAll(async ({ playwright }) => {
       if (status !== 201 && status !== 409) {
         throw new Error(`Filler enrollment for ${learnerName(n)}: HTTP ${status}`);
       }
+    }
+
+    // Learners-story filler: 12 accounts with mixed roles (no enrollments).
+    for (let n = 1; n <= LEARNER_COUNT; n++) {
+      const resp = await api.post('/api/users', {
+        data: {
+          name: accountName(n),
+          email: accountEmail(n),
+          password: FILLER_PASSWORD,
+          role: accountRole(n),
+          organizationId: ROOT_ORG,
+        },
+      });
+      if (resp.status() !== 201) throw new Error(`Filler account ${accountName(n)}: HTTP ${resp.status()}`);
+      const location = resp.headers()['location'] ?? '';
+      ids.accountIds.push(location.split('/').pop() ?? '');
     }
   } finally {
     await browser.close();
@@ -237,5 +266,64 @@ test.describe('Admin Enrollments pagination (spec 032, US1)', () => {
     expect(await enrollments.getRowCount()).toBe(9);
     await expect(enrollments.paginationNav).toHaveCount(0);
     await expect(page).toHaveURL(/pageNumber=1/);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// T023 — US2: Admin > Learners pagination (marker-scoped to 12 accounts)
+// ────────────────────────────────────────────────────────────────────
+test.describe('Admin Learners pagination (spec 032, US2)', () => {
+  test('shows one page of rows with pagination controls', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const learners = new AdminLearnersPage(page);
+    await learners.gotoWithQuery(`search=${encodeURIComponent(LEARNERS_MARKER)}`);
+
+    expect(await learners.getRowCount()).toBe(10); // default page size 10 of 12
+    await expect(learners.pageIndicator).toHaveText(`Page 1 of 2 (${LEARNER_COUNT} total)`);
+    await expect(learners.paginationNav).toBeVisible();
+  });
+
+  test('previous hidden on page 1, next hidden on the last page', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const learners = new AdminLearnersPage(page);
+    await learners.gotoWithQuery(`search=${encodeURIComponent(LEARNERS_MARKER)}`);
+
+    await expect(learners.previousLink).toHaveCount(0);
+    await expect(learners.nextLink).toHaveCount(1);
+
+    await learners.nextLink.click();
+    await page.waitForLoadState('networkidle');
+
+    expect(await learners.getRowCount()).toBe(LEARNER_COUNT - 10);
+    await expect(learners.pageIndicator).toHaveText(`Page 2 of 2 (${LEARNER_COUNT} total)`);
+    await expect(learners.nextLink).toHaveCount(0);
+    await expect(learners.previousLink).toHaveCount(1);
+  });
+
+  test('search narrows paginated results', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const learners = new AdminLearnersPage(page);
+    await learners.gotoWithQuery(`search=${encodeURIComponent(LEARNERS_MARKER)}`);
+    await expect(learners.pageIndicator).toContainText('Page 1 of 2');
+
+    // Alpha01..Alpha09 (9 rows, one page) — nav disappears, rows pin the total.
+    await learners.searchFor(`${LEARNERS_MARKER} Alpha0`);
+    expect(await learners.getRowCount()).toBe(9);
+    await expect(learners.paginationNav).toHaveCount(0);
+  });
+
+  test('role filter composes with search', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const learners = new AdminLearnersPage(page);
+    // OrgAdmin accounts: Alpha02, Alpha05, Alpha08, Alpha11 — 4 rows, one page.
+    await learners.gotoWithQuery(
+      `search=${encodeURIComponent(LEARNERS_MARKER)}&role=OrgAdmin`,
+    );
+
+    expect(await learners.getRowCount()).toBe(4);
+    await expect(learners.paginationNav).toHaveCount(0);
+    const names = await learners.getLearnerNames();
+    expect(names).toContain('AdmPg032L Alpha02');
+    expect(names).toContain('AdmPg032L Alpha11');
   });
 });
