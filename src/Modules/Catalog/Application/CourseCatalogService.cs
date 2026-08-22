@@ -131,7 +131,9 @@ public class CourseCatalogService(CatalogDbContext context)
         string? category,
         int pageNumber,
         int pageSize,
-        HashSet<Guid>? visibleCourseIds = null)
+        HashSet<Guid>? visibleCourseIds = null,
+        string sortBy = "title",
+        string sortDirection = "asc")
     {
         // Trim whitespace from search term
         searchTerm = searchTerm?.Trim();
@@ -146,6 +148,12 @@ public class CourseCatalogService(CatalogDbContext context)
 
         if (pageSize < 1)
             pageSize = 12;
+
+        // Allowlist sort values (defense in depth; the procedure also normalizes)
+        if (sortBy.ToLowerInvariant() is not ("title" or "category" or "duration"))
+            sortBy = "title";
+        if (sortDirection.ToLowerInvariant() is not ("asc" or "desc"))
+            sortDirection = "asc";
 
         var connection = context.Database.GetDbConnection();
         if (connection.State != ConnectionState.Open)
@@ -162,6 +170,8 @@ public class CourseCatalogService(CatalogDbContext context)
             command.Parameters.Add("@Category", SqlDbType.NVarChar, 100).Value = category ?? (object)DBNull.Value;
             command.Parameters.Add("@PageSize", SqlDbType.Int).Value = pageSize;
             command.Parameters.Add("@PageNumber", SqlDbType.Int).Value = pageNumber;
+            command.Parameters.Add("@SortBy", SqlDbType.NVarChar, 20).Value = sortBy;
+            command.Parameters.Add("@SortDirection", SqlDbType.NVarChar, 4).Value = sortDirection;
 
             var allItems = new List<CourseItemDto>();
             var totalCount = 0;
@@ -176,7 +186,8 @@ public class CourseCatalogService(CatalogDbContext context)
                     reader.GetString(1),
                     reader.GetString(2),
                     reader.GetString(3),
-                    reader.GetString(4)
+                    reader.GetString(4),
+                    reader.GetGuid(5)
                 ));
             }
 
@@ -210,7 +221,8 @@ public record CourseItemDto(
     string Title,
     string ShortDescription,
     string Category,
-    string Duration);
+    string Duration,
+    Guid OrganizationId);
 
 /// <summary>Paginated browse result from the stored procedure.</summary>
 public record BrowseResult(

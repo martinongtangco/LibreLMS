@@ -1,0 +1,43 @@
+@model LibreLms.Host.Pages.Admin.AdminPaginationModel
+
+@* Shared admin pagination controls (spec 032). Consumed by all three admin index pages
+   (Courses, Enrollments, Learners).
+   Block 1: page-size form — self-contained GET form that submits on change and resets
+   pageNumber to 1 (interaction rule 2). Filter values are carried as hidden inputs so the
+   active filters/sort survive the size change (interaction rule 3).
+   Block 2: Previous/Next nav — boundary controls are hidden, not disabled, and the whole
+   nav is hidden when totalPages <= 1 (interaction rule 4). *@
+
+<form method="get" action="@Model.ActionUrl" class="page-size-form" style="display:flex; align-items:center; gap:0.5rem; margin-top:1rem;">
+    @foreach (var kv in Model.FilterQueryParams)
+    {
+        <input type="hidden" name="@kv.Key" value="@kv.Value" />
+    }
+    <input type="hidden" name="pageNumber" value="1" />
+    <label class="text-muted" style="font-size:0.875rem;" for="admin-page-size">Rows per page:</label>
+    <select id="admin-page-size" name="pageSize" class="form-select" onchange="this.form.submit()">
+        @foreach (var size in new[] { 10, 30, 50, 100 })
+        {
+            <option value="@size" selected="@(size == Model.PageSize ? "selected" : null)">@size</option>
+        }
+    </select>
+</form>
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="admin-pagination" style="display:flex; align-items:center; justify-content:center; gap:1rem; margin-top:1.5rem; padding:0.5rem 0;">
+        @* Hide (not just disable) Previous on the first page (interaction rule 4) *@
+        @if (Model.Page > 1)
+        {
+            <a class="btn btn-sm btn-ghost" href="@Model.BuildPageUrl(Model.Page - 1)">← Previous</a>
+        }
+
+        <span class="text-muted" style="font-size:0.875rem;">Page @Model.Page of @Model.TotalPages (@Model.Total total)</span>
+
+        @* Hide (not just disable) Next on the last page (interaction rule 4) *@
+        @if (Model.Page < Model.TotalPages)
+        {
+            <a class="btn btn-sm btn-ghost" href="@Model.BuildPageUrl(Model.Page + 1)">Next →</a>
+        }
+    </nav>
+}

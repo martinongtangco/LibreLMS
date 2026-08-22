@@ -17,6 +17,9 @@ public record EnrollmentDto(
     DateTimeOffset EnrolledAt
 );
 
+/// <summary>A page of enrollment rows plus the filtered total count (spec 032).</summary>
+public record EnrollmentPageResult(IList<EnrollmentDto> Items, int TotalCount);
+
 /// <summary>Result of a bulk enrollment operation.</summary>
 public record BulkEnrollmentResult(
     int Enrolled,
@@ -144,5 +147,44 @@ public class AdminEnrollmentService(
         }
 
         return dtos;
+    }
+
+    /// <summary>
+    /// Paged variant of ListAllEnrollmentsAsync: delegates to IEnrollmentAdmin.ListPagedAsync,
+    /// then enriches org names for the page's distinct OrganizationIds via IOrganizationLookup
+    /// (page-local cache, bounded to the page). The row already carries learner name/email —
+    /// no IUserLookup call (spec 032).
+    /// </summary>
+    public async Task<EnrollmentPageResult> ListAllEnrollmentsPagedAsync(
+        string? studentName, string? courseTitle, int pageNumber, int pageSize)
+    {
+        var page = await enrollmentAdmin.ListPagedAsync(studentName, courseTitle, pageNumber, pageSize);
+
+        // Org names for the page's distinct OrganizationIds (page-local cache; missing org -> "Unknown").
+        var orgCache = new Dictionary<Guid, string>();
+        var dtos = new List<EnrollmentDto>();
+
+        foreach (var r in page.Items)
+        {
+            if (!orgCache.TryGetValue(r.OrganizationId, out var orgName))
+            {
+                var org = await orgLookup.GetOrganizationAsync(r.OrganizationId);
+                orgName = org?.Name ?? "Unknown";
+                orgCache[r.OrganizationId] = orgName;
+            }
+
+            dtos.Add(new EnrollmentDto(
+                r.EnrollmentId,
+                r.StudentId,
+                r.StudentName,
+                r.StudentEmail,
+                r.CourseId,
+                r.CourseTitle,
+                orgName,
+                r.EnrolledAt
+            ));
+        }
+
+        return new EnrollmentPageResult(dtos, page.TotalCount);
     }
 }

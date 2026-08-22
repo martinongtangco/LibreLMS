@@ -1,0 +1,670 @@
+import { test, expect, Page, type Locator, type APIRequestContext, type Browser } from '@playwright/test';
+import { AdminEnrollmentsPage } from '../pages/AdminEnrollmentsPage';
+import { AdminLearnersPage } from '../pages/AdminLearnersPage';
+import { AdminCoursesPage } from '../pages/AdminCoursesPage';
+import { testUsers } from '../utils/testUsers';
+
+/**
+ * Admin list pagination + page size toggle (spec 032).
+ *
+ * Self-contained per the 11-course-pagination pattern: beforeAll creates
+ * marker-prefixed filler data through the admin API, afterAll deletes it.
+ * Every UI assertion is scoped to the marker, so seeded/accumulated data in
+ * the system is irrelevant and other specs can run concurrently.
+ *
+ * Blocks are appended in task order (single writer — the orchestrating
+ * session — see tasks.md serialization rule):
+ *   T014 Admin Enrollments  ->  T023 Admin Learners  ->  T025 page-size toggle
+ *   ->  T032 Admin Courses  ->  T036 cross-page consistency
+ */
+
+const ROOT_ORG = '00000000-0000-0000-0000-000000000001';
+const MARKER = 'AdmPg032E'; // Enrollments story filler (learners + courses)
+const LEARNERS_MARKER = 'AdmPg032L'; // Learners story filler (accounts only)
+const COURSES_MARKER = 'AdmPg032C'; // Courses story filler (courses only)
+const FILLER_PASSWORD = 'Qw3rt!Pg032Filler';
+const LEARNER_COUNT = 12; // > one default page (10) so the controls render
+const COURSE_COUNT = 3; // Enrollments story: one enrollment each, 4 per course
+const COURSES_FILLER_COUNT = 11; // Courses story: 10 + 1 -> two pages, last page deletable
+
+const coursesFillerTitle = (n: number) => `${COURSES_MARKER} T${pad2(n)}`;
+const coursesFillerCategory = (n: number) =>
+  n % 2 === 0 ? `${COURSES_MARKER}-Even` : `${COURSES_MARKER}-Odd`;
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const learnerName = (n: number) => `${MARKER} S${pad2(n)}`;
+const learnerEmail = (n: number) => `adm.pg032e.${pad2(n)}@example.com`;
+const courseTitle = (n: number) => `${MARKER} Course ${n}`;
+const accountName = (n: number) => `${LEARNERS_MARKER} Alpha${pad2(n)}`;
+const accountEmail = (n: number) => `adm.pg032l.${pad2(n)}@example.com`;
+/** Same role pattern as the integration tests: 4 Learner, 4 OrgAdmin, 4 SuperUser. */
+const accountRole = (n: number): string =>
+  n % 3 === 1 ? 'Learner' : n % 3 === 2 ? 'OrgAdmin' : 'SuperUser';
+
+test.describe.configure({ mode: 'serial' });
+
+/**
+ * Sign in as SuperUser in a throwaway browser and return the API request
+ * context with its auth cookies (pattern: 11-course-pagination.spec.ts).
+ */
+async function adminApi(playwright: { chromium: import('@playwright/test').Chromium }) {
+  const browser: Browser = await playwright.chromium.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto('http://localhost:5000/Account/Login');
+  await page.getByLabel('Email').fill(testUsers.superUser.email);
+  await page.getByLabel('Password').fill(testUsers.superUser.password);
+  await page.getByRole('button', { name: 'Sign In' }).click();
+  await page.waitForURL('**/Courses**', { timeout: 15000 });
+  return { browser, api: context.request };
+}
+
+/** UI login as SuperUser (pattern: 05-admin-learners.spec.ts). */
+async function loginAsSuperUser(page: Page) {
+  const user = testUsers.superUser;
+  await page.goto('/Account/Login');
+  await page.getByLabel('Email').fill(user.email);
+  await page.getByLabel('Password').fill(user.password);
+  await page.getByRole('button', { name: 'Sign In' }).click();
+  await page.waitForURL((url) => url.pathname.includes('/Courses') || url.pathname === '/', {
+    timeout: 10_000,
+  });
+}
+
+interface FillerIds {
+  learnerIds: string[];
+  accountIds: string[];
+  courseIds: string[];
+  coursesFillerIds: string[];
+}
+
+/** Collect the ids of filler rows still present (from a previously interrupted run). */
+async function findStaleFillers(api: APIRequestContext): Promise<FillerIds> {
+  const ids: FillerIds = { learnerIds: [], accountIds: [], courseIds: [], coursesFillerIds: [] };
+
+  const usersResp = await api.get('/api/users');
+  if (usersResp.ok()) {
+    const { users } = await usersResp.json();
+    for (const u of users) {
+      if (typeof u.name !== 'string') continue;
+      if (u.name.startsWith(LEARNERS_MARKER)) ids.accountIds.push(u.id);
+      else if (u.name.startsWith(MARKER)) ids.learnerIds.push(u.id);
+    }
+  }
+
+  const coursesResp = await api.get('/api/admin/courses');
+  if (coursesResp.ok()) {
+    const { courses } = await coursesResp.json();
+    for (const c of courses) {
+      if (typeof c.title !== 'string') continue;
+      if (c.title.startsWith(`${COURSES_MARKER} T`)) ids.coursesFillerIds.push(c.courseId);
+      else if (c.title.startsWith(`${MARKER} Course`)) ids.courseIds.push(c.courseId);
+    }
+  }
+
+  return ids;
+}
+
+async function deleteFillers(api: APIRequestContext) {
+  // Enrollments first (the users endpoint deletes the student row only).
+  const enrollResp = await api.get(`/api/admin/enrollments?student=${encodeURIComponent(MARKER)}`);
+  if (enrollResp.ok()) {
+    const { enrollments } = await enrollResp.json();
+    for (const e of enrollments) {
+      await api.delete(`/api/admin/enrollments/${e.enrollmentId}`);
+    }
+  }
+
+  const stale = await findStaleFillers(api);
+  for (const id of stale.learnerIds) {
+    await api.delete(`/api/users/${id}`);
+  }
+  for (const id of stale.accountIds) {
+    await api.delete(`/api/users/${id}`);
+  }
+  for (const id of stale.courseIds) {
+    await api.delete(`/api/admin/courses/${id}`);
+  }
+  for (const id of stale.coursesFillerIds) {
+    await api.delete(`/api/admin/courses/${id}`);
+  }
+}
+
+test.beforeAll(async ({ playwright }) => {
+  const { browser, api } = await adminApi(playwright);
+  try {
+    await deleteFillers(api);
+
+    const ids: FillerIds = { learnerIds: [], accountIds: [], courseIds: [], coursesFillerIds: [] };
+
+    for (let n = 1; n <= COURSE_COUNT; n++) {
+      const resp = await api.post('/api/courses', {
+        data: {
+          title: courseTitle(n),
+          shortDescription: 'Pagination test filler (spec 032, removed after the run).',
+          fullDescription: `Temporary filler course created by 16-admin-pagination.spec.ts. Deleted in afterAll.`,
+          category: 'Tools',
+          duration: '1 hour',
+          organizationId: ROOT_ORG,
+        },
+      });
+      if (resp.status() !== 201) throw new Error(`Filler course ${courseTitle(n)}: HTTP ${resp.status()}`);
+      const location = resp.headers()['location'] ?? '';
+      ids.courseIds.push(location.split('/').pop() ?? '');
+    }
+
+    for (let n = 1; n <= LEARNER_COUNT; n++) {
+      const resp = await api.post('/api/users', {
+        data: {
+          name: learnerName(n),
+          email: learnerEmail(n),
+          password: FILLER_PASSWORD,
+          role: 'Learner',
+          organizationId: ROOT_ORG,
+        },
+      });
+      if (resp.status() !== 201) throw new Error(`Filler learner ${learnerName(n)}: HTTP ${resp.status()}`);
+      const location = resp.headers()['location'] ?? '';
+      ids.learnerIds.push(location.split('/').pop() ?? '');
+    }
+
+    // Learner i enrolls in course ((i-1) mod 3)+1 — every course has exactly 4 learners.
+    for (let n = 1; n <= LEARNER_COUNT; n++) {
+      const resp = await api.post('/api/admin/enrollments', {
+        data: { studentId: ids.learnerIds[n - 1], courseId: ids.courseIds[(n - 1) % COURSE_COUNT] },
+      });
+      const status = resp.status();
+      if (status !== 201 && status !== 409) {
+        throw new Error(`Filler enrollment for ${learnerName(n)}: HTTP ${status}`);
+      }
+    }
+
+    // Learners-story filler: 12 accounts with mixed roles (no enrollments).
+    for (let n = 1; n <= LEARNER_COUNT; n++) {
+      const resp = await api.post('/api/users', {
+        data: {
+          name: accountName(n),
+          email: accountEmail(n),
+          password: FILLER_PASSWORD,
+          role: accountRole(n),
+          organizationId: ROOT_ORG,
+        },
+      });
+      if (resp.status() !== 201) throw new Error(`Filler account ${accountName(n)}: HTTP ${resp.status()}`);
+      const location = resp.headers()['location'] ?? '';
+      ids.accountIds.push(location.split('/').pop() ?? '');
+    }
+
+    // Courses-story filler: 11 courses with crafted sort orders (categories
+    // alternate by index so category order != title order across the page
+    // boundary). T11 lands alone on the title-asc page 2 (deletion test).
+    for (let n = 1; n <= COURSES_FILLER_COUNT; n++) {
+      const resp = await api.post('/api/courses', {
+        data: {
+          title: coursesFillerTitle(n),
+          shortDescription: 'Pagination test filler (spec 032 US4, removed after the run).',
+          fullDescription: `Temporary filler course created by 16-admin-pagination.spec.ts. Deleted in afterAll.`,
+          category: coursesFillerCategory(n),
+          duration: '1 hour',
+          organizationId: ROOT_ORG,
+        },
+      });
+      if (resp.status() !== 201) throw new Error(`Filler course ${coursesFillerTitle(n)}: HTTP ${resp.status()}`);
+      const location = resp.headers()['location'] ?? '';
+      ids.coursesFillerIds.push(location.split('/').pop() ?? '');
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
+test.afterAll(async ({ playwright }) => {
+  const { browser, api } = await adminApi(playwright);
+  try {
+    await deleteFillers(api);
+  } finally {
+    await browser.close();
+  }
+});
+
+// ────────────────────────────────────────────────────────────────────
+// T014 — US1: Admin > Enrollments pagination (marker-scoped to 12 rows)
+// ────────────────────────────────────────────────────────────────────
+test.describe('Admin Enrollments pagination (spec 032, US1)', () => {
+  test('shows one page of rows with pagination controls', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}`);
+
+    expect(await enrollments.getRowCount()).toBe(10); // default page size 10 of 12
+    await expect(enrollments.pageIndicator).toHaveText(`Page 1 of 2 (${LEARNER_COUNT} total)`);
+    await expect(enrollments.paginationNav).toBeVisible();
+  });
+
+  test('previous hidden on page 1, next hidden on the last page', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}`);
+
+    // Page 1: Previous absent from the DOM entirely, Next present.
+    await expect(enrollments.previousLink).toHaveCount(0);
+    await expect(enrollments.nextLink).toHaveCount(1);
+
+    await enrollments.nextLink.click();
+    await page.waitForLoadState('networkidle');
+
+    // Last page (2 rows): Next absent, Previous present.
+    expect(await enrollments.getRowCount()).toBe(LEARNER_COUNT - 10);
+    await expect(enrollments.pageIndicator).toHaveText(`Page 2 of 2 (${LEARNER_COUNT} total)`);
+    await expect(enrollments.nextLink).toHaveCount(0);
+    await expect(enrollments.previousLink).toHaveCount(1);
+  });
+
+  test('course filter composes with pagination and resets to page 1', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    // Start on page 2 of the marker filter.
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}&pageNumber=2`);
+    await expect(enrollments.pageIndicator).toContainText('Page 2 of 2');
+
+    // Course 1 has exactly 4 learners (1, 4, 7, 10) — one page, so the whole
+    // nav (incl. indicator) is hidden (interaction rule 4). Row count pins the
+    // filtered total (FR-013).
+    await enrollments.filterByCourse(courseTitle(1));
+    expect(await enrollments.getRowCount()).toBe(4);
+    await expect(enrollments.paginationNav).toHaveCount(0);
+  });
+
+  test('single-row results hide the whole nav', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}`);
+    await enrollments.filterByStudent(learnerName(12));
+
+    expect(await enrollments.getRowCount()).toBe(1);
+    await expect(enrollments.paginationNav).toHaveCount(0);
+  });
+
+  test('filter change resets pagination to page 1', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}&pageNumber=2`);
+    await expect(enrollments.pageIndicator).toContainText('Page 2 of 2');
+
+    // Narrow to S01..S09 (9 rows, one page) via the filter form.
+    await enrollments.filterByStudent(`${MARKER} S0`);
+    expect(await enrollments.getRowCount()).toBe(9);
+    await expect(enrollments.paginationNav).toHaveCount(0);
+    await expect(page).toHaveURL(/pageNumber=1/);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// T023 — US2: Admin > Learners pagination (marker-scoped to 12 accounts)
+// ────────────────────────────────────────────────────────────────────
+test.describe('Admin Learners pagination (spec 032, US2)', () => {
+  test('shows one page of rows with pagination controls', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const learners = new AdminLearnersPage(page);
+    await learners.gotoWithQuery(`search=${encodeURIComponent(LEARNERS_MARKER)}`);
+
+    expect(await learners.getRowCount()).toBe(10); // default page size 10 of 12
+    await expect(learners.pageIndicator).toHaveText(`Page 1 of 2 (${LEARNER_COUNT} total)`);
+    await expect(learners.paginationNav).toBeVisible();
+  });
+
+  test('previous hidden on page 1, next hidden on the last page', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const learners = new AdminLearnersPage(page);
+    await learners.gotoWithQuery(`search=${encodeURIComponent(LEARNERS_MARKER)}`);
+
+    await expect(learners.previousLink).toHaveCount(0);
+    await expect(learners.nextLink).toHaveCount(1);
+
+    await learners.nextLink.click();
+    await page.waitForLoadState('networkidle');
+
+    expect(await learners.getRowCount()).toBe(LEARNER_COUNT - 10);
+    await expect(learners.pageIndicator).toHaveText(`Page 2 of 2 (${LEARNER_COUNT} total)`);
+    await expect(learners.nextLink).toHaveCount(0);
+    await expect(learners.previousLink).toHaveCount(1);
+  });
+
+  test('search narrows paginated results', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const learners = new AdminLearnersPage(page);
+    await learners.gotoWithQuery(`search=${encodeURIComponent(LEARNERS_MARKER)}`);
+    await expect(learners.pageIndicator).toContainText('Page 1 of 2');
+
+    // Alpha01..Alpha09 (9 rows, one page) — nav disappears, rows pin the total.
+    await learners.searchFor(`${LEARNERS_MARKER} Alpha0`);
+    expect(await learners.getRowCount()).toBe(9);
+    await expect(learners.paginationNav).toHaveCount(0);
+  });
+
+  test('role filter composes with search', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const learners = new AdminLearnersPage(page);
+    // OrgAdmin accounts: Alpha02, Alpha05, Alpha08, Alpha11 — 4 rows, one page.
+    await learners.gotoWithQuery(
+      `search=${encodeURIComponent(LEARNERS_MARKER)}&role=OrgAdmin`,
+    );
+
+    expect(await learners.getRowCount()).toBe(4);
+    await expect(learners.paginationNav).toHaveCount(0);
+    const names = await learners.getLearnerNames();
+    expect(names).toContain('AdmPg032L Alpha02');
+    expect(names).toContain('AdmPg032L Alpha11');
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// T025 — US3: page-size toggle on Enrollments + Learners
+// (exact options 10/30/50/100, default 10, reset-to-page-1 on change,
+// retention while paging, URL-tamper fallbacks)
+// ────────────────────────────────────────────────────────────────────
+test.describe('Admin page-size toggle (spec 032, US3)', () => {
+  test('enrollments: selector offers exactly 10/30/50/100 with 10 selected by default', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}`);
+
+    const options = await enrollments.pageSizeSelect.locator('option').allTextContents();
+    expect(options).toEqual(['10', '30', '50', '100']);
+    expect(await enrollments.pageSizeSelect.inputValue()).toBe('10');
+  });
+
+  test('enrollments: changing size to 50 re-renders at page 1 with the new size', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}`);
+
+    await enrollments.pageSizeSelect.selectOption('50');
+    await page.waitForLoadState('networkidle');
+
+    // All 12 rows fit in one page of 50; the form reset to page 1 and kept the filter.
+    expect(await enrollments.getRowCount()).toBe(LEARNER_COUNT);
+    await expect(enrollments.paginationNav).toHaveCount(0);
+    await expect(page).toHaveURL(/pageSize=50/);
+    await expect(page).toHaveURL(/pageNumber=1/);
+    await expect(page).toHaveURL(/student=AdmPg032E/);
+  });
+
+  test('enrollments: page size is retained across Next/Previous', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}`);
+
+    await enrollments.nextLink.click();
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/pageSize=10/);
+    await expect(page).toHaveURL(/pageNumber=2/);
+
+    await enrollments.previousLink.click();
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/pageSize=10/);
+    await expect(page).toHaveURL(/pageNumber=1/);
+  });
+
+  test('enrollments: tampered pageSize=999 renders with size 10', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}&pageSize=999`);
+
+    expect(await enrollments.getRowCount()).toBe(10);
+    await expect(enrollments.pageIndicator).toHaveText(`Page 1 of 2 (${LEARNER_COUNT} total)`);
+    expect(await enrollments.pageSizeSelect.inputValue()).toBe('10');
+  });
+
+  test('enrollments: tampered pageSize=15 (legacy size) renders with size 10', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}&pageSize=15`);
+
+    expect(await enrollments.getRowCount()).toBe(10);
+    expect(await enrollments.pageSizeSelect.inputValue()).toBe('10');
+  });
+
+  test('enrollments: tampered pageNumber=99999 renders the last valid page', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const enrollments = new AdminEnrollmentsPage(page);
+    await enrollments.gotoWithQuery(`student=${encodeURIComponent(MARKER)}&pageNumber=99999`);
+
+    expect(await enrollments.getRowCount()).toBe(LEARNER_COUNT - 10);
+    await expect(enrollments.pageIndicator).toHaveText(`Page 2 of 2 (${LEARNER_COUNT} total)`);
+    await expect(enrollments.nextLink).toHaveCount(0);
+    await expect(enrollments.previousLink).toHaveCount(1);
+  });
+
+  test('learners: selector options match and 10 to 30 change re-renders at page 1', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const learners = new AdminLearnersPage(page);
+    await learners.gotoWithQuery(`search=${encodeURIComponent(LEARNERS_MARKER)}`);
+
+    const options = await learners.pageSizeSelect.locator('option').allTextContents();
+    expect(options).toEqual(['10', '30', '50', '100']);
+
+    await learners.pageSizeSelect.selectOption('30');
+    await page.waitForLoadState('networkidle');
+
+    expect(await learners.getRowCount()).toBe(LEARNER_COUNT);
+    await expect(learners.paginationNav).toHaveCount(0);
+    await expect(page).toHaveURL(/pageSize=30/);
+    await expect(page).toHaveURL(/pageNumber=1/);
+    await expect(page).toHaveURL(/search=AdmPg032L/);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// T036 — cross-page consistency (US3 close-out): the shared
+// _AdminPagination partial must behave identically on Enrollments,
+// Learners, and Courses. Runs BEFORE the T032 block on purpose (serial
+// mode): its delete test removes T11, which would leave Courses on a
+// single page.
+// ────────────────────────────────────────────────────────────────────
+interface PaginationControls {
+  paginationNav: Locator;
+  previousLink: Locator;
+  nextLink: Locator;
+  pageIndicator: Locator;
+  pageSizeSelect: Locator;
+  gotoWithQuery(query: string): Promise<void>;
+  getRowCount(): Promise<number>;
+}
+
+const adminPages: Array<{
+  label: string;
+  query: string;
+  total: number;
+  create: (p: Page) => PaginationControls;
+}> = [
+  {
+    label: 'Enrollments',
+    query: `student=${encodeURIComponent(MARKER)}`,
+    total: LEARNER_COUNT,
+    create: (p) => new AdminEnrollmentsPage(p),
+  },
+  {
+    label: 'Learners',
+    query: `search=${encodeURIComponent(LEARNERS_MARKER)}`,
+    total: LEARNER_COUNT,
+    create: (p) => new AdminLearnersPage(p),
+  },
+  {
+    label: 'Courses',
+    query: `search=${encodeURIComponent(COURSES_MARKER)}`,
+    total: COURSES_FILLER_COUNT,
+    create: (p) => new AdminCoursesPage(p),
+  },
+];
+
+test.describe('Cross-page consistency (spec 032, US3 close-out)', () => {
+  test('all three admin pages render the identical shared controls', async ({ page }) => {
+    await loginAsSuperUser(page);
+    for (const target of adminPages) {
+      const controls = target.create(page);
+      await controls.gotoWithQuery(target.query);
+
+      await expect(controls.paginationNav).toBeVisible();
+      const options = await controls.pageSizeSelect.locator('option').allTextContents();
+      expect(options, `${target.label} page-size options`).toEqual(['10', '30', '50', '100']);
+      expect(await controls.pageSizeSelect.inputValue(), `${target.label} default size`).toBe('10');
+      expect(await controls.getRowCount(), `${target.label} page 1 rows`).toBe(10);
+      await expect(controls.pageIndicator, `${target.label} indicator`).toHaveText(
+        `Page 1 of 2 (${target.total} total)`,
+      );
+    }
+  });
+
+  test('previous/next boundary hiding is identical on all three pages', async ({ page }) => {
+    await loginAsSuperUser(page);
+    for (const target of adminPages) {
+      const controls = target.create(page);
+      await controls.gotoWithQuery(target.query);
+
+      await expect(controls.previousLink, `${target.label} p1 previous`).toHaveCount(0);
+      await expect(controls.nextLink, `${target.label} p1 next`).toHaveCount(1);
+
+      await controls.nextLink.click();
+      await page.waitForLoadState('networkidle');
+
+      expect(await controls.getRowCount(), `${target.label} p2 rows`).toBe(target.total - 10);
+      await expect(controls.pageIndicator, `${target.label} p2 indicator`).toHaveText(
+        `Page 2 of 2 (${target.total} total)`,
+      );
+      await expect(controls.nextLink, `${target.label} p2 next`).toHaveCount(0);
+      await expect(controls.previousLink, `${target.label} p2 previous`).toHaveCount(1);
+
+      // Return to page 1 for the next page's iteration.
+      await controls.previousLink.click();
+      await page.waitForLoadState('networkidle');
+    }
+  });
+
+  test('changing the page size to 30 behaves identically on all three pages', async ({ page }) => {
+    await loginAsSuperUser(page);
+    for (const target of adminPages) {
+      const controls = target.create(page);
+      await controls.gotoWithQuery(target.query);
+
+      await controls.pageSizeSelect.selectOption('30');
+      await page.waitForLoadState('networkidle');
+
+      expect(await controls.getRowCount(), `${target.label} size-30 rows`).toBe(target.total);
+      await expect(controls.paginationNav, `${target.label} size-30 nav`).toHaveCount(0);
+      await expect(page, `${target.label} size-30 url`).toHaveURL(/pageSize=30/);
+      await expect(page, `${target.label} size-30 page`).toHaveURL(/pageNumber=1/);
+    }
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// T032 — US4: Admin > Courses pagination (server-side sort, page-size
+// toggle, filter+sort+pagination composition, delete step-back).
+// The deletion test runs LAST (serial mode) and removes T11.
+// ────────────────────────────────────────────────────────────────────
+test.describe('Admin Courses pagination (spec 032, US4)', () => {
+  test('shows one page of rows with pagination controls', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const courses = new AdminCoursesPage(page);
+    await courses.gotoWithQuery(`search=${encodeURIComponent(COURSES_MARKER)}`);
+
+    expect(await courses.getRowCount()).toBe(10); // default page size 10 of 11
+    await expect(courses.pageIndicator).toHaveText(`Page 1 of 2 (${COURSES_FILLER_COUNT} total)`);
+    await expect(courses.paginationNav).toBeVisible();
+  });
+
+  test('title sort orders the whole filtered set across pages', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const courses = new AdminCoursesPage(page);
+    await courses.gotoWithQuery(`search=${encodeURIComponent(COURSES_MARKER)}`);
+
+    // Default: title ascending — page 1 is T01..T10, page 2 is T11.
+    let titles = await courses.getCourseTitles();
+    expect(titles[0]).toBe(coursesFillerTitle(1));
+    expect(titles[9]).toBe(coursesFillerTitle(10));
+
+    await courses.nextLink.click();
+    await page.waitForLoadState('networkidle');
+    titles = await courses.getCourseTitles();
+    expect(titles).toEqual([coursesFillerTitle(11)]);
+
+    // Clicking the Title header toggles to descending (page resets to 1).
+    await courses.titleSortLink.click();
+    await page.waitForLoadState('networkidle');
+    titles = await courses.getCourseTitles();
+    expect(titles[0]).toBe(coursesFillerTitle(11));
+    expect(titles[9]).toBe(coursesFillerTitle(2));
+  });
+
+  test('category sort reorders the whole filtered set across pages', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const courses = new AdminCoursesPage(page);
+    await courses.gotoWithQuery(`search=${encodeURIComponent(COURSES_MARKER)}`);
+
+    // Category ascending: 5 Even rows then 6 Odd rows — the category order
+    // crosses the page boundary (page 1 ends mid-odd, page 2 is odd-only).
+    await courses.categorySortLink.click();
+    await page.waitForLoadState('networkidle');
+
+    let categories = await courses.getCategories();
+    expect(categories.slice(0, 5)).toEqual(Array(5).fill(`${COURSES_MARKER}-Even`));
+    expect(categories.slice(5)).toEqual(Array(5).fill(`${COURSES_MARKER}-Odd`));
+
+    await courses.nextLink.click();
+    await page.waitForLoadState('networkidle');
+    categories = await courses.getCategories();
+    expect(categories).toEqual([`${COURSES_MARKER}-Odd`]);
+  });
+
+  test('category filter composes with pagination', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const courses = new AdminCoursesPage(page);
+    // Odd category: T01, T03, T05, T07, T09, T11 — 6 rows, one page.
+    await courses.gotoWithQuery(
+      `search=${encodeURIComponent(COURSES_MARKER)}&category=${encodeURIComponent(`${COURSES_MARKER}-Odd`)}`,
+    );
+
+    expect(await courses.getRowCount()).toBe(6);
+    await expect(courses.paginationNav).toHaveCount(0);
+    const titles = await courses.getCourseTitles();
+    expect(titles).toContain(coursesFillerTitle(11));
+  });
+
+  test('page size toggle works on the courses page', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const courses = new AdminCoursesPage(page);
+    await courses.gotoWithQuery(`search=${encodeURIComponent(COURSES_MARKER)}`);
+
+    await courses.pageSizeSelect.selectOption('50');
+    await page.waitForLoadState('networkidle');
+
+    expect(await courses.getRowCount()).toBe(COURSES_FILLER_COUNT);
+    await expect(courses.paginationNav).toHaveCount(0);
+    await expect(page).toHaveURL(/pageSize=50/);
+    await expect(page).toHaveURL(/pageNumber=1/);
+    await expect(page).toHaveURL(/search=AdmPg032C/);
+  });
+
+  test('delete on the last page steps back when the page becomes empty', async ({ page }) => {
+    await loginAsSuperUser(page);
+    const courses = new AdminCoursesPage(page);
+    // Title ascending: T11 sits alone on page 2.
+    await courses.gotoWithQuery(`search=${encodeURIComponent(COURSES_MARKER)}&pageNumber=2`);
+    expect(await courses.getRowCount()).toBe(1);
+    await expect(courses.pageIndicator).toHaveText(`Page 2 of 2 (${COURSES_FILLER_COUNT} total)`);
+
+    await courses.deleteRow(0);
+
+    // Page 2 is now empty -> the page steps back to page 1 (10 rows, one
+    // page, so the nav is hidden). The browser URL still carries the delete
+    // form's ReturnUrl (page 2), which is safe: the server clamps it to the
+    // last valid page on reload.
+    expect(await courses.getRowCount()).toBe(10);
+    await expect(courses.paginationNav).toHaveCount(0);
+    const titles = await courses.getCourseTitles();
+    expect(titles).toContain(coursesFillerTitle(1));
+    expect(titles).toContain(coursesFillerTitle(10));
+    expect(titles).not.toContain(coursesFillerTitle(11));
+  });
+});

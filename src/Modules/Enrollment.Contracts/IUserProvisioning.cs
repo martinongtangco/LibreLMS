@@ -18,6 +18,12 @@ public interface IUserProvisioning
     /// <summary>List all platform accounts (optionally filtered by exact role). SuperUser-scope listing.</summary>
     Task<IList<StudentProvisionedDto>> ListAsync(string? roleFilter = null);
 
+    /// <summary>Paged admin listing, name-ascending. Search is case-insensitive contains on
+    /// name OR email; roleFilter is an exact role string. Returns only the requested page plus
+    /// the filtered total.</summary>
+    Task<StudentPageResult> ListPagedAsync(
+        string? search, string? roleFilter, int pageNumber, int pageSize);
+
     /// <summary>Update an account. Null arguments mean "no change" for that field.
     /// <paramref name="avatarPath"/> is the display photo's URL path (null/empty = no change, spec 030).</summary>
     Task<StudentProvisionedDto> UpdateAsync(Guid studentId, string? name, string? role, Guid? organizationId,
@@ -32,3 +38,6 @@ public interface IUserProvisioning
 /// <c>AvatarPath</c> is the display photo's URL path (e.g. "/avatars/&lt;guid&gt;.png") or null (spec 030).</summary>
 public record StudentProvisionedDto(Guid Id, string Name, string Email, string Role,
     Guid OrganizationId, DateTimeOffset CreatedAt, bool IsEmailVerified, string? AvatarPath = null);
+
+/// <summary>A page of learner accounts plus the filtered total count.</summary>
+public record StudentPageResult(IList<StudentProvisionedDto> Items, int TotalCount);

@@ -15,6 +15,9 @@ public record UserDto(
     DateTimeOffset CreatedAt
 );
 
+/// <summary>A page of user rows plus the filtered total count (spec 032).</summary>
+public record UserPageResult(IList<UserDto> Items, int TotalCount);
+
 /// <summary>
 /// Service for managing users (learners and org admins) within organizational scope.
 /// Spec 027 (R9): delegates all account work to the Enrollment module's IUserProvisioning
@@ -110,6 +113,15 @@ public class UserService(
     {
         var students = await provisioning.ListAsync(roleFilter);
         return await ToUserDtosAsync(students);
+    }
+
+    /// <summary>Paged variant of ListAllAsync: delegates to IUserProvisioning.ListPagedAsync,
+    /// then enriches org names for the page's distinct OrganizationIds. Old method retained.</summary>
+    public async Task<UserPageResult> ListAllPagedAsync(string? search, string? roleFilter, int pageNumber, int pageSize)
+    {
+        var page = await provisioning.ListPagedAsync(search, roleFilter, pageNumber, pageSize);
+        var dtos = await ToUserDtosAsync(page.Items);
+        return new UserPageResult(dtos, page.TotalCount);
     }
 
     private async Task<IList<UserDto>> ToUserDtosAsync(IList<StudentProvisionedDto> students)

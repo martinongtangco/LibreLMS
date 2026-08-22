@@ -14,10 +14,55 @@ export class AdminEnrollmentsPage extends BasePage {
   // Buttons / links
   readonly bulkEnrollButton: Locator;
 
+  // Pagination (spec 032): shared _AdminPagination partial controls
+  readonly paginationNav: Locator;
+  readonly previousLink: Locator;
+  readonly nextLink: Locator;
+  readonly pageIndicator: Locator;
+  readonly pageSizeSelect: Locator;
+
   constructor(page: Page) {
     super(page);
     this.enrollmentTable = page.locator('.data-table');
     this.bulkEnrollButton = page.getByRole('link', { name: 'Bulk Enroll' });
+    this.paginationNav = page.locator('nav.admin-pagination');
+    this.previousLink = page.locator('nav.admin-pagination a').filter({ hasText: 'Previous' });
+    this.nextLink = page.locator('nav.admin-pagination a').filter({ hasText: 'Next' });
+    this.pageIndicator = page.locator('nav.admin-pagination span');
+    this.pageSizeSelect = page.locator('select[name="pageSize"]');
+  }
+
+  /**
+   * Navigate to the Admin Enrollments page with a query string (no leading '?').
+   */
+  async gotoWithQuery(query: string): Promise<void> {
+    await this.page.goto(`/Admin/Enrollments/Index${query ? `?${query}` : ''}`);
+    await this.page.locator('h1', { hasText: 'Enrollment Management' }).waitFor({ state: 'visible' });
+  }
+
+  /**
+   * Number of rows currently rendered in the enrollment table.
+   */
+  async getRowCount(): Promise<number> {
+    return this.enrollmentTable.locator('tbody tr').count();
+  }
+
+  /**
+   * Set the student-name filter and submit the filter form (resets to page 1).
+   */
+  async filterByStudent(student: string): Promise<void> {
+    await this.page.getByPlaceholder('Search by student name...').fill(student);
+    await this.page.getByRole('button', { name: 'Filter' }).click();
+    await this.page.waitForLoadState('networkidle');
+  }
+
+  /**
+   * Set the course-title filter and submit the filter form (resets to page 1).
+   */
+  async filterByCourse(course: string): Promise<void> {
+    await this.page.getByPlaceholder('Search by course title...').fill(course);
+    await this.page.getByRole('button', { name: 'Filter' }).click();
+    await this.page.waitForLoadState('networkidle');
   }
 
   /**

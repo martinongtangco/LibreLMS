@@ -27,6 +27,13 @@ public class IndexModel : PageModel
     public string? SelectedRole { get; set; }
     public string? Error { get; set; }
 
+    [BindProperty(SupportsGet = true)] public int PageNumber { get; set; } = 1;
+    [BindProperty(SupportsGet = true)] public int PageSize { get; set; } = AdminPageState.DefaultPageSize;
+
+    public int TotalCount { get; set; }
+    public int TotalPages { get; set; } = 1;
+    public LibreLms.Host.Pages.Admin.AdminPaginationModel? Pagination { get; set; }
+
     public async Task OnGetAsync(string? search, string? org, string? role)
     {
         try
@@ -49,16 +56,43 @@ public class IndexModel : PageModel
             }.ToList();
             RoleFilter = new SelectList(roleItems, "Value", "Text", SelectedRole);
 
-            var allUsers = await _userService.ListAllAsync(string.IsNullOrEmpty(role) ? null : role);
+            // Shared pagination load pattern (spec 032): normalize size, clamp page, re-fetch if clamped.
+            var effectiveSize = AdminPageState.NormalizePageSize(PageSize);
+            var searchValue = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+            var roleFilter = string.IsNullOrEmpty(role) ? null : role;
+            var requestedPage = Math.Max(1, PageNumber);
 
-            // Filter by search
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var term = search.ToLowerInvariant();
-                allUsers = allUsers.Where(u => u.Name.ToLowerInvariant().Contains(term) || u.Email.ToLowerInvariant().Contains(term)).ToList();
-            }
+            var page = await _userService.ListAllPagedAsync(searchValue, roleFilter, requestedPage, effectiveSize);
+            var effectivePage = AdminPageState.ClampPage(requestedPage, page.TotalCount, effectiveSize);
 
-            Users = allUsers.ToList();
+            if (effectivePage != requestedPage)
+                page = await _userService.ListAllPagedAsync(searchValue, roleFilter, effectivePage, effectiveSize);
+
+            Users = page.Items.ToList();
+            PageSize = effectiveSize;
+            PageNumber = effectivePage;
+            TotalCount = page.TotalCount;
+            TotalPages = AdminPageState.TotalPages(page.TotalCount, effectiveSize);
+
+            // Pagination links and the page-size form carry the current filter values.
+            Pagination = new LibreLms.Host.Pages.Admin.AdminPaginationModel(
+                PageNumber,
+                TotalPages,
+                PageSize,
+                TotalCount,
+                "/Admin/Learners/Index",
+                new[]
+                {
+                    new KeyValuePair<string, string?>("search", Search),
+                    new KeyValuePair<string, string?>("org", SelectedOrg),
+                    new KeyValuePair<string, string?>("role", SelectedRole)
+                },
+                p => "/Admin/Learners/Index"
+                    + "?search=" + Uri.EscapeDataString(Search ?? "")
+                    + "&org=" + Uri.EscapeDataString(SelectedOrg ?? "")
+                    + "&role=" + Uri.EscapeDataString(SelectedRole ?? "")
+                    + "&pageSize=" + PageSize
+                    + "&pageNumber=" + p);
         }
         catch (Exception ex)
         {
