@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-22
 
-**Status**: In progress
+**Status**: Complete (merged + history scrubbed 2026-08-22)
 
 **Input**: User report: "did we just commit the cookies.txt to the remote repo?" — confirmed: the file is in `origin/master` and the repository is public.
 
