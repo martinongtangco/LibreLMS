@@ -20,8 +20,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Modules\Enrollment\Enrollment.csproj" />
     <ProjectReference Include="..\..\src\Modules\Catalog.Contracts\Catalog.Contracts.csproj" />
+    <!-- Host reference exists so tests can point MigrationsAssembly at the Host assembly
+         (EF migrations for all module contexts live there). Same pattern as Catalog.Tests. -->
+    <ProjectReference Include="..\..\src\Host\Host.csproj" />
   </ItemGroup>
 
 </Project>

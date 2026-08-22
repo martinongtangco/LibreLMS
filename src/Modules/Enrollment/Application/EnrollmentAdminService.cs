@@ -1,3 +1,5 @@
+using System.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using LibreLms.Contracts.Catalog;
 using LibreLms.Contracts.Enrollment;
@@ -181,6 +183,76 @@ public sealed class EnrollmentAdminService : IEnrollmentAdmin
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Paged admin listing, newest-first, via the AdminListEnrollments stored procedure
+    /// (created by an EF migration). Filters are case-insensitive contains on student name
+    /// and course title; whitespace-only filters are sent as NULL (no filter).
+    /// Rows whose course no longer exists are omitted (same semantics as ListAsync).
+    /// Returns the requested page plus the filtered total count.
+    /// </summary>
+    public async Task<AdminEnrollmentPageResult> ListPagedAsync(
+        string? studentName, string? courseTitle, int pageNumber, int pageSize)
+    {
+        studentName = studentName?.Trim();
+        if (string.IsNullOrWhiteSpace(studentName))
+            studentName = null;
+
+        courseTitle = courseTitle?.Trim();
+        if (string.IsNullOrWhiteSpace(courseTitle))
+            courseTitle = null;
+
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync();
+
+        try
+        {
+            using var command = new SqlCommand("AdminListEnrollments", (SqlConnection)connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            command.Parameters.Add("@StudentName", SqlDbType.NVarChar, 200).Value = studentName ?? (object)DBNull.Value;
+            command.Parameters.Add("@CourseTitle", SqlDbType.NVarChar, 200).Value = courseTitle ?? (object)DBNull.Value;
+            command.Parameters.Add("@PageSize", SqlDbType.Int).Value = pageSize;
+            command.Parameters.Add("@PageNumber", SqlDbType.Int).Value = pageNumber;
+
+            var items = new List<AdminEnrollmentRow>();
+            var totalCount = 0;
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            // Result Set 1: enrollment rows
+            while (reader.Read())
+            {
+                items.Add(new AdminEnrollmentRow(
+                    reader.GetGuid(0),
+                    reader.GetGuid(1),
+                    reader.GetString(2),
+                    reader.GetString(3),
+                    reader.GetGuid(4),
+                    reader.GetString(5),
+                    reader.GetGuid(6),
+                    reader.GetDateTimeOffset(7)
+                ));
+            }
+
+            // Move to Result Set 2: filtered total count
+            await reader.NextResultAsync();
+            if (reader.Read())
+            {
+                totalCount = reader.GetInt32(0);
+            }
+
+            return new AdminEnrollmentPageResult(items, totalCount);
+        }
+        finally
+        {
+            if (connection.State == ConnectionState.Open)
+                await connection.CloseAsync();
+        }
     }
 
     /// <summary>Batch course lookup by id — the cross-module replacement for joining the Catalog DbContext.</summary>

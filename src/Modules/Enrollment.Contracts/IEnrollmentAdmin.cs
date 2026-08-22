@@ -28,6 +28,12 @@ public interface IEnrollmentAdmin
     /// <summary>All enrollments newest-first, optionally filtered by (case-insensitive) student
     /// name and course title. Enrollments whose course no longer exists are omitted.</summary>
     Task<IList<AdminEnrollmentInfo>> ListAsync(string? studentName = null, string? courseTitle = null);
+
+    /// <summary>Paged admin listing, newest-first. Filters are case-insensitive contains on
+    /// student name and course title. Enrollments whose course no longer exists are omitted
+    /// (same semantics as ListAsync). Returns only the requested page plus the filtered total.</summary>
+    Task<AdminEnrollmentPageResult> ListPagedAsync(
+        string? studentName, string? courseTitle, int pageNumber, int pageSize);
 }
 
 /// <summary>Result of an enrollment operation. AlreadyEnrolled results carry EnrollmentId=Guid.Empty.</summary>
@@ -41,3 +47,12 @@ public record AdminEnrollmentInfo(Guid EnrollmentId, Guid StudentId, Guid Course
 /// <summary>Recent enrollment with learner + course display data.</summary>
 public record RecentEnrollmentInfo(Guid EnrollmentId, Guid StudentId, string StudentName,
     string StudentEmail, Guid CourseId, string CourseTitle, DateTimeOffset EnrolledAt);
+
+/// <summary>One enrollment row as returned by the AdminListEnrollments procedure
+/// (includes learner name/email and the learner's org id for display enrichment).</summary>
+public record AdminEnrollmentRow(
+    Guid EnrollmentId, Guid StudentId, string StudentName, string StudentEmail,
+    Guid CourseId, string CourseTitle, Guid OrganizationId, DateTimeOffset EnrolledAt);
+
+/// <summary>A page of admin enrollment rows plus the filtered total count.</summary>
+public record AdminEnrollmentPageResult(IList<AdminEnrollmentRow> Items, int TotalCount);

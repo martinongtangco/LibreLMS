@@ -29,5 +29,6 @@ public record UserScopeInfo(Guid OrganizationId, string Role);
 /// <summary>Account count for one organization.</summary>
 public record OrgLearnerCount(Guid OrganizationId, int Count);
 
-/// <summary>Minimal user identity for display across module boundaries.</summary>
-public record UserSummary(Guid Id, string Name, string Email);
+/// <summary>Minimal user identity for display across module boundaries; carries the user's
+/// organization id so consuming modules can resolve org names in bounded batches.</summary>
+public record UserSummary(Guid Id, string Name, string Email, Guid OrganizationId);

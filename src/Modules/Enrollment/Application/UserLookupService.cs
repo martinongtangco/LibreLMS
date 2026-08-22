@@ -56,7 +56,7 @@ public sealed class UserLookupService : IUserLookup
         var ids = studentIds.ToList();
         return await _context.Students
             .Where(s => ids.Contains(s.Id))
-            .Select(s => new UserSummary(s.Id, s.Name, s.Email))
+            .Select(s => new UserSummary(s.Id, s.Name, s.Email, s.OrganizationId))
             .ToListAsync();
     }
 

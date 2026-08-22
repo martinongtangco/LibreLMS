@@ -1,3 +1,5 @@
+using System.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using LibreLms.Contracts.Enrollment;
 using LibreLms.Modules.Enrollment.Domain;
@@ -90,6 +92,72 @@ public sealed class UserProvisioningService : IUserProvisioning
 
         var students = await query.ToListAsync();
         return students.Select(ToDto).ToList();
+    }
+
+    /// <summary>Paged admin listing over the AdminListLearners stored procedure (spec 032):
+    /// case-insensitive contains search on name OR email, exact role match, name-ascending.
+    /// The procedure's result set deliberately excludes credential columns
+    /// (PasswordHash/SecurityStamp are never selected or returned).</summary>
+    public async Task<StudentPageResult> ListPagedAsync(string? search, string? roleFilter, int pageNumber, int pageSize)
+    {
+        // Trim whitespace from search term
+        search = search?.Trim();
+        if (string.IsNullOrWhiteSpace(search))
+            search = null;
+
+        if (string.IsNullOrWhiteSpace(roleFilter))
+            roleFilter = null;
+
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync();
+
+        try
+        {
+            using var command = new SqlCommand("AdminListLearners", (SqlConnection)connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            command.Parameters.Add("@Search", SqlDbType.NVarChar, 200).Value = search ?? (object)DBNull.Value;
+            command.Parameters.Add("@Role", SqlDbType.NVarChar, 50).Value = roleFilter ?? (object)DBNull.Value;
+            command.Parameters.Add("@PageSize", SqlDbType.Int).Value = pageSize;
+            command.Parameters.Add("@PageNumber", SqlDbType.Int).Value = pageNumber;
+
+            var items = new List<StudentProvisionedDto>();
+            var totalCount = 0;
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            // Result Set 1: learner rows (columns 0..7 map 1:1 onto StudentProvisionedDto)
+            while (reader.Read())
+            {
+                items.Add(new StudentProvisionedDto(
+                    reader.GetGuid(0),
+                    reader.GetString(1),
+                    reader.GetString(2),
+                    reader.GetString(3),
+                    reader.GetGuid(4),
+                    reader.GetDateTimeOffset(5),
+                    reader.GetBoolean(6),
+                    reader.IsDBNull(7) ? null : reader.GetString(7)
+                ));
+            }
+
+            // Move to Result Set 2: Total count
+            await reader.NextResultAsync();
+            if (reader.Read())
+            {
+                totalCount = reader.GetInt32(0);
+            }
+
+            return new StudentPageResult(items, totalCount);
+        }
+        finally
+        {
+            if (connection.State == ConnectionState.Open)
+                await connection.CloseAsync();
+        }
     }
 
     public async Task<StudentProvisionedDto> UpdateAsync(Guid studentId, string? name, string? role, Guid? organizationId,
