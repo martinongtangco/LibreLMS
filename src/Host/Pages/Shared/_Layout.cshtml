@@ -136,26 +136,36 @@
             lucide.createIcons({ attributes: { 'stroke-width': 2.75 } });
         })();
 
-        // ── Active link detection (spec 020) ─────────────────────────────
+        // ── Active link detection (spec 020; matching rule fixed in spec 034) ──
+        // Keys are SECTION paths (the folder each link's page lives in; for the leaf
+        // page /Admin/Upload the page path IS the section). A link is active when the
+        // pathname equals its section or lies under it (section + '/'). The LONGEST
+        // matching section wins, so '/Admin/Courses/Index' highlights "Courses" (admin)
+        // — the old substring check made '/Courses/Index' ("Browse Courses") match
+        // first because it is contained in that URL.
         (function() {
             var path = window.location.pathname;
             var linkMap = {
-                '/MyCourses/Index': 'my-courses',
-                '/Courses/Index': 'browse-courses',
-                '/Admin/Dashboard/Index': 'dashboard',
-                '/Admin/Courses/Index': 'admin-courses',
-                '/Admin/Enrollments/Index': 'admin-enrollments',
-                '/Admin/Learners/Index': 'admin-learners',
-                '/Admin/Organizations/Index': 'admin-orgs',
+                '/MyCourses': 'my-courses',
+                '/Courses': 'browse-courses',
+                '/Admin/Dashboard': 'dashboard',
+                '/Admin/Courses': 'admin-courses',
+                '/Admin/Enrollments': 'admin-enrollments',
+                '/Admin/Learners': 'admin-learners',
+                '/Admin/Organizations': 'admin-orgs',
                 '/Admin/Upload': 'admin-upload'
             };
+            var bestKey = null;
             for (var urlPage in linkMap) {
-                var pageKey = linkMap[urlPage];
-                if (path.indexOf(urlPage) !== -1 || (urlPage !== '/' && path.indexOf(urlPage.toLowerCase()) !== -1)) {
-                    var activeLink = document.querySelector('a.nav-link[data-page="' + pageKey + '"]');
-                    if (activeLink) activeLink.classList.add('active');
-                    break;
+                var isExact = path === urlPage;
+                var isSubpage = path.length > urlPage.length && path.indexOf(urlPage + '/') === 0;
+                if ((isExact || isSubpage) && (bestKey === null || urlPage.length > bestKey.length)) {
+                    bestKey = urlPage;
                 }
+            }
+            if (bestKey !== null) {
+                var activeLink = document.querySelector('a.nav-link[data-page="' + linkMap[bestKey] + '"]');
+                if (activeLink) activeLink.classList.add('active');
             }
         })();
 
