@@ -1,5 +1,7 @@
 # Spec 011: Fix Logout Authentication Scheme Name
 
+**Status**: Complete (merged 2026-07-31)
+
 ## Problem
 
 After the logout button fix (spec 010), clicking Logout throws:

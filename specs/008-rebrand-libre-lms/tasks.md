@@ -19,7 +19,7 @@
 
 **Purpose**: Preparation — no new infrastructure needed for a rebrand
 
-- [ ] T001 Create git branch `story/008-rebrand-libre-lms` from `main`
+- [x] T001 Create git branch `story/008-rebrand-libre-lms` from `main`
 
 ---
 
@@ -31,10 +31,10 @@
 
 ### Implementation
 
-- [ ] T002 [P] [US1] Update `src/Host/Pages/Shared/_Layout.cshtml`: change `<title>` from "Learning LMS" to "Libre LMS"
-- [ ] T003 [P] [US1] Update `src/Host/Pages/Shared/_Layout.cshtml`: change `.brand` span from "Learning LMS" to "Libre LMS"
-- [ ] T004 [P] [US1] Update `src/Host/Pages/Shared/_Layout.cshtml`: change footer copyright from "Learning LMS" to "Libre LMS"
-- [ ] T005 [P] [US1] Update `src/Host/Pages/Scorm/Launch.cshtml`: change page title from "Learning LMS" to "Libre LMS"
+- [x] T002 [P] [US1] Update `src/Host/Pages/Shared/_Layout.cshtml`: change `<title>` from "Learning LMS" to "Libre LMS"
+- [x] T003 [P] [US1] Update `src/Host/Pages/Shared/_Layout.cshtml`: change `.brand` span from "Learning LMS" to "Libre LMS"
+- [x] T004 [P] [US1] Update `src/Host/Pages/Shared/_Layout.cshtml`: change footer copyright from "Learning LMS" to "Libre LMS"
+- [x] T005 [P] [US1] Update `src/Host/Pages/Scorm/Launch.cshtml`: change page title from "Learning LMS" to "Libre LMS"
 
 **Checkpoint**: UI branding complete — browser shows "Libre LMS" everywhere
 
@@ -48,8 +48,8 @@
 
 ### Implementation
 
-- [ ] T006 [P] [US2] Update `README.md`: replace all instances of "Learning LMS" with "Libre LMS" and "LearningLms" with "LibreLms"
-- [ ] T007 [P] [US2] Update `.specify/memory/constitution.md`: replace title and body references of "Learning LMS" with "Libre LMS"
+- [x] T006 [P] [US2] Update `README.md`: replace all instances of "Learning LMS" with "Libre LMS" and "LearningLms" with "LibreLms"
+- [x] T007 [P] [US2] Update `.specify/memory/constitution.md`: replace title and body references of "Learning LMS" with "Libre LMS"
 
 **Checkpoint**: Documentation complete — no "Learning LMS" in README or constitution
 
@@ -63,21 +63,21 @@
 
 ### Implementation
 
-- [ ] T008 [P] [US3] Rename solution file: `LearningLms.slnx` → `LibreLms.slnx`
-- [ ] T009 [P] [US3] Update `src/Host/appsettings.Development.json`: change database name from "LearningLms" to "LibreLms"
-- [ ] T010 [P] [US3] Rename namespaces in `src/SharedKernel/`: Entity.cs, IDomainEvent.cs, Result.cs (`LearningLms` → `LibreLms`)
-- [ ] T011 [P] [US3] Rename namespaces in `src/Host/`: Program.cs, ScormHelpers.cs, and all Pages/*.cshtml.cs files
-- [ ] T012 [P] [US3] Rename namespace in `src/Host/Pages/Error.cshtml` (@using directive)
-- [ ] T013 [P] [US3] Rename namespaces in `src/Modules/Catalog/`: all files in Application/, Domain/, Endpoints/, Infrastructure/, ModuleMarker.cs
-- [ ] T014 [P] [US3] Rename namespaces in `src/Modules/Catalog.Contracts/`: all .cs files
-- [ ] T015 [P] [US3] Rename namespaces in `src/Modules/Enrollment/`: all files in Application/, Domain/, Endpoints/, Infrastructure/, ModuleMarker.cs
-- [ ] T016 [P] [US3] Rename namespaces in `src/Modules/Enrollment.Contracts/`: all .cs files
-- [ ] T017 [P] [US3] Rename namespaces in `src/Modules/Scorm/`: all files in Application/, Domain/, Endpoints/, Infrastructure/, ModuleMarker.cs
-- [ ] T018 [P] [US3] Rename namespaces in `src/Modules/Scorm.Contracts/`: all .cs files
-- [ ] T019 [P] [US3] Rename namespaces in `tests/ArchitectureTests/`: ModuleBoundaryTests.cs
-- [ ] T020 [P] [US3] Rename namespaces in `tests/Catalog.Tests/`: PlaceholderTests.cs
-- [ ] T021 [P] [US3] Rename namespaces in `tests/Enrollment.Tests/`: PlaceholderTests.cs
-- [ ] T022 [P] [US3] Rename namespaces in `tests/Scorm.Tests/`: PlaceholderTests.cs
+- [x] T008 [P] [US3] Rename solution file: `LearningLms.slnx` → `LibreLms.slnx`
+- [x] T009 [P] [US3] Update `src/Host/appsettings.Development.json`: change database name from "LearningLms" to "LibreLms"
+- [x] T010 [P] [US3] Rename namespaces in `src/SharedKernel/`: Entity.cs, IDomainEvent.cs, Result.cs (`LearningLms` → `LibreLms`)
+- [x] T011 [P] [US3] Rename namespaces in `src/Host/`: Program.cs, ScormHelpers.cs, and all Pages/*.cshtml.cs files
+- [x] T012 [P] [US3] Rename namespace in `src/Host/Pages/Error.cshtml` (@using directive)
+- [x] T013 [P] [US3] Rename namespaces in `src/Modules/Catalog/`: all files in Application/, Domain/, Endpoints/, Infrastructure/, ModuleMarker.cs
+- [x] T014 [P] [US3] Rename namespaces in `src/Modules/Catalog.Contracts/`: all .cs files
+- [x] T015 [P] [US3] Rename namespaces in `src/Modules/Enrollment/`: all files in Application/, Domain/, Endpoints/, Infrastructure/, ModuleMarker.cs
+- [x] T016 [P] [US3] Rename namespaces in `src/Modules/Enrollment.Contracts/`: all .cs files
+- [x] T017 [P] [US3] Rename namespaces in `src/Modules/Scorm/`: all files in Application/, Domain/, Endpoints/, Infrastructure/, ModuleMarker.cs
+- [x] T018 [P] [US3] Rename namespaces in `src/Modules/Scorm.Contracts/`: all .cs files
+- [x] T019 [P] [US3] Rename namespaces in `tests/ArchitectureTests/`: ModuleBoundaryTests.cs
+- [x] T020 [P] [US3] Rename namespaces in `tests/Catalog.Tests/`: PlaceholderTests.cs
+- [x] T021 [P] [US3] Rename namespaces in `tests/Enrollment.Tests/`: PlaceholderTests.cs
+- [x] T022 [P] [US3] Rename namespaces in `tests/Scorm.Tests/`: PlaceholderTests.cs
 
 **Checkpoint**: Internal naming complete — all namespaces use "LibreLms"
 
@@ -87,13 +87,13 @@
 
 **Purpose**: Verify the rebrand is complete and the application builds and runs correctly
 
-- [ ] T023 Build solution: `dotnet build LibreLms.slnx` — must succeed with zero errors
-- [ ] T024 Run architecture tests: `dotnet test tests/ArchitectureTests` — must pass
-- [ ] T025 Run all tests: `dotnet test LibreLms.slnx` — must pass
-- [ ] T026 Verify no "LearningLms" in active source: `grep -r "LearningLms" src/ --include="*.cs" --exclude-dir=Migrations` — must be empty
-- [ ] T027 Verify no "Learning LMS" in documentation: `grep -r "Learning LMS" README.md .specify/memory/constitution.md` — must be empty
-- [ ] T028 [P] Run application and verify UI: `dotnet run --project src/Host` — check browser for "Libre LMS" branding
-- [ ] T029 Commit all changes with descriptive commit message
+- [x] T023 Build solution: `dotnet build LibreLms.slnx` — must succeed with zero errors
+- [x] T024 Run architecture tests: `dotnet test tests/ArchitectureTests` — must pass
+- [x] T025 Run all tests: `dotnet test LibreLms.slnx` — must pass
+- [x] T026 Verify no "LearningLms" in active source: `grep -r "LearningLms" src/ --include="*.cs" --exclude-dir=Migrations` — must be empty
+- [x] T027 Verify no "Learning LMS" in documentation: `grep -r "Learning LMS" README.md .specify/memory/constitution.md` — must be empty
+- [x] T028 [P] Run application and verify UI: `dotnet run --project src/Host` — check browser for "Libre LMS" branding
+- [x] T029 Commit all changes with descriptive commit message
 
 ---
 

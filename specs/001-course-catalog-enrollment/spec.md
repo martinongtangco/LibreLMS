@@ -4,7 +4,7 @@
 
 **Created**: 2025-07-29
 
-**Status**: Draft
+**Status**: Complete (merged 2026-07-28)
 
 **Input**: User description: "Slice 1: Course Catalog + Enrollment. Students can browse a list of available courses, view a courses detail page, enroll in a course, and see a list of courses theyre enrolled in. No SCORM content yet — thats a separate slice."
 

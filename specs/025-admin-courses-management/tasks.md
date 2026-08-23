@@ -26,7 +26,7 @@ description: "Task list for Admin Courses Management Overhaul with SCORM Integra
 
 **Purpose**: Branch creation and environment preparation
 
-- [ ] T001 Create git branch `bug/025-admin-courses-management` from `main`
+- [x] T001 Create git branch `bug/025-admin-courses-management` from `main`
 
 ---
 
@@ -38,27 +38,27 @@ description: "Task list for Admin Courses Management Overhaul with SCORM Integra
 
 ### Database Migration
 
-- [ ] T002 [P] Generate EF Core migration `AddScormPackageNullableCourseId` in `src/Host/Migrations/Scorm/` that: (a) drops existing unique index on `ScormPackages.CourseId`, (b) alters `CourseId` column from `Guid` to nullable `Guid?`, (c) creates filtered unique index `WHERE [CourseId] IS NOT NULL` using `HasFilter("[CourseId] IS NOT NULL")`
+- [x] T002 [P] Generate EF Core migration `AddScormPackageNullableCourseId` in `src/Host/Migrations/Scorm/` that: (a) drops existing unique index on `ScormPackages.CourseId`, (b) alters `CourseId` column from `Guid` to nullable `Guid?`, (c) creates filtered unique index `WHERE [CourseId] IS NOT NULL` using `HasFilter("[CourseId] IS NOT NULL")`
 
 ### Scorm Module Changes
 
-- [ ] T003 [P] Modify `src/Modules/Scorm/Domain/ScormPackage.cs`: change `CourseId` property from `Guid` to `Guid?` (nullable)
+- [x] T003 [P] Modify `src/Modules/Scorm/Domain/ScormPackage.cs`: change `CourseId` property from `Guid` to `Guid?` (nullable)
 
-- [ ] T004 [P] Modify `src/Modules/Scorm/Infrastructure/ScormDbContext.cs`: update `OnModelCreating` for `ScormPackage` — change `entity.HasIndex(e => e.CourseId).IsUnique()` to `entity.HasIndex(e => e.CourseId).IsUnique().HasFilter("[CourseId] IS NOT NULL")`
+- [x] T004 [P] Modify `src/Modules/Scorm/Infrastructure/ScormDbContext.cs`: update `OnModelCreating` for `ScormPackage` — change `entity.HasIndex(e => e.CourseId).IsUnique()` to `entity.HasIndex(e => e.CourseId).IsUnique().HasFilter("[CourseId] IS NOT NULL")`
 
-- [ ] T005 Modify `src/Modules/Scorm/Application/ScormPackageService.cs`: add `ListAvailableAsync()` method returning `Task<IEnumerable<ScormPackage>>` that queries `ScormPackages` where `CourseId == null`; add `AssociateWithCourseAsync(Guid packageId, Guid courseId)` method that finds a package by `packageId`, validates `CourseId` is null, sets `CourseId = courseId`, and saves; add `ReplacePackageAsync(Guid courseId, Stream zipStream)` method that finds existing package for `courseId`, deletes its content directory from filesystem, removes the entity, then calls existing upload logic to create new package with the given `courseId`
+- [x] T005 Modify `src/Modules/Scorm/Application/ScormPackageService.cs`: add `ListAvailableAsync()` method returning `Task<IEnumerable<ScormPackage>>` that queries `ScormPackages` where `CourseId == null`; add `AssociateWithCourseAsync(Guid packageId, Guid courseId)` method that finds a package by `packageId`, validates `CourseId` is null, sets `CourseId = courseId`, and saves; add `ReplacePackageAsync(Guid courseId, Stream zipStream)` method that finds existing package for `courseId`, deletes its content directory from filesystem, removes the entity, then calls existing upload logic to create new package with the given `courseId`
 
 ### Catalog Module Changes
 
-- [ ] T006 [P] Create `src/Modules/Catalog/Endpoints/UpdateCourseRequest.cs` with record containing: Title (string), ShortDescription (string), FullDescription (string), Category (string), Duration (string)
+- [x] T006 [P] Create `src/Modules/Catalog/Endpoints/UpdateCourseRequest.cs` with record containing: Title (string), ShortDescription (string), FullDescription (string), Category (string), Duration (string)
 
-- [ ] T007 [P] Modify `src/Modules/Catalog/Endpoints/CreateCourseRequest.cs`: add optional `Guid? ScormPackageId` parameter to the record for SCORM association during course creation
+- [x] T007 [P] Modify `src/Modules/Catalog/Endpoints/CreateCourseRequest.cs`: add optional `Guid? ScormPackageId` parameter to the record for SCORM association during course creation
 
-- [ ] T008 Modify `src/Modules/Catalog/Application/CourseCatalogService.cs`: add `UpdateAsync(Guid courseId, UpdateCourseRequest request)` method that finds course by ID, updates Title/ShortDescription/FullDescription/Category/Duration, calls `SaveChangesAsync`, and returns updated Course (throws `KeyNotFoundException` if not found)
+- [x] T008 Modify `src/Modules/Catalog/Application/CourseCatalogService.cs`: add `UpdateAsync(Guid courseId, UpdateCourseRequest request)` method that finds course by ID, updates Title/ShortDescription/FullDescription/Category/Duration, calls `SaveChangesAsync`, and returns updated Course (throws `KeyNotFoundException` if not found)
 
 ### Management Module Changes
 
-- [ ] T009 Modify `src/Modules/Management/Application/CourseVisibilityService.cs`: fix `GetAllCoursesAsync` to properly resolve organization names using `orgLookup.GetOrganizationAsync` with a cache (same pattern as `GetVisibleCoursesAsync`); fix `DeleteCourseAsync` to also delete the associated ScormPackage (via injected ScormDbContext or ScormPackageService) and its content directory from the filesystem before deleting the course
+- [x] T009 Modify `src/Modules/Management/Application/CourseVisibilityService.cs`: fix `GetAllCoursesAsync` to properly resolve organization names using `orgLookup.GetOrganizationAsync` with a cache (same pattern as `GetVisibleCoursesAsync`); fix `DeleteCourseAsync` to also delete the associated ScormPackage (via injected ScormDbContext or ScormPackageService) and its content directory from the filesystem before deleting the course
 
 **Checkpoint**: Service layer ready — migration applied, new methods exist, all DTOs in place. Page implementation can begin.
 
@@ -74,9 +74,9 @@ description: "Task list for Admin Courses Management Overhaul with SCORM Integra
 
 ### Implementation for User Story 1
 
-- [ ] T010 [P] [US1] Modify `src/Host/Pages/Admin/Courses/Index.cshtml.cs`: inject `ScormPackageService` alongside existing services; add `HasScorm` boolean to `CourseDisplay` record; in `OnGetAsync`, after building `Courses` list, check each course against `ScormPackageService.GetPackageByCourseIdAsync` to populate `HasScorm`; ensure `OnPostDeleteAsync` includes SCORM-aware confirmation data (expose `HasScorm` per course in the model)
+- [x] T010 [P] [US1] Modify `src/Host/Pages/Admin/Courses/Index.cshtml.cs`: inject `ScormPackageService` alongside existing services; add `HasScorm` boolean to `CourseDisplay` record; in `OnGetAsync`, after building `Courses` list, check each course against `ScormPackageService.GetPackageByCourseIdAsync` to populate `HasScorm`; ensure `OnPostDeleteAsync` includes SCORM-aware confirmation data (expose `HasScorm` per course in the model)
 
-- [ ] T011 [P] [US1] Modify `src/Host/Pages/Admin/Courses/Index.cshtml`: add "SCORM" column to the table showing a badge/indicator for courses with SCORM content; ensure "Create Course" button, Edit link (`asp-page="Edit" asp-route-courseId="@course.CourseId"`), and Delete form are all present in the Actions column; add `data-has-scorm="true"` attribute to delete buttons for courses with SCORM content (used by confirmation JS in US4)
+- [x] T011 [P] [US1] Modify `src/Host/Pages/Admin/Courses/Index.cshtml`: add "SCORM" column to the table showing a badge/indicator for courses with SCORM content; ensure "Create Course" button, Edit link (`asp-page="Edit" asp-route-courseId="@course.CourseId"`), and Delete form are all present in the Actions column; add `data-has-scorm="true"` attribute to delete buttons for courses with SCORM content (used by confirmation JS in US4)
 
 **Checkpoint**: At this point, the Admin/Courses listing page displays courses with search, filter, sort, pagination, and SCORM status indicators. Create/Edit/Delete actions are wired.
 
@@ -92,9 +92,9 @@ description: "Task list for Admin Courses Management Overhaul with SCORM Integra
 
 ### Implementation for User Story 2
 
-- [ ] T012 [P] [US2] Rewrite `src/Host/Pages/Admin/Courses/Create.cshtml.cs`: inject `CourseCatalogService`, `ScormPackageService`, and `IWebHostEnvironment`; add `[BindProperty]` properties: `ScormMode` (string: "none"/"upload"/"associate"), `ScormFile` (IFormFile?), `ScormPackageId` (Guid?); in `OnPostAsync`: (a) create course via `CourseCatalogService.CreateAsync`, (b) if ScormMode="upload", call `ScormPackageService.UploadAsync(file.OpenReadStream(), courseId)`, (c) if ScormMode="associate", call `ScormPackageService.AssociateWithCourseAsync(ScormPackageId.Value, courseId)`, (d) redirect to `/Admin/Courses` with success/error params
+- [x] T012 [P] [US2] Rewrite `src/Host/Pages/Admin/Courses/Create.cshtml.cs`: inject `CourseCatalogService`, `ScormPackageService`, and `IWebHostEnvironment`; add `[BindProperty]` properties: `ScormMode` (string: "none"/"upload"/"associate"), `ScormFile` (IFormFile?), `ScormPackageId` (Guid?); in `OnPostAsync`: (a) create course via `CourseCatalogService.CreateAsync`, (b) if ScormMode="upload", call `ScormPackageService.UploadAsync(file.OpenReadStream(), courseId)`, (c) if ScormMode="associate", call `ScormPackageService.AssociateWithCourseAsync(ScormPackageId.Value, courseId)`, (d) redirect to `/Admin/Courses` with success/error params
 
-- [ ] T013 [P] [US2] Rewrite `src/Host/Pages/Admin/Courses/Create.cshtml`: add SCORM section after Duration field with radio button group: (1) "No SCORM content" (default), (2) "Upload new SCORM package", (3) "Associate existing SCORM"; add `<input type="file" accept=".zip" name="ScormFile" id="scormFileInput" />` hidden by default; add dropdown for existing SCORM packages hidden by default, populated from `Model.AvailableScormPackages`; add minimal JavaScript to toggle visibility of file input and dropdown based on radio selection; load available SCORM packages in page model `OnGet` via `ScormPackageService.ListAvailableAsync()`
+- [x] T013 [P] [US2] Rewrite `src/Host/Pages/Admin/Courses/Create.cshtml`: add SCORM section after Duration field with radio button group: (1) "No SCORM content" (default), (2) "Upload new SCORM package", (3) "Associate existing SCORM"; add `<input type="file" accept=".zip" name="ScormFile" id="scormFileInput" />` hidden by default; add dropdown for existing SCORM packages hidden by default, populated from `Model.AvailableScormPackages`; add minimal JavaScript to toggle visibility of file input and dropdown based on radio selection; load available SCORM packages in page model `OnGet` via `ScormPackageService.ListAvailableAsync()`
 
 **Checkpoint**: Course creation works end-to-end: button click → form with SCORM options → submit → success → listing shows new course with optional SCORM.
 
@@ -110,9 +110,9 @@ description: "Task list for Admin Courses Management Overhaul with SCORM Integra
 
 ### Implementation for User Story 3
 
-- [ ] T014 [P] [US3] Create `src/Host/Pages/Admin/Courses/Edit.cshtml.cs`: `[Authorize(Roles = "SuperUser,OrgAdmin")]` page model injecting `CourseCatalogService`, `ScormPackageService`; `[BindProperty]` properties for Title, ShortDescription, FullDescription, Category, Duration, ScormFile (IFormFile?), ScormMode (string?); `CurrentScormPackage` property for display; `OnGetAsync(Guid courseId)` loads course by ID and populates fields, loads current SCORM via `ScormPackageService.GetPackageByCourseIdAsync(courseId)` (redirects to Index with error if not found); `OnPostAsync(Guid courseId)` calls `CourseCatalogService.UpdateAsync(courseId, new UpdateCourseRequest(...))`, then if ScormFile is provided calls `ScormPackageService.ReplacePackageAsync(courseId, ScormFile.OpenReadStream())` if course has SCORM or `ScormPackageService.UploadAsync(ScormFile.OpenReadStream(), courseId)` if not, then redirects to Index with success
+- [x] T014 [P] [US3] Create `src/Host/Pages/Admin/Courses/Edit.cshtml.cs`: `[Authorize(Roles = "SuperUser,OrgAdmin")]` page model injecting `CourseCatalogService`, `ScormPackageService`; `[BindProperty]` properties for Title, ShortDescription, FullDescription, Category, Duration, ScormFile (IFormFile?), ScormMode (string?); `CurrentScormPackage` property for display; `OnGetAsync(Guid courseId)` loads course by ID and populates fields, loads current SCORM via `ScormPackageService.GetPackageByCourseIdAsync(courseId)` (redirects to Index with error if not found); `OnPostAsync(Guid courseId)` calls `CourseCatalogService.UpdateAsync(courseId, new UpdateCourseRequest(...))`, then if ScormFile is provided calls `ScormPackageService.ReplacePackageAsync(courseId, ScormFile.OpenReadStream())` if course has SCORM or `ScormPackageService.UploadAsync(ScormFile.OpenReadStream(), courseId)` if not, then redirects to Index with success
 
-- [ ] T015 [P] [US3] Create `src/Host/Pages/Admin/Courses/Edit.cshtml`: page with `<h1>Edit Course</h1>`; form with inputs for Title, ShortDescription, FullDescription (textarea), Category, Duration matching the Create form layout; SCORM section showing: if `CurrentScormPackage` exists, display its ManifestTitle and CreatedAt with "Upload new SCORM to replace" file input; if no SCORM, show "Upload SCORM package" file input; Save Changes and Cancel buttons; Cancel links to `/Admin/Courses`
+- [x] T015 [P] [US3] Create `src/Host/Pages/Admin/Courses/Edit.cshtml`: page with `<h1>Edit Course</h1>`; form with inputs for Title, ShortDescription, FullDescription (textarea), Category, Duration matching the Create form layout; SCORM section showing: if `CurrentScormPackage` exists, display its ManifestTitle and CreatedAt with "Upload new SCORM to replace" file input; if no SCORM, show "Upload SCORM package" file input; Save Changes and Cancel buttons; Cancel links to `/Admin/Courses`
 
 **Checkpoint**: Course editing works end-to-end: Edit link → pre-populated form → save → success → listing shows updated data. SCORM can be added or replaced.
 
@@ -128,9 +128,9 @@ description: "Task list for Admin Courses Management Overhaul with SCORM Integra
 
 ### Implementation for User Story 4
 
-- [ ] T016 [P] [US4] Modify `src/Host/Pages/Admin/Courses/Index.cshtml.cs`: in `OnPostDeleteAsync`, check if course has SCORM before deleting (via `ScormPackageService.GetPackageByCourseIdAsync`); expose `HasScorm` per course in the `CourseDisplay` record or as a separate `Dictionary<Guid, bool>` for the view
+- [x] T016 [P] [US4] Modify `src/Host/Pages/Admin/Courses/Index.cshtml.cs`: in `OnPostDeleteAsync`, check if course has SCORM before deleting (via `ScormPackageService.GetPackageByCourseIdAsync`); expose `HasScorm` per course in the `CourseDisplay` record or as a separate `Dictionary<Guid, bool>` for the view
 
-- [ ] T017 [P] [US4] Modify `src/Host/Pages/Admin/Courses/Index.cshtml`: for delete buttons/forms, add JavaScript confirmation that checks `data-has-scorm` attribute — if true, show message "This course has SCORM content. Deleting this course will also permanently delete the SCORM package and its extracted files. Are you sure?" — if false, show standard "Are you sure you want to delete this course?"; verify the delete form correctly passes `courseId` via `asp-route-courseId`
+- [x] T017 [P] [US4] Modify `src/Host/Pages/Admin/Courses/Index.cshtml`: for delete buttons/forms, add JavaScript confirmation that checks `data-has-scorm` attribute — if true, show message "This course has SCORM content. Deleting this course will also permanently delete the SCORM package and its extracted files. Are you sure?" — if false, show standard "Are you sure you want to delete this course?"; verify the delete form correctly passes `courseId` via `asp-route-courseId`
 
 **Checkpoint**: Course deletion works: Delete click → confirm dialog (with SCORM warning if applicable) → course removed → success message → listing updated.
 
@@ -146,7 +146,7 @@ description: "Task list for Admin Courses Management Overhaul with SCORM Integra
 
 ### Implementation for User Story 5
 
-- [ ] T018 [P] [US5] Add CSS rules to `src/Host/wwwroot/css/site.css`: add `.data-table tr:nth-child(even) { background: var(--color-bg); }` for alternating row colors; add `.data-table tbody tr:hover { background: var(--color-border-light, #f5f0ea); }` for hover highlight; add `.badge-scorm` or similar class for SCORM status indicators with appropriate colors; ensure the table card wrapper renders with `--color-surface` (#ffffff) background providing clear contrast against `--page-bg` (#f5ead8)
+- [x] T018 [P] [US5] Add CSS rules to `src/Host/wwwroot/css/site.css`: add `.data-table tr:nth-child(even) { background: var(--color-bg); }` for alternating row colors; add `.data-table tbody tr:hover { background: var(--color-border-light, #f5f0ea); }` for hover highlight; add `.badge-scorm` or similar class for SCORM status indicators with appropriate colors; ensure the table card wrapper renders with `--color-surface` (#ffffff) background providing clear contrast against `--page-bg` (#f5ead8)
 
 **Checkpoint**: Table is visually distinct with card surface, clear headers, alternating rows, hover states, and SCORM status badges.
 
@@ -162,11 +162,11 @@ description: "Task list for Admin Courses Management Overhaul with SCORM Integra
 
 ### Implementation for User Story 6
 
-- [ ] T019 [P] [US6] Rewrite `src/Host/Pages/Admin/Upload.cshtml.cs`: remove course dropdown and `CourseCatalogService`/`CourseVisibilityService` dependencies; inject `ScormPackageService` directly; add `AvailablePackages` property (list of ScormPackage with ManifestTitle, Id, CreatedAt); in `OnGetAsync`, call `ScormPackageService.ListAvailableAsync()` to populate packages; in `OnPostAsync`, handle file upload without courseId — use direct call to `ScormPackageService` with `null` courseId (may need to add overload or modify existing `UploadAsync` to accept `Guid? courseId`); add `OnPostDeleteAsync(Guid packageId)` that deletes the ScormPackage entity and its content directory from the filesystem
+- [x] T019 [P] [US6] Rewrite `src/Host/Pages/Admin/Upload.cshtml.cs`: remove course dropdown and `CourseCatalogService`/`CourseVisibilityService` dependencies; inject `ScormPackageService` directly; add `AvailablePackages` property (list of ScormPackage with ManifestTitle, Id, CreatedAt); in `OnGetAsync`, call `ScormPackageService.ListAvailableAsync()` to populate packages; in `OnPostAsync`, handle file upload without courseId — use direct call to `ScormPackageService` with `null` courseId (may need to add overload or modify existing `UploadAsync` to accept `Guid? courseId`); add `OnPostDeleteAsync(Guid packageId)` that deletes the ScormPackage entity and its content directory from the filesystem
 
-- [ ] T020 [P] [US6] Rewrite `src/Host/Pages/Admin/Upload.cshtml`: remove course selection dropdown; add upload form with single file input for SCORM ZIP; add section below titled "Available SCORM Packages" listing unassociated packages with ManifestTitle, CreatedAt, and Delete button for each; add SCORM pool count display; add 50MB upload size note
+- [x] T020 [P] [US6] Rewrite `src/Host/Pages/Admin/Upload.cshtml`: remove course selection dropdown; add upload form with single file input for SCORM ZIP; add section below titled "Available SCORM Packages" listing unassociated packages with ManifestTitle, CreatedAt, and Delete button for each; add SCORM pool count display; add 50MB upload size note
 
-- [ ] T021 Modify `src/Modules/Scorm/Application/ScormPackageService.cs`: add `UploadAsync(Stream zipStream, Guid? courseId)` overload that accepts nullable courseId — when null, creates ScormPackage with `CourseId = null`; add `DeleteAsync(Guid packageId)` method that finds the package, deletes its content directory from filesystem, removes the entity, and saves
+- [x] T021 Modify `src/Modules/Scorm/Application/ScormPackageService.cs`: add `UploadAsync(Stream zipStream, Guid? courseId)` overload that accepts nullable courseId — when null, creates ScormPackage with `CourseId = null`; add `DeleteAsync(Guid packageId)` method that finds the package, deletes its content directory from filesystem, removes the entity, and saves
 
 **Checkpoint**: SCORM pool management works: upload to pool → package listed → delete from pool → package removed. Course creation can associate with pool packages.
 
@@ -176,21 +176,21 @@ description: "Task list for Admin Courses Management Overhaul with SCORM Integra
 
 **Purpose**: Verification, cleanup, and E2E validation.
 
-- [ ] T022 Run `dotnet build src/Host` and confirm zero build errors
+- [x] T022 Run `dotnet build src/Host` and confirm zero build errors
 
-- [ ] T023 Run EF Core migration: `dotnet ef database update --project src/Host --context ScormDbContext` and confirm `ScormPackages.CourseId` is nullable with filtered unique index
+- [x] T023 Run EF Core migration: `dotnet ef database update --project src/Host --context ScormDbContext` and confirm `ScormPackages.CourseId` is nullable with filtered unique index
 
-- [ ] T024 Run `dotnet test tests/ArchitectureTests` and confirm module boundary tests pass (no cross-module references introduced)
+- [x] T024 Run `dotnet test tests/ArchitectureTests` and confirm module boundary tests pass (no cross-module references introduced)
 
-- [ ] T025 Run the application (`dotnet run --project src/Host`) and validate all 14 scenarios from `quickstart.md` manually
+- [x] T025 Run the application (`dotnet run --project src/Host`) and validate all 14 scenarios from `quickstart.md` manually
 
-- [ ] T026 [P] Verify responsive layout on mobile viewport (≤480px): filters stack vertically, table scrolls horizontally, pagination buttons remain tappable, SCORM radio section is usable
+- [x] T026 [P] Verify responsive layout on mobile viewport (≤480px): filters stack vertically, table scrolls horizontally, pagination buttons remain tappable, SCORM radio section is usable
 
-- [ ] T027 Verify empty state displays when no courses match search/filter, with actionable guidance message
+- [x] T027 Verify empty state displays when no courses match search/filter, with actionable guidance message
 
-- [ ] T028 Verify SCORM upload size limit (50MB): test with a file exceeding 50MB and confirm rejection
+- [x] T028 Verify SCORM upload size limit (50MB): test with a file exceeding 50MB and confirm rejection
 
-- [ ] T029 Verify that the SCORM upload endpoint in `src/Modules/Scorm/Endpoints/` accepts nullable courseId (if the endpoint is used by the Upload page; otherwise confirm direct service injection is used instead)
+- [x] T029 Verify that the SCORM upload endpoint in `src/Modules/Scorm/Endpoints/` accepts nullable courseId (if the endpoint is used by the Upload page; otherwise confirm direct service injection is used instead)
 
 ---
 

@@ -4,7 +4,7 @@
 
 **Created**: 2025-07-29
 
-**Status**: Draft
+**Status**: Complete (merged 2026-07-31)
 
 **Input**: User description: "review these gaps identified in the previous prompt" — comprehensive codebase review identified critical bugs blocking SCORM launch (missing ContentUrl), broken navigation (missing tag helpers), orphaned seed data, missing auth pages, no course creation, and several polish issues.
 

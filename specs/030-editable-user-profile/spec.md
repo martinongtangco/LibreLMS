@@ -7,7 +7,7 @@
 
 **Created**: 2026-08-16
 
-**Status**: Ready for Planning
+**Status**: Complete (merged 2026-08-16)
 
 **Input**: User description: "the View Profile should be editable for users (logged in) and can edit Name (must have verification email to apply changes). Profile should also display courses they enrolled and completed. user should be able to edit display photo and display photo should be visible near the Profile name at the upper right nav menu (if not admin)"
 

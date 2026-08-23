@@ -1,5 +1,7 @@
 # Spec 010: Fix Logout Button
 
+**Status**: Complete (merged 2026-07-31)
+
 ## Problem
 
 The Logout button in the navigation bar does not work. Clicking it results in a 404 error.

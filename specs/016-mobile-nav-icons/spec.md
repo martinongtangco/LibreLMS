@@ -2,7 +2,7 @@
 
 **Created**: 2025-08-03
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-03)
 
 **Input**: "add icons when its in mobile view — all of the above (hamburger toggle, nav item icons, icon-only mobile nav)"
 

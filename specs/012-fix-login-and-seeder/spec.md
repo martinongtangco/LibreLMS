@@ -1,5 +1,7 @@
 # Spec 012: Fix Login, Seeder, and Connection String
 
+**Status**: Complete (merged 2026-07-31)
+
 ## Problems
 
 ### Bug 1: Connection string name mismatch

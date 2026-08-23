@@ -7,7 +7,7 @@
 
 **Created**: 2025-01-31
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-05)
 
 **Input**: User description: "Implement the top navigation bar and account menu for Libre LMS exactly to this spec. Build a single reusable nav/account component with role toggle pill, static identity display, dropdown menu, mobile hamburger menu, and responsive layouts. Logout action belongs only on the Settings page — not in the top nav."
 

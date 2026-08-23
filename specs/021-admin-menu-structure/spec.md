@@ -7,7 +7,7 @@
 
 **Created**: 2025-07-31
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-05)
 
 **Input**: User description: "ensure Admin menus are kept and remembered so that any ui or visual enhancement wont break it"
 

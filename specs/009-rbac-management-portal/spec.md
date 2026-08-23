@@ -7,7 +7,7 @@
 
 **Created**: 2025-07-31
 
-**Status**: Draft
+**Status**: Complete (merged 2026-07-31)
 
 **Input**: User description: "we need a management portal with RBAC and dashboards. It should be able to manage learners and its organizations. there will be a root organization where a SuperUser resides, each node in the organization can have its own administrator but limited to its own organization and the branches underneath it. you can upload scorm courses to each organization and it can be unique for each level."
 

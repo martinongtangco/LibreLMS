@@ -4,7 +4,7 @@
 
 **Created**: 2025-07-30
 
-**Status**: Draft
+**Status**: Complete (merged 2026-07-31)
 
 **Input**: User description: "we need to implement the launch course once enrolled. it needs to be able to show the status of the course if its launched, in progress, failed, complete (see correct status aligned to SCORM standards). if we can provide percentage completion (see SCORM standards), then lets also specify that."
 

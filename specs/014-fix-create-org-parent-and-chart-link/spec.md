@@ -4,7 +4,7 @@
 
 **Created**: 2025-08-01
 
-**Status**: Implementing
+**Status**: Complete (merged 2026-07-31)
 
 ## Bug 1 — Create Organization always fails with "A root organization already exists"
 
