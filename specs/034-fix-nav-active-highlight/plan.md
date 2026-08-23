@@ -3,14 +3,16 @@
 ## Changes Required
 
 ### 1. Replace substring matching with section-prefix matching
-- In the active-link detection IIFE in `src/Host/Pages/Shared/_Layout.cshtml`, replace the
-  `path.indexOf(urlPage) !== -1` test (plus the dead lowercase fallback branch) with:
+- In the active-link detection IIFE in `src/Host/Pages/Shared/_Layout.cshtml`, change the
+  `linkMap` keys from full page targets to **section paths** (`/MyCourses`, `/Courses`,
+  `/Admin/Dashboard`, `/Admin/Courses`, `/Admin/Enrollments`, `/Admin/Learners`,
+  `/Admin/Organizations`, `/Admin/Upload`) and replace the `path.indexOf(urlPage) !== -1`
+  test (plus the dead lowercase fallback branch) with:
   - exact match: `path === urlPage`, or
-  - section-prefix match: `path.length > urlPage.length && path.startsWith(urlPage + '/')`
+  - section-prefix match: `path.length > urlPage.length && path.indexOf(urlPage + '/') === 0`
 - When multiple keys match, keep the **longest** key (most specific section) instead of
   `break`-ing on the first insertion-order hit.
-- Keep the same `linkMap` keys/values and the same `data-page` lookup; no CSS, no other JS
-  (FR-007).
+- Keep the same `data-page` values and lookup; no CSS, no other JS (FR-007).
 - File: `src/Host/Pages/Shared/_Layout.cshtml`
 
 ### 2. E2E tests (Principle XIII)
@@ -23,9 +25,9 @@
     Courses link is still active on page 2 and Browse Courses is not; also assert
     `/Admin/Enrollments/Index?pageNumber=2` and `/Admin/Learners/Index?pageNumber=2` keep
     their own links active (pathname-level checks, no data needed)
-  - Story 3: `/Courses/Detail` (seeded course) → Browse Courses active;
-    `/Admin/Courses/Edit?courseId=...` (filler course) → admin Courses active; `/` and
-    `/Account/Login` (logged-out context) → no active nav link
+  - Story 3: `/Courses/Detail/{id}` (route value; filler course) → Browse Courses active;
+    `/Admin/Courses/Edit?courseId=...` (filler course) → admin Courses active;
+    `/Account/Login` (logged-out) and `/Account/Profile` (logged in) → no active nav link
 - Reuse existing page objects (`AdminCoursesPage`) and `testUsers`.
 - Files: `tests/Playwright.Tests/tests/17-nav-active-highlight.spec.ts` (new),
   `tests/Playwright.Tests/pages/AdminCoursesPage.ts` (extend only if a locator is missing)
