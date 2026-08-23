@@ -7,7 +7,7 @@
 
 **Created**: 2026-08-15
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-15)
 
 **Input**: User description: "formalize Signup and Registration. Theres still a Demo credentials hint 'Demo credentials: alice@example.com / password123 (student) or admin@example.com / password123 (admin)' which we should also remove. Sign ups should be email unique. Passwords strict. There should also be a forgot password. We need to also mock email sending for verification and signup. I plan to use SendGrid in the future."
 

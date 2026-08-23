@@ -7,7 +7,7 @@
 
 **Created**: 2025-07-30
 
-**Status**: Draft
+**Status**: Complete (merged 2026-07-30)
 
 **Input**: User description: "Clean up orphaned `OnGetDetailAsync` HTMX handler, update tasks.md to reflect actual implementation approach, and update spec to record the decision to abandon HTMX inline swap in favor of full-page navigation."
 

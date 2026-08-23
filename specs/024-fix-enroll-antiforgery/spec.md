@@ -1,5 +1,7 @@
 # Spec 024: Fix Enroll Button — Missing Antiforgery Import
 
+**Status**: Complete (merged 2026-08-10)
+
 ## Problem
 The "Enroll now" button on the course detail page returns HTTP 400 (Bad Request) and does nothing. The HTMX POST to `OnPostEnrollAsync` is rejected by Razor Pages' antiforgery validation.
 

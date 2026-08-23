@@ -6,7 +6,7 @@
 
 **Created**: 2025-08-05
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-07)
 
 **Input**: User description: "develop a playwright automated tests on existing UI"
 

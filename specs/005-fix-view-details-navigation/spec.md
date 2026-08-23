@@ -7,7 +7,7 @@
 
 **Created**: 2025-07-30
 
-**Status**: Draft
+**Status**: Complete (merged 2026-07-30)
 
 **Input**: User description: "missing gap identified in this thread (View Details)" — the "View Details" button on course catalog cards does not reliably navigate to the course detail page. The implementation mixes HTMX inline swaps and full-page navigation attributes on the same link, causing conflicts. Additionally, HTMX's `hx-push-url` pushes a handler-specific URL that breaks on browser refresh (returns a partial view without layout).
 

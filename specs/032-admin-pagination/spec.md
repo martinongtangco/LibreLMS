@@ -7,7 +7,7 @@
 
 **Created**: 2026-08-21
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-22)
 
 **Input**: User description: "i noticed theres no pagination implemented in the Admin > Courses, Enrollment, Learners. Implement the same pagination implemented in the Browse Courses. Make sure we use stored procedures and efficient pagination thats scalable and reliable. in Admin pages, i want to be able to toggle page sizes: 10, 30, 50, 100."
 

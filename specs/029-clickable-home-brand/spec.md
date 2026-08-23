@@ -7,7 +7,7 @@
 
 **Created**: 2026-08-16
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-16)
 
 **Input**: User description: "Need to have the Libre LMS to be clickable to home. I sometimes find myself testing this logged off and clicking the Login button just to be stuck in the Login page. Home should be Browse Courses by default."
 

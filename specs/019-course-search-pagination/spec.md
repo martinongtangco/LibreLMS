@@ -7,7 +7,7 @@
 
 **Created**: 2025-07-31
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-05)
 
 **Input**: User description: "the Browse Courses search box and filter doesnt work. I want to implement this along with pagination. One thing I'm very particular is that i want search and pagination written in T-SQL. I think it's the most efficient way to do pagination and search"
 

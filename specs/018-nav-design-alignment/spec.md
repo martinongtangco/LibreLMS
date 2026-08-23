@@ -7,7 +7,7 @@
 
 **Created**: 2025-08-04
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-03)
 
 **Input**: User description: "The current implementation only partially applied the Libre LMS redesign. Please bring it in line with the approved design (see Design Handoff.pdf / Libre LMS.dc.html): 1. Header/nav bar — Replace emoji icons with Lucide SVG icons, replace plain username+Logout with avatar+name profile control with dropdown, remove standalone Logout from nav, add Learner/Admin role switcher. 2. Mobile nav (≤760px) — collapse nav links and role switcher behind hamburger, keep brand+hamburger+avatar visible. 3. General — use Organic design system tokens throughout, verify no raw hex/px values hardcoded."
 

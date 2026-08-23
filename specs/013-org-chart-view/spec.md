@@ -7,7 +7,7 @@
 
 **Created**: 2025-08-01
 
-**Status**: Draft
+**Status**: Complete (merged 2026-07-31)
 
 **Input**: User description: "create a dynamic tree view for the organization. it has to look like an actual org chart and you can create nodes below to add a new org. i dont want a list view or table for this. admins should be able to zoom in and out of the org. there should also be a context menu on each node box of the org to edit, disable, and add/assign a new or existing user or course"
 

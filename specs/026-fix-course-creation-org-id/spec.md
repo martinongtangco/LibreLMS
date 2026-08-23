@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-12
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-12)
 
 **Input**: User report: "i found a bug in the course creation, there's an error. try testing it by adding a title 'some course', description 'some description' full description 'full description', category 'catg', Duration 1, and No scorm content"
 

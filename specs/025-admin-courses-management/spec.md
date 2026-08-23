@@ -6,7 +6,7 @@
 
 **Created**: 2025-08-11
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-12)
 
 **Input**: User description: "in the Admin/Courses page, i discovered the following issues: 1. there are no Create Course button, 2. i cannot modify courses details, 3. delete course doesnt work, 4. the page doesnt have filter, sorting, and pagination, 5. UI seems to be broken. theres not much contrast on the table and background."
 
