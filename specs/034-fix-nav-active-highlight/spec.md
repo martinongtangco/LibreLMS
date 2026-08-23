@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-23
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-23)
 
 **Input**: User report: "the selected navigation highlight do not persist. example, login as
 admin, go to courses. notice that the courses do not highlight to orange. then browse down,
