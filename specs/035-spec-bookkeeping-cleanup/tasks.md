@@ -18,4 +18,4 @@
 - [x] T008 Verify: no open checkboxes remain in any tasks.md
 - [x] T009 Verify: every spec.md (001–035) carries a `Complete` status line
 - [x] T010 Verify: `git diff --name-only` shows only files under `specs/`
-- [ ] T011 Mark spec 035 complete (post-merge docs commit on master)
+- [x] T011 Mark spec 035 complete (post-merge docs commit on master)

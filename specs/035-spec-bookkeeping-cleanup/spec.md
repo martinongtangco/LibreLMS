@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-23
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-23)
 
 **Input**: Audit of `specs/` (2026-08-23) found that all 34 prior specs (001–034) are
 implemented and merged to `master`, but their artifacts were never updated:
