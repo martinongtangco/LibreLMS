@@ -45,6 +45,29 @@ test.describe('Admin Enrollments', () => {
     }
   });
 
+  test('bulk-enroll button is spaced from the filter bar below (bug-038)', async ({ page }) => {
+    // Login as OrgAdmin
+    await login(page, testUsers.orgAdmin.email, testUsers.orgAdmin.password);
+    await page.goto('/Admin/Enrollments/Index');
+
+    // The global * { margin: 0 } reset removes the default <p> margin, so the gap
+    // between the "Bulk Enroll" button and the filter bar must come from an
+    // explicit spacing class — assert it is present and non-trivial.
+    const actions = page.locator('p').filter({ has: page.getByRole('link', { name: 'Bulk Enroll' }) });
+    const marginBottom = await actions.evaluate((el) => {
+      // Minimal structural type — this project's TS lib set has no DOM lib.
+      const view = (
+        el as unknown as {
+          ownerDocument: { defaultView: { getComputedStyle: (e: unknown) => Record<string, string> } };
+        }
+      ).ownerDocument.defaultView;
+      return view.getComputedStyle(el).marginBottom;
+    });
+    const px = Number.parseFloat(marginBottom);
+    expect(Number.isFinite(px), `bottom margin must be a length, got "${marginBottom}"`).toBe(true);
+    expect(px, `action button needs bottom spacing from the filter bar (got ${marginBottom})`).toBeGreaterThanOrEqual(16);
+  });
+
   test('bulk enroll form is accessible', async ({ page }) => {
     // Login as OrgAdmin
     await login(page, testUsers.orgAdmin.email, testUsers.orgAdmin.password);
