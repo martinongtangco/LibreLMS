@@ -20,7 +20,7 @@
 
 **Purpose**: Branch discipline before any code change (Constitution VIII)
 
-- [ ] T001 Create branch `story/036-org-tree-branching` from `master` (`git checkout master && git checkout -b story/036-org-tree-branching`); verify clean working tree
+- [X] T001 Create branch `story/036-org-tree-branching` from `master` (`git checkout master && git checkout -b story/036-org-tree-branching`); verify clean working tree
 
 ---
 
@@ -30,8 +30,8 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T002 [P] Extend `OrgTreeNode` record with `bool IsDisabled` in `src/Host/Pages/Admin/Organizations/Index.cshtml.cs` and compute it in `BuildTree` as *own flag OR any ancestor's flag* (data-model.md; no service/module changes)
-- [ ] T003 [P] [US1][US2] Add failing E2E assertions to `tests/Playwright.Tests/tests/06-admin-organizations.spec.ts`: single top-level node with `Root` badge (C-01, C-07); every org renders exactly once (C-01); Billing's `<li>` is a DOM descendant of Finance's and not of Sales' (C-02/C-03); Finance and Sales share one parent `<ul>` (C-04). **Must FAIL before Phase 3 markup exists** (verify the failure, then proceed)
+- [X] T002 [P] Extend `OrgTreeNode` record with `bool IsDisabled` in `src/Host/Pages/Admin/Organizations/Index.cshtml.cs` and compute it in `BuildTree` as *own flag OR any ancestor's flag* (data-model.md; no service/module changes)
+- [X] T003 [P] [US1][US2] Add failing E2E assertions to `tests/Playwright.Tests/tests/06-admin-organizations.spec.ts`: single top-level node with `Root` badge (C-01, C-07); every org renders exactly once (C-01); Billing's `<li>` is a DOM descendant of Finance's and not of Sales' (C-02/C-03); Finance and Sales share one parent `<ul>` (C-04). **Must FAIL before Phase 3 markup exists** (verify the failure, then proceed)
 
 **Checkpoint**: Foundation ready — view model carries disabled state; US1/US2 tests written and failing
 

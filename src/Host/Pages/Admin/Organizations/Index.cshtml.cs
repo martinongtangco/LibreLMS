@@ -26,7 +26,7 @@ public class IndexModel : PageModel
         try
         {
             var allOrgs = await _service.ListAllAsync();
-            OrgTree = BuildTree(allOrgs, null);
+            OrgTree = BuildTree(allOrgs, null, false);
         }
         catch (Exception ex)
         {
@@ -34,7 +34,7 @@ public class IndexModel : PageModel
         }
     }
 
-    private List<OrgTreeNode> BuildTree(IEnumerable<LibreLms.Modules.Management.Domain.Organization> orgs, Guid? parentId)
+    private List<OrgTreeNode> BuildTree(IEnumerable<LibreLms.Modules.Management.Domain.Organization> orgs, Guid? parentId, bool ancestorDisabled)
     {
         var children = orgs
             .Where(o => o.ParentId == parentId)
@@ -43,7 +43,8 @@ public class IndexModel : PageModel
                 o.Name,
                 o.Description,
                 o.ParentId,
-                BuildTree(orgs, o.Id)
+                o.IsDisabled || ancestorDisabled,
+                BuildTree(orgs, o.Id, o.IsDisabled || ancestorDisabled)
             ))
             .ToList();
 
@@ -51,10 +52,15 @@ public class IndexModel : PageModel
     }
 }
 
+/// <summary>
+/// Page-level view model for one node of the organizations tree.
+/// </summary>
+/// <param name="IsDisabled">Own flag OR any ancestor's flag — a disabled org's whole subtree renders disabled.</param>
 public record OrgTreeNode(
     Guid Id,
     string Name,
     string? Description,
     Guid? ParentId,
+    bool IsDisabled,
     List<OrgTreeNode> Children
 );
