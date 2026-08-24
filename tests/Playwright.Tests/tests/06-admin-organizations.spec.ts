@@ -32,6 +32,27 @@ test.describe('Admin Organizations', () => {
     await expect(page.getByText('Root Organization')).toBeVisible();
   });
 
+  test('action buttons are spaced from the org tree below (bug-037)', async ({ page }) => {
+    await page.goto('/Admin/Organizations/Index');
+
+    // The global * { margin: 0 } reset removes the default <p> margin, so the gap
+    // between the "Org Chart View" / "Create Organization" row and the tree must
+    // come from an explicit spacing class — assert it is present and non-trivial.
+    const actions = page.locator('p').filter({ has: page.getByRole('link', { name: 'Org Chart View' }) });
+    const marginBottom = await actions.evaluate((el) => {
+      // Minimal structural type — this project's TS lib set has no DOM lib.
+      const view = (
+        el as unknown as {
+          ownerDocument: { defaultView: { getComputedStyle: (e: unknown) => Record<string, string> } };
+        }
+      ).ownerDocument.defaultView;
+      return view.getComputedStyle(el).marginBottom;
+    });
+    const px = Number.parseFloat(marginBottom);
+    expect(Number.isFinite(px), `bottom margin must be a length, got "${marginBottom}"`).toBe(true);
+    expect(px, `action buttons need bottom spacing from the tree (got ${marginBottom})`).toBeGreaterThanOrEqual(16);
+  });
+
   test('create organization form is accessible', async ({ page }) => {
     await page.goto('/Admin/Organizations/Index');
 
