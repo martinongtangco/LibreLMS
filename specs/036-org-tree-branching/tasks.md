@@ -106,10 +106,10 @@
 
 **Purpose**: Constitution Principle XIII — no completion claims without evidence from all three gates
 
-- [ ] T017 Gate 2 (E2E): full Playwright regression — `npx playwright test` (all specs, from `tests/Playwright.Tests`) passes; show output
-- [ ] T018 Gate 2 (architecture): `dotnet test tests/ArchitectureTests` passes (Principle III)
-- [ ] T019 Gate 3 (post-merge): fast-forward merge `story/036-org-tree-branching` into `master`, rebuild + restart on merged code, re-run `npx playwright test tests/06-admin-organizations.spec.ts` — passes; show output
-- [ ] T020 Bookkeeping on `master`: set spec.md `Status` to `Complete (merged <date>)` and commit `docs(036): mark complete` directly on master (project convention); confirm session ends on `master` (Principle XII)
+- [X] T017 Gate 2 (E2E): full Playwright regression — `npx playwright test` (all specs, from `tests/Playwright.Tests`) passes; show output
+- [X] T018 Gate 2 (architecture): `dotnet test tests/ArchitectureTests` passes (Principle III)
+- [X] T019 Gate 3 (post-merge): fast-forward merge `story/036-org-tree-branching` into `master`, rebuild + restart on merged code, re-run `npx playwright test tests/06-admin-organizations.spec.ts` — passes; show output
+- [X] T020 Bookkeeping on `master`: set spec.md `Status` to `Complete (merged <date>)` and commit `docs(036): mark complete` directly on master (project convention); confirm session ends on `master` (Principle XII)
 
 ---
 

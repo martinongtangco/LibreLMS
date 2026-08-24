@@ -7,7 +7,7 @@
 
 **Created**: 2026-08-24
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-24)
 
 **Input**: User description: "While testing the Admin > Organizations, i discovered that theres no actual branching and root visible enough to identify if a two nodes are under the same root. For example, i creted Finance and Sales under "Root Organization" (top org). Then I created Billing under Finance. All Finance, Billing, and Sales are rendered to be on the same indentation together. There should be a tree like branching and node visible to know who is the parent of what. Design/UX should be modern and matching our design decisions. Things should be tracable and branched"
 
