@@ -45,11 +45,11 @@
 
 ### Implementation for User Story 1
 
-- [ ] T004 [P] Rewrite `src/Host/Pages/Shared/_OrgNode.cshtml` as semantic nested-list markup: `<li class="org-node">` per org, children in a nested `<ul class="org-tree org-tree--nested">`, card with name/description (only when present)/Edit action; `org-node--root` + `Root` badge on the root; **remove all inline `margin-left` styles**; HTML-encoded names (C-01…C-05, C-07, C-09, C-12)
-- [ ] T005 [P] Add tree styles to `src/Host/wwwroot/css/site.css` using existing Organic tokens only: `--org-tree-indent` variable, CSS elbow connectors (pseudo-element vertical + horizontal lines, `--color-border`/`--color-border-strong`) on non-root `<li>`s, stronger root-card styling (brand-tinted border/background) (C-06, C-07, C-10; R1–R3, R5)
-- [ ] T006 Update `src/Host/Pages/Admin/Organizations/Index.cshtml`: wrap the root loop in `<ul class="org-tree" aria-label="Organization hierarchy">`; keep Org Chart View / Create Organization entry points and error alert intact (C-01, FR-011; B-01)
-- [ ] T007 Rebuild + restart (`./scripts/restart-app.sh --background` from repo root; confirm `Build succeeded` + `Now listening` per quickstart §2) and manually verify M1–M4 against the seeded hierarchy
-- [ ] T008 Run `npx playwright test tests/06-admin-organizations.spec.ts` (from `tests/Playwright.Tests`) — T003's US1 assertions now PASS; existing tests still pass
+- [X] T004 [P] Rewrite `src/Host/Pages/Shared/_OrgNode.cshtml` as semantic nested-list markup: `<li class="org-node">` per org, children in a nested `<ul class="org-tree org-tree--nested">`, card with name/description (only when present)/Edit action; `org-node--root` + `Root` badge on the root; **remove all inline `margin-left` styles**; HTML-encoded names (C-01…C-05, C-07, C-09, C-12)
+- [X] T005 [P] Add tree styles to `src/Host/wwwroot/css/site.css` using existing Organic tokens only: `--org-tree-indent` variable, CSS elbow connectors (pseudo-element vertical + horizontal lines, `--color-border`/`--color-border-strong`) on non-root `<li>`s, stronger root-card styling (brand-tinted border/background) (C-06, C-07, C-10; R1–R3, R5)
+- [X] T006 Update `src/Host/Pages/Admin/Organizations/Index.cshtml`: wrap the root loop in `<ul class="org-tree" aria-label="Organization hierarchy">`; keep Org Chart View / Create Organization entry points and error alert intact (C-01, FR-011; B-01)
+- [X] T007 Rebuild + restart (`./scripts/restart-app.sh --background` from repo root; confirm `Build succeeded` + `Now listening` per quickstart §2) and manually verify M1–M4 against the seeded hierarchy
+- [X] T008 Run `npx playwright test tests/06-admin-organizations.spec.ts` (from `tests/Playwright.Tests`) — T003's US1 assertions now PASS; existing tests still pass
 
 **Checkpoint**: MVP — hierarchy visible at a glance; US1 independently testable and verified
 
@@ -63,7 +63,7 @@
 
 ### Implementation for User Story 2
 
-- [ ] T009 Verify US2 acceptance via the Phase 3 E2E traceability assertions (T003) plus the SC-001/SC-002 identification trial (quickstart §5 M2/M3). Structurally delivered by US1 markup — **no new code expected**; if any connector is ambiguous at 3 levels, fix line geometry in `src/Host/wwwroot/css/site.css` and re-run T008
+- [X] T009 Verify US2 acceptance via the Phase 3 E2E traceability assertions (T003) plus the SC-001/SC-002 identification trial (quickstart §5 M2/M3). Structurally delivered by US1 markup — **no new code expected**; if any connector is ambiguous at 3 levels, fix line geometry in `src/Host/wwwroot/css/site.css` and re-run T008
 
 **Checkpoint**: US1 + US2 both verified independently
 
