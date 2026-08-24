@@ -94,9 +94,9 @@
 
 ### Implementation for User Story 4
 
-- [ ] T014 [P] Add media queries to `src/Host/wwwroot/css/site.css` reducing `--org-tree-indent` at the existing breakpoints (≤480px base, ≤760px) so deep trees fit ≥375px viewports (C-11; R5)
-- [ ] T015 [P] [US4] Add E2E to `tests/Playwright.Tests/tests/06-admin-organizations.spec.ts`: at 375px viewport the tree container satisfies `scrollWidth <= clientWidth` (C-11, SC-004)
-- [ ] T016 Rebuild + restart; verify M8 (375px) and M9 (optional: seed 7 levels, deepest node still traceable) per quickstart §5
+- [X] T014 [P] Add media queries to `src/Host/wwwroot/css/site.css` reducing `--org-tree-indent` at the existing breakpoints (≤480px base, ≤760px) so deep trees fit ≥375px viewports (C-11; R5)
+- [X] T015 [P] [US4] Add E2E to `tests/Playwright.Tests/tests/06-admin-organizations.spec.ts`: at 375px viewport the tree container satisfies `scrollWidth <= clientWidth` (C-11, SC-004)
+- [X] T016 Rebuild + restart; verify M8 (375px) and M9 (optional: seed 7 levels, deepest node still traceable) per quickstart §5
 
 **Checkpoint**: All four user stories independently functional and verified
 

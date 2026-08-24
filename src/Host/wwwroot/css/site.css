@@ -1821,3 +1821,20 @@ body.role-admin .account-avatar {
   background: var(--color-bg);
   color: var(--color-text-muted);
 }
+
+    /* Responsive indentation compression (spec 036 US4, C-11): the
+       per-level indent step shrinks at the project's existing breakpoints
+       (base = mobile ≤480px) so deep hierarchies stay readable with no
+       horizontal scrolling down to 375px viewports. */
+
+    @media (min-width: 481px) {
+      .org-tree {
+        --org-tree-indent: 1rem;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .org-tree {
+        --org-tree-indent: 1.5rem;
+      }
+    }

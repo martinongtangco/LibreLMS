@@ -288,4 +288,36 @@ test.describe('Admin Organizations — tree hierarchy (spec 036)', () => {
       }
     }
   });
+
+  test('fits a 375px viewport without horizontal overflow (C-11, SC-004)', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/Admin/Organizations/Index');
+
+    const tree = page.locator('ul.org-tree[aria-label="Organization hierarchy"]');
+    const fits = await tree.evaluate((el) => {
+      // Minimal structural type — this project's TS lib set has no DOM lib.
+      const node = el as unknown as {
+        scrollWidth: number;
+        clientWidth: number;
+        ownerDocument: { documentElement: { scrollWidth: number } };
+      };
+      return {
+        scrollWidth: node.scrollWidth,
+        clientWidth: node.clientWidth,
+        docScrollWidth: node.ownerDocument.documentElement.scrollWidth,
+      };
+    });
+
+    // No horizontal overflow: not on the tree container, not on the page.
+    expect(fits.scrollWidth, 'tree container must not overflow horizontally').toBeLessThanOrEqual(fits.clientWidth + 1);
+    expect(fits.docScrollWidth, 'page must not scroll horizontally').toBeLessThanOrEqual(375);
+
+    // Every node name stays visible with the compressed indentation.
+    const names = page.locator('span.org-node__name');
+    const count = await names.count();
+    expect(count).toBeGreaterThanOrEqual(4);
+    for (let i = 0; i < count; i++) {
+      await expect(names.nth(i)).toBeVisible();
+    }
+  });
 });
