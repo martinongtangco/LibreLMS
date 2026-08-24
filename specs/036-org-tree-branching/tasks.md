@@ -77,10 +77,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T010 [P] [US3] Add disabled treatment to `src/Host/Pages/Shared/_OrgNode.cshtml`: `org-node--disabled` class + `Disabled` badge when `Model.IsDisabled` (C-08; R4)
-- [ ] T011 [P] [US3] Add E2E assertions to `tests/Playwright.Tests/tests/06-admin-organizations.spec.ts`: a disabled node and all descendants carry `org-node--disabled` + `Disabled` badge and remain visible in place (C-08); create-organization flow still lands the new node in the correct nesting (B-03)
-- [ ] T012 [P] [US3] Add disabled-node styles to `src/Host/wwwroot/css/site.css`: muted treatment using existing tokens (reduced opacity / `--color-text-faint`) for `org-node--disabled`; no strike-through (C-08, C-10; R4)
-- [ ] T013 [US3] Verify US3 acceptance: seed a disabled org via the Org Chart context menu (quickstart §3 step 4), confirm subtree treatment (M5/M6 + C-08); confirm Edit/Create/Chart entry points unchanged (FR-011)
+- [X] T010 [P] [US3] Add disabled treatment to `src/Host/Pages/Shared/_OrgNode.cshtml`: `org-node--disabled` class + `Disabled` badge when `Model.IsDisabled` (C-08; R4)
+- [X] T011 [P] [US3] Add E2E assertions to `tests/Playwright.Tests/tests/06-admin-organizations.spec.ts`: a disabled node and all descendants carry `org-node--disabled` + `Disabled` badge and remain visible in place (C-08); create-organization flow still lands the new node in the correct nesting (B-03)
+- [X] T012 [P] [US3] Add disabled-node styles to `src/Host/wwwroot/css/site.css`: muted treatment using existing tokens (reduced opacity / `--color-text-faint`) for `org-node--disabled`; no strike-through (C-08, C-10; R4)
+- [X] T013 [US3] Verify US3 acceptance: seed a disabled org via the Org Chart context menu (quickstart §3 step 4), confirm subtree treatment (M5/M6 + C-08); confirm Edit/Create/Chart entry points unchanged (FR-011)
 
 **Checkpoint**: US1–US3 all independently functional
 

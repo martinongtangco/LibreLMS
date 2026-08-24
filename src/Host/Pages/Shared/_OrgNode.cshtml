@@ -1,26 +1,31 @@
 @model LibreLms.Host.Pages.Admin.Organizations.OrgTreeNode
 
-<div class="card org-node" style="margin-left: @(Model.ParentId.HasValue ? "20px" : "0");">
-    <div class="card" style="padding: var(--spacing-sm) var(--spacing-md);">
-        <strong>@Model.Name</strong>
+<li class="org-node@(Model.ParentId.HasValue ? string.Empty : " org-node--root")@(Model.IsDisabled ? " org-node--disabled" : string.Empty)">
+    <div class="org-node__card">
+        <span class="org-node__name">@Model.Name</span>
         @if (!string.IsNullOrEmpty(Model.Description))
         {
-            <span class="text-muted"> — @Model.Description</span>
+            <span class="org-node__description">@Model.Description</span>
         }
-        <div class="mt-sm">
+        @if (!Model.ParentId.HasValue)
+        {
+            <span class="badge org-node__root-badge">Root</span>
+        }
+        @if (Model.IsDisabled)
+        {
+            <span class="badge org-node__disabled-badge">Disabled</span>
+        }
+        <div class="org-node__actions">
             <a asp-page="Edit" asp-route-id="@Model.Id" class="btn btn-secondary">Edit</a>
-            @if (!Model.ParentId.HasValue)
-            {
-                <span class="badge badge-duration">Root</span>
-            }
         </div>
     </div>
-</div>
-
-@if (Model.Children.Any())
-{
-    @foreach (var child in Model.Children)
+    @if (Model.Children.Any())
     {
-        <partial name="_OrgNode" model="child" />
+        <ul class="org-tree org-tree--nested">
+            @foreach (var child in Model.Children)
+            {
+                <partial name="_OrgNode" model="child" />
+            }
+        </ul>
     }
-}
+</li>

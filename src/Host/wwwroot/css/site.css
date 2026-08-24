@@ -1702,3 +1702,122 @@ body.role-admin .account-avatar {
     font-size: 0.75rem;
   }
 }
+
+/* ── Organization Tree (spec 036) ───────────────────────────────────
+   Server-rendered nested-list tree: <ul class="org-tree"> with one
+   <li class="org-node"> per organization. Depth indentation and
+   parent→child connector lines are pure CSS (no JS, no images).
+   Indentation is structural (one --org-tree-indent step per nesting
+   level); responsive compression of the step is added later (US4). */
+
+.org-tree {
+  --org-tree-indent: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.org-tree--nested {
+  position: relative;
+  margin-left: calc(var(--org-tree-indent) / 2);
+  padding-left: calc(var(--org-tree-indent) / 2);
+  padding-top: var(--spacing-sm);
+}
+
+/* Vertical segment from the parent card down to the first child's elbow. */
+.org-tree--nested::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: var(--spacing-sm);
+  border-left: 1px solid var(--color-border-strong);
+}
+
+.org-node {
+  position: relative;
+}
+
+/* Horizontal elbow from the parent's spine to each child node. */
+.org-tree--nested > li.org-node::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(var(--org-tree-indent) / -2);
+  width: calc(var(--org-tree-indent) / 2);
+  border-top: 1px solid var(--color-border-strong);
+}
+
+/* Vertical spine down through every child except the last — the last
+   child's elbow is where the spine terminates (no dangling lines). */
+.org-tree--nested > li.org-node:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--org-tree-indent) / -2);
+  border-left: 1px solid var(--color-border);
+}
+
+/* Vertical breathing room between sibling rows (padding, not margin,
+   so the spine stays continuous through the li box). */
+.org-tree--nested > li.org-node {
+  padding-bottom: var(--spacing-sm);
+}
+
+.org-node__card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-card);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.org-node__name {
+  min-width: 0;
+  font-weight: 600;
+}
+
+.org-node__description {
+  min-width: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.org-node__actions {
+  margin-left: auto;
+}
+
+/* Root treatment (C-07): explicit badge + visibly stronger card. */
+.org-node--root > .org-node__card {
+  border: 2px solid var(--color-brand);
+  background: var(--color-category-bg);
+}
+
+.org-node__root-badge {
+  background: var(--color-brand);
+  color: var(--color-surface);
+}
+
+/* Disabled nodes (spec 036 US3, C-08): a disabled org — or any
+   descendant of one — renders muted but stays in place. Muted, not
+   struck-through (strike-through reads as deleted). */
+
+.org-node--disabled > .org-node__card {
+  opacity: 0.65;
+  border-style: dashed;
+}
+
+.org-node--disabled .org-node__name,
+.org-node--disabled .org-node__description {
+  color: var(--color-text-faint);
+}
+
+.org-node__disabled-badge {
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}

@@ -15,8 +15,12 @@
 {
     <div class="alert alert-danger">@Model.Error</div>
 }
-
-@foreach (var node in Model.OrgTree)
+else
 {
-    <partial name="_OrgNode" model="node" />
+    <ul class="org-tree" aria-label="Organization hierarchy">
+        @foreach (var node in Model.OrgTree)
+        {
+            <partial name="_OrgNode" model="node" />
+        }
+    </ul>
 }
