@@ -104,4 +104,25 @@ test.describe('Admin Dashboard Smoke', () => {
     const courseRows = page.locator('.courses-table tbody tr');
     await expect(courseRows).toHaveCount(10);
   });
+
+  /**
+   * story 040 (L3): direct probe of the cookie's org-scope claim. GET
+   * /api/dashboard 401s for an OrgAdmin whose cookie lacks the OrganizationId
+   * claim (Program.cs cannot parse a missing org), so a 200 with
+   * role=OrgAdmin and non-zero learner count proves the claim survived sign-in
+   * end-to-end — through the real cookie, not a page render.
+   */
+  test('OrgAdmin cookie carries org-scope claim: /api/dashboard returns 200 (story 040)', async ({ page }) => {
+    await loginAsAdmin(page);
+
+    // page.request shares the browser context's cookies (unlike the standalone
+    // `request` fixture, which gets the 302-to-login and masks the failure).
+    const res = await page.request.get('/api/dashboard');
+    expect(res.status()).toBe(200);
+
+    const body = await res.json();
+    expect(body.role).toBe('OrgAdmin');
+    expect(body.metrics.organizationName).toBeTruthy();
+    expect(body.metrics.learnerCount).toBeGreaterThanOrEqual(5);
+  });
 });

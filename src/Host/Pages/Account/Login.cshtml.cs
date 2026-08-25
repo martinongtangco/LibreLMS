@@ -96,23 +96,12 @@ public class LoginModel : PageModel
             return Page();
         }
 
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, student.Id.ToString()),
-            new(ClaimTypes.Name, student.Name),
-            new(ClaimTypes.Email, student.Email),
-            new(SecurityClaims.SecurityStamp, student.SecurityStamp.ToString()),
-            // Org-scoped authorization (spec 009 T043; restored in bug-039 — the
-            // spec 027 claim rebuild dropped it, blanking the OrgAdmin dashboard).
-            new(OrgClaimTypes.OrganizationId, student.OrganizationId.ToString()),
-        };
-        if (!string.IsNullOrWhiteSpace(student.Roles))
-            claims.Add(new Claim(ClaimTypes.Role, student.Roles));
-
-        // Spec 030: the avatar URL path rides the cookie so the shared layout renders
-        // the display photo purely from claims (no DB access in the layout, R3).
-        if (!string.IsNullOrWhiteSpace(student.AvatarPath))
-            claims.Add(new Claim(AvatarClaimTypes.AvatarPath, student.AvatarPath));
+        // Story 040: the claim set is built in exactly one place (AuthClaims) so
+        // the two sign-in paths can never drift — see bug-039 for what happened
+        // when they were duplicated.
+        var claims = AuthClaims.Build(
+            student.Id, student.Name, student.Email, student.SecurityStamp,
+            student.OrganizationId, student.Roles, student.AvatarPath);
 
         var identity = new ClaimsIdentity(claims, AuthScheme);
         await HttpContext.SignInAsync(

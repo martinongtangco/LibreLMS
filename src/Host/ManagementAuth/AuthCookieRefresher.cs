@@ -29,29 +29,17 @@ public sealed class AuthCookieRefresher
     /// <summary>Re-signs the current request's cookie from the passed account state.
     /// The SecurityStamp is re-read from the DB (one indexed primary-key lookup — the
     /// same cost the cookie's OnValidatePrincipal re-check already pays per request)
-    /// so the re-issued cookie always carries the account's current stamp.</summary>
-    ///
-    /// NOTE: the claim list below must stay in sync with LoginModel.OnPostAsync —
-    /// both build the full claim set (NameIdentifier, Name, Email, SecurityStamp,
-    /// OrganizationId, Role, AvatarPath). bug-039: the OrganizationId claim was
-    /// dropped from both in the spec 027/030 rebuilds, which blanked the OrgAdmin
-    /// dashboard (no org scope to resolve).
+    /// so the re-issued cookie always carries the account's current stamp.
+    /// The claim set comes from AuthClaims.Build (story 040) — the same single
+    /// source LoginModel.OnPostAsync uses, so the two sign-in paths cannot drift
+    /// (bug-039: duplicated builders silently dropped the OrganizationId claim).</summary>
     public async Task RefreshAsync(HttpContext context, StudentProvisionedDto student)
     {
         var stamp = await _registrationService.GetSecurityStampAsync(student.Id);
 
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, student.Id.ToString()),
-            new(ClaimTypes.Name, student.Name),
-            new(ClaimTypes.Email, student.Email),
-            new(SecurityClaims.SecurityStamp, (stamp ?? Guid.Empty).ToString()),
-            new(OrgClaimTypes.OrganizationId, student.OrganizationId.ToString()),
-        };
-        if (!string.IsNullOrWhiteSpace(student.Role))
-            claims.Add(new Claim(ClaimTypes.Role, student.Role));
-        if (!string.IsNullOrWhiteSpace(student.AvatarPath))
-            claims.Add(new Claim(AvatarClaimTypes.AvatarPath, student.AvatarPath));
+        var claims = AuthClaims.Build(
+            student.Id, student.Name, student.Email, stamp ?? Guid.Empty,
+            student.OrganizationId, student.Role, student.AvatarPath);
 
         var identity = new ClaimsIdentity(claims, AuthScheme);
         await context.SignInAsync(
