@@ -102,6 +102,9 @@ public class LoginModel : PageModel
             new(ClaimTypes.Name, student.Name),
             new(ClaimTypes.Email, student.Email),
             new(SecurityClaims.SecurityStamp, student.SecurityStamp.ToString()),
+            // Org-scoped authorization (spec 009 T043; restored in bug-039 — the
+            // spec 027 claim rebuild dropped it, blanking the OrgAdmin dashboard).
+            new(OrgClaimTypes.OrganizationId, student.OrganizationId.ToString()),
         };
         if (!string.IsNullOrWhiteSpace(student.Roles))
             claims.Add(new Claim(ClaimTypes.Role, student.Roles));
