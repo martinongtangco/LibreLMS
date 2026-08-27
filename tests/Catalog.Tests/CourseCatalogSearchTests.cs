@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using LibreLms.Modules.Catalog.Application;
 using LibreLms.Modules.Catalog.Infrastructure;
@@ -9,11 +8,13 @@ namespace Catalog.Tests;
 
 /// <summary>
 /// Integration tests for the BrowseAsync search, filter, and pagination functionality.
-/// Tests require a running MSSQL instance (docker compose up mssql).
+/// Requires a running MSSQL instance (sibling 'mssql' container) and the same
+/// database the Host uses. The schema and the BrowseCourses stored procedure are
+/// owned by the Host's EF migrations — Database.Migrate() below applies them when
+/// the app has not already done so (no-op otherwise).
 /// </summary>
 public class CourseCatalogSearchTests : IAsyncLifetime
 {
-    private string? _connectionString;
     private CatalogDbContext? _context;
     private CourseCatalogService? _service;
 
@@ -26,18 +27,20 @@ public class CourseCatalogSearchTests : IAsyncLifetime
             .AddEnvironmentVariables()
             .Build();
 
-        _connectionString = config.GetConnectionString("Sql")
+        var connectionString = config.GetConnectionString("Sql")
             ?? "Server=localhost,1433;Database=LearningLms;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True";
 
+        // The EF migrations for all module contexts live in the Host assembly, so the
+        // test context must point MigrationsAssembly at it. Database.Migrate() applies
+        // pending Catalog migrations (which own the BrowseCourses stored procedure);
+        // it is a no-op when the app has already migrated the shared database.
+        var hostAssembly = System.Reflection.Assembly.Load("Host");
         var options = new DbContextOptionsBuilder<CatalogDbContext>()
-            .UseSqlServer(_connectionString)
+            .UseSqlServer(connectionString, sql => sql.MigrationsAssembly(hostAssembly))
             .Options;
 
         _context = new CatalogDbContext(options);
-        _context.Database.OpenConnection();
-
-        // Ensure the stored procedure exists
-        EnsureStoredProceduresExist();
+        _context.Database.Migrate();
 
         _service = new CourseCatalogService(_context);
 
@@ -50,76 +53,30 @@ public class CourseCatalogSearchTests : IAsyncLifetime
         return Task.CompletedTask;
     }
 
-    private void EnsureStoredProceduresExist()
-    {
-        using var cmd = new SqlCommand(@"
-            IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'BrowseCourses' AND type = 'P')
-            BEGIN
-                -- Create Full-Text Catalog
-                IF NOT EXISTS (SELECT 1 FROM sys.fulltext_catalogs WHERE name = 'LearningLmsFtCatalog')
-                    CREATE FULLTEXT CATALOG LearningLmsFtCatalog AS DEFAULT;
-
-                -- Create Full-Text Index (use PK_Courses — must be single-column unique index)
-                IF NOT EXISTS (SELECT 1 FROM sys.fulltext_indexes fti
-                               JOIN sys.tables t ON fti.object_id = t.object_id
-                               WHERE t.name = 'Courses')
-                BEGIN
-                    CREATE FULLTEXT INDEX ON Courses(Title)
-                    KEY INDEX PK_Courses
-                    ON LearningLmsFtCatalog
-                    WITH (CHANGE_TRACKING = AUTO);
-                END;
-
-                -- Create stored procedure (org visibility filtered in C#)
-                IF OBJECT_ID('BrowseCourses', 'P') IS NOT NULL DROP PROCEDURE BrowseCourses;
-                EXEC('CREATE PROCEDURE BrowseCourses
-                    @SearchTerm NVARCHAR(200) = NULL,
-                    @Category NVARCHAR(100) = NULL,
-                    @PageSize INT = 12,
-                    @PageNumber INT = 1
-                AS
-                BEGIN
-                    SET NOCOUNT ON;
-                    IF @PageSize <= 0 SET @PageSize = 12;
-                    IF @PageNumber <= 0 SET @PageNumber = 1;
-                    DECLARE @Offset INT = (@PageNumber - 1) * @PageSize;
-                    DECLARE @FtsAvailable BIT = 0;
-                    SELECT @FtsAvailable = CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
-                    FROM sys.fulltext_indexes fti
-                    JOIN sys.tables t ON fti.object_id = t.object_id
-                    WHERE t.name = 'Courses';
-
-                    SELECT c.Id, c.Title, c.ShortDescription, c.Category, c.Duration
-                    FROM Courses c
-                    WHERE (@Category IS NULL OR @Category = '' OR c.Category = @Category)
-                        AND (@SearchTerm IS NULL OR @SearchTerm = ''
-                            OR ((@FtsAvailable = 1 AND CONTAINS(c.Title, @SearchTerm))
-                                OR (@FtsAvailable = 0 AND c.Title LIKE '%' + @SearchTerm + '%')))
-                    ORDER BY c.Title ASC
-                    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
-
-                    SELECT COUNT(*) AS TotalCount FROM Courses c
-                    WHERE (@Category IS NULL OR @Category = '' OR c.Category = @Category)
-                        AND (@SearchTerm IS NULL OR @SearchTerm = ''
-                            OR ((@FtsAvailable = 1 AND CONTAINS(c.Title, @SearchTerm))
-                                OR (@FtsAvailable = 0 AND c.Title LIKE '%' + @SearchTerm + '%')));
-                END;');
-            END;
-        ", new SqlConnection(_connectionString!));
-        cmd.ExecuteNonQuery();
-    }
+    /// <summary>
+    /// Organization for all seeded rows. Courses has a unique index on
+    /// (Title, OrganizationId), so cleanups are scoped to this org.
+    /// </summary>
+    private static readonly Guid TestOrgId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
     private async Task SeedTestCoursesAsync(IEnumerable<string> titles, string category = "TestCategory")
     {
         if (_context == null) throw new InvalidOperationException("Not initialized");
 
-        // Clear test data first
-        var testCourses = _context.Courses.Where(c => c.Category == category).ToList();
-        _context.Courses.RemoveRange(testCourses);
+        var titleList = titles.ToList();
+
+        // Clear conflicting rows first: Courses has a unique index on
+        // (Title, OrganizationId), and another test in this class (or a prior run)
+        // may already use some of these titles under a different category.
+        var toRemove = _context.Courses
+            .Where(c => c.Category == category
+                        || (c.OrganizationId == TestOrgId && titleList.Contains(c.Title)))
+            .ToList();
+        _context.Courses.RemoveRange(toRemove);
         await _context.SaveChangesAsync();
 
         // Insert test courses
-        foreach (var title in titles)
+        foreach (var title in titleList)
         {
             _context.Courses.Add(new LibreLms.Modules.Catalog.Domain.Course
             {
@@ -129,7 +86,7 @@ public class CourseCatalogSearchTests : IAsyncLifetime
                 FullDescription = $"Full description for {title}",
                 Category = category,
                 Duration = "1 hour",
-                OrganizationId = Guid.Parse("00000000-0000-0000-0000-000000000001"),
+                OrganizationId = TestOrgId,
                 CreatedAt = DateTimeOffset.UtcNow
             });
         }
@@ -138,7 +95,7 @@ public class CourseCatalogSearchTests : IAsyncLifetime
 
     // ===== Integration Tests (Phase 7) =====
 
-    [Fact(Skip = "Requires MSSQL")]
+    [Fact]
     public async Task BrowseAsync_returns_matching_courses_by_title()
     {
         await SeedTestCoursesAsync(new[]
@@ -157,7 +114,7 @@ public class CourseCatalogSearchTests : IAsyncLifetime
         }
     }
 
-    [Fact(Skip = "Requires MSSQL")]
+    [Fact]
     public async Task BrowseAsync_filters_by_category()
     {
         await SeedTestCoursesAsync(new[]
@@ -165,14 +122,19 @@ public class CourseCatalogSearchTests : IAsyncLifetime
             "Course A", "Course B", "Course C"
         }, "TestCategory");
 
-        // Add some in different category
+        // Add some in different category (removing a leftover from a prior run
+        // first — (Title, OrganizationId) is unique)
         var ctx = _context!;
+        var staleOther = await ctx.Courses
+            .Where(c => c.Title == "Other Course" && c.OrganizationId == TestOrgId)
+            .ToListAsync();
+        ctx.Courses.RemoveRange(staleOther);
         ctx.Courses.Add(new LibreLms.Modules.Catalog.Domain.Course
         {
             Id = Guid.NewGuid(), Title = "Other Course",
             ShortDescription = "Other", FullDescription = "Other",
             Category = "OtherCategory", Duration = "1h",
-            OrganizationId = Guid.Parse("00000000-0000-0000-0000-000000000001"),
+            OrganizationId = TestOrgId,
             CreatedAt = DateTimeOffset.UtcNow
         });
         await ctx.SaveChangesAsync();
@@ -182,7 +144,7 @@ public class CourseCatalogSearchTests : IAsyncLifetime
         Assert.All(result.Items, item => Assert.Equal("TestCategory", item.Category));
     }
 
-    [Fact(Skip = "Requires MSSQL")]
+    [Fact]
     public async Task BrowseAsync_combines_search_and_category()
     {
         await SeedTestCoursesAsync(new[]
@@ -190,14 +152,19 @@ public class CourseCatalogSearchTests : IAsyncLifetime
             "Python Programming", "Python Advanced"
         }, "CombinedTest");
 
-        // Add courses in other category with "Python" in title
+        // Add courses in other category with "Python" in title (removing a
+        // leftover from a prior run first — (Title, OrganizationId) is unique)
         var ctx = _context!;
+        var staleCross = await ctx.Courses
+            .Where(c => c.Title == "Python for Data Science" && c.OrganizationId == TestOrgId)
+            .ToListAsync();
+        ctx.Courses.RemoveRange(staleCross);
         ctx.Courses.Add(new LibreLms.Modules.Catalog.Domain.Course
         {
             Id = Guid.NewGuid(), Title = "Python for Data Science",
             ShortDescription = "Cross-category", FullDescription = "Cross",
             Category = "OtherCategory", Duration = "1h",
-            OrganizationId = Guid.Parse("00000000-0000-0000-0000-000000000001"),
+            OrganizationId = TestOrgId,
             CreatedAt = DateTimeOffset.UtcNow
         });
         await ctx.SaveChangesAsync();
@@ -211,7 +178,7 @@ public class CourseCatalogSearchTests : IAsyncLifetime
         });
     }
 
-    [Fact(Skip = "Requires MSSQL")]
+    [Fact]
     public async Task BrowseAsync_returns_correct_page()
     {
         var titles = Enumerable.Range(1, 30).Select(i => $"Test Course {i:D3}").ToList();
@@ -229,7 +196,7 @@ public class CourseCatalogSearchTests : IAsyncLifetime
         Assert.Empty(page1Ids.Intersect(page2Ids));
     }
 
-    [Fact(Skip = "Requires MSSQL")]
+    [Fact]
     public async Task BrowseAsync_total_count_across_pages_matches()
     {
         var titles = Enumerable.Range(1, 25).Select(i => $"Count Course {i:D3}").ToList();
@@ -250,7 +217,7 @@ public class CourseCatalogSearchTests : IAsyncLifetime
         Assert.Equal(25, allItems.Count);
     }
 
-    [Fact(Skip = "Requires MSSQL")]
+    [Fact]
     public async Task BrowseAsync_empty_result_for_no_match()
     {
         var result = await _service!.BrowseAsync("xyznonexistent123", null, 1, 12);
@@ -261,7 +228,7 @@ public class CourseCatalogSearchTests : IAsyncLifetime
 
     // ===== Performance Tests (Phase 6) =====
 
-    [Fact(Skip = "Requires MSSQL")]
+    [Fact]
     public async Task Stored_procedure_returns_page_within_200ms_with_100_courses()
     {
         var titles = Enumerable.Range(1, 100).Select(i => $"Perf Course {i:D4}").ToList();
@@ -276,7 +243,7 @@ public class CourseCatalogSearchTests : IAsyncLifetime
             $"SP took {stopwatch.ElapsedMilliseconds}ms, expected < 200ms");
     }
 
-    [Fact(Skip = "Requires MSSQL")]
+    [Fact]
     public async Task Stored_procedure_returns_page_within_500ms_with_1000_courses()
     {
         var titles = Enumerable.Range(1, 1000).Select(i => $"Perf Course {i:D5}").ToList();
@@ -291,7 +258,7 @@ public class CourseCatalogSearchTests : IAsyncLifetime
             $"SP took {stopwatch.ElapsedMilliseconds}ms, expected < 500ms");
     }
 
-    [Fact(Skip = "Requires MSSQL")]
+    [Fact]
     public async Task Stored_procedure_returns_page_within_1000ms_with_10000_courses()
     {
         var titles = Enumerable.Range(1, 10000).Select(i => $"Perf Course {i:D6}").ToList();
@@ -306,7 +273,7 @@ public class CourseCatalogSearchTests : IAsyncLifetime
             $"SP took {stopwatch.ElapsedMilliseconds}ms, expected < 1000ms");
     }
 
-    [Fact(Skip = "Requires MSSQL")]
+    [Fact]
     public async Task BrowseAsync_service_method_within_500ms()
     {
         var titles = Enumerable.Range(1, 500).Select(i => $"Service Test Course {i:D4}").ToList();
@@ -321,55 +288,4 @@ public class CourseCatalogSearchTests : IAsyncLifetime
             $"Full-stack call took {stopwatch.ElapsedMilliseconds}ms, expected < 500ms");
     }
 
-    [Fact(Skip = "Requires MSSQL")]
-    public async Task FTS_index_exists_after_migration()
-    {
-        using var cmd = new SqlCommand(@"
-            SELECT COUNT(*) FROM sys.fulltext_indexes fti
-            JOIN sys.tables t ON fti.object_id = t.object_id
-            WHERE t.name = 'Courses'
-        ", new SqlConnection(_connectionString!));
-
-        var count = (int)cmd.ExecuteScalar();
-        Assert.True(count >= 1, "FTS index should exist on Courses table");
-    }
-
-    [Fact(Skip = "Requires MSSQL")]
-    public async Task Stored_procedure_fallback_to_like_when_fts_unavailable()
-    {
-        // Seed some courses
-        await SeedTestCoursesAsync(new[] { "Fallback Test Alpha", "Fallback Test Beta", "Regular Course" }, "FallbackTest");
-
-        // Temporarily disable FTS by dropping the index
-        using (var dropCmd = new SqlCommand(@"
-            IF EXISTS (SELECT 1 FROM sys.fulltext_indexes fti
-                       JOIN sys.tables t ON fti.object_id = t.object_id
-                       WHERE t.name = 'Courses')
-                DROP FULLTEXT INDEX ON Courses;
-        ", new SqlConnection(_connectionString!)))
-        {
-            dropCmd.ExecuteNonQuery();
-        }
-
-        // Call stored procedure — should fall back to LIKE
-        var result = await _service!.BrowseAsync("fallback", "FallbackTest", 1, 12);
-        Assert.NotEmpty(result.Items);
-        Assert.All(result.Items, item => Assert.Contains("fallback", item.Title.ToLowerInvariant()));
-
-        // Recreate FTS index for other tests
-        using (var recreateCmd = new SqlCommand(@"
-            IF NOT EXISTS (SELECT 1 FROM sys.fulltext_indexes fti
-                           JOIN sys.tables t ON fti.object_id = t.object_id
-                           WHERE t.name = 'Courses')
-            BEGIN
-                CREATE FULLTEXT INDEX ON Courses(Title)
-                KEY INDEX PK_Courses
-                ON LearningLmsFtCatalog
-                WITH (CHANGE_TRACKING = AUTO);
-            END;
-        ", new SqlConnection(_connectionString!)))
-        {
-            recreateCmd.ExecuteNonQuery();
-        }
-    }
 }
