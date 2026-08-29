@@ -152,7 +152,7 @@ from first paint; incognito (anonymous) → follows device.
 
 **Purpose**: Full regression evidence per Principle XIII and the quickstart walkthrough
 
-- [ ] T023 Run the complete verification gates from quickstart.md: `dotnet test tests/ArchitectureTests` (Principle III), `dotnet test tests/Host.Tests`, `npx playwright test` (FULL suite from `tests/Playwright.Tests`) — capture all passing output; fix any regressions the full run exposes
+- [X] T023 Run the complete verification gates from quickstart.md: `dotnet test tests/ArchitectureTests` (Principle III), `dotnet test tests/Host.Tests`, `npx playwright test` (FULL suite from `tests/Playwright.Tests`) — capture all passing output; fix any regressions the full run exposes
 - [ ] T024 Complete the 8 manual scenarios in quickstart.md "Manual validation" in a real browser at `http://localhost:5000` (default System, Dark, Light paper, persistence, live-follow, anonymous, SCORM iframe isolation, save-failure) and record results in the PR/commit notes
 - [ ] T025 Merge `story/042-user-theme-preference` into `master`, then on `master` rebuild + restart + re-run `npx playwright test` (Principle XIII gate 3 — post-merge regression), and switch back to `master` clean (Principle XII)
 
