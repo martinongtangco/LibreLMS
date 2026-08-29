@@ -101,7 +101,8 @@ public class LoginModel : PageModel
         // when they were duplicated.
         var claims = AuthClaims.Build(
             student.Id, student.Name, student.Email, student.SecurityStamp,
-            student.OrganizationId, student.Roles, student.AvatarPath);
+            student.OrganizationId, student.Roles, student.AvatarPath,
+            student.ThemePreference);
 
         var identity = new ClaimsIdentity(claims, AuthScheme);
         await HttpContext.SignInAsync(
