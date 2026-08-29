@@ -35,9 +35,12 @@ public interface IUserProvisioning
 }
 
 /// <summary>Minimal account data exposed across module boundaries (never includes the credential).
-/// <c>AvatarPath</c> is the display photo's URL path (e.g. "/avatars/&lt;guid&gt;.png") or null (spec 030).</summary>
+/// <c>AvatarPath</c> is the display photo's URL path (e.g. "/avatars/&lt;guid&gt;.png") or null (spec 030).
+/// <c>ThemePreference</c> is always normalized to "System"/"Light"/"Dark" and defaults to
+/// "System" (spec 042).</summary>
 public record StudentProvisionedDto(Guid Id, string Name, string Email, string Role,
-    Guid OrganizationId, DateTimeOffset CreatedAt, bool IsEmailVerified, string? AvatarPath = null);
+    Guid OrganizationId, DateTimeOffset CreatedAt, bool IsEmailVerified, string? AvatarPath = null,
+    string ThemePreference = "System");
 
 /// <summary>A page of learner accounts plus the filtered total count.</summary>
 public record StudentPageResult(IList<StudentProvisionedDto> Items, int TotalCount);
