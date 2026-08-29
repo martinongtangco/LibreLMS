@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using LibreLms.Contracts.Enrollment;
 using LibreLms.Modules.Scorm.Domain;
@@ -40,11 +41,40 @@ public class ScormSessionService
     /// </summary>
     public async Task<LaunchResult> LaunchAsync(Guid studentId, Guid courseId)
     {
-        // Validate enrollment
+        // Validate enrollment (stable across retries — run once)
         var isEnrolled = await _enrollmentLookup.IsEnrolledAsync(studentId, courseId);
         if (!isEnrolled)
             return LaunchResult.CreateNotEnrolled();
 
+        // Attempt numbers are max+1, and that read-then-insert is not atomic:
+        // two concurrent launches for the same student/course both pass the
+        // active-session check, read the same max, and the unique index
+        // IX_CourseAttempts_StudentId_CourseId_AttemptNumber rejects the second
+        // insert (SQL 2601). Retry with a fresh read — the losing insert is
+        // rolled back, so the next try sees the new max (bug-044).
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return await TryLaunchCoreAsync(studentId, courseId);
+            }
+            catch (SqlException ex) when (ex.Number == 2601)
+            {
+                if (attempt >= 3)
+                    return LaunchResult.CreateConflict();
+                _scormContext.ChangeTracker.Clear(); // drop the failed Added entity
+                await Task.Delay(50 * attempt);
+            }
+        }
+    }
+
+    /// <summary>
+    /// One launch attempt: active-session check, attempt numbering (max+1),
+    /// CourseAttempt insert, Valkey session. Retried by LaunchAsync on the
+    /// duplicate-key conflict described there (bug-044).
+    /// </summary>
+    private async Task<LaunchResult> TryLaunchCoreAsync(Guid studentId, Guid courseId)
+    {
         // Check for active session (concurrent session prevention)
         var existingKey = await _sessionStore.FindActiveSessionKeyAsync(studentId, courseId);
         if (!string.IsNullOrEmpty(existingKey))
@@ -261,6 +291,9 @@ public record LaunchResult
 
     public static LaunchResult CreateSessionAlreadyActive()
         => new() { Success = false, Error = "A session for this course is already active. Please close it before launching again." };
+
+    public static LaunchResult CreateConflict()
+        => new() { Success = false, Error = "A momentary conflict occurred while launching (the course may be opening in another tab). Please try again." };
 }
 
 /// <summary>Result of setting a CMI value.</summary>
