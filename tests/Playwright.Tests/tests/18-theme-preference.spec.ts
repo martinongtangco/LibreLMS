@@ -340,3 +340,124 @@ test.describe('Theme — Dark night-reading palette (spec 042 US3)', () => {
     });
   }
 });
+
+/* ── US4: System follows the device, no flash (FR-007…FR-009, SC-004/005) ─ */
+
+test.describe('Theme — System follows device, no flash (spec 042 US4)', () => {
+  /** First document HTML of a navigation (asserted pre-settle — SC-004). */
+  async function firstDocumentHtml(page: Page, url: string): Promise<string> {
+    const [resp] = await Promise.all([
+      page.waitForResponse((r) => r.request().resourceType() === 'document'),
+      page.goto(url),
+    ]);
+    return resp.text();
+  }
+
+  test('explicit themes render data-theme in the FIRST served document (SC-004)', async ({ page }) => {
+    await authFixture.loginAs(page, 'Learner');
+    try {
+      await setTheme(page, 'Dark');
+      const darkHtml = await firstDocumentHtml(page, '/Courses/Index');
+      expect(darkHtml).toMatch(/<html[^>]*data-theme="dark"/);
+
+      await setTheme(page, 'Light');
+      const lightHtml = await firstDocumentHtml(page, '/Courses/Index');
+      expect(lightHtml).toMatch(/<html[^>]*data-theme="light"/);
+    } finally {
+      await restoreSystemTheme(page);
+    }
+  });
+
+  test('System serves no server-side theme and the resolver runs before site.css (SC-004)', async ({ page }) => {
+    await authFixture.loginAs(page, 'Learner');
+    await page.goto('/Account/Settings');
+    try {
+      // Force System so the assertion does not depend on prior test state.
+      await page.locator(THEME_SELECT).selectOption('System');
+      const html = await firstDocumentHtml(page, '/Courses/Index');
+
+      // System: no server-side dark/light attribute…
+      expect(html).not.toMatch(/<html[^>]*data-theme="(dark|light)"/);
+      // …and the inline resolver is served in <head> BEFORE the stylesheet
+      // paints, so the first paint is already themed (no flash).
+      const scriptIdx = html.indexOf('prefers-color-scheme');
+      const cssIdx = html.indexOf('/css/site.css');
+      expect(scriptIdx, 'head resolver script missing from served HTML').toBeGreaterThan(-1);
+      expect(cssIdx, 'site.css link missing from served HTML').toBeGreaterThan(-1);
+      expect(scriptIdx).toBeLessThan(cssIdx);
+    } finally {
+      await restoreSystemTheme(page);
+    }
+  });
+
+  test('System live-follows a device change with no reload (FR-007, SC-005)', async ({ page }) => {
+    await authFixture.loginAs(page, 'Learner');
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto('/Courses/Index');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+    const urlBefore = page.url();
+    await page.evaluate(() => {
+      (window as unknown as Record<string, string>).__themeNavProbe = 'alive';
+    });
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark', { timeout: 3_000 });
+    expect(page.url()).toBe(urlBefore);
+    expect(await page.evaluate(() => (window as unknown as Record<string, string>).__themeNavProbe)).toBe('alive');
+  });
+
+  test('explicit save stops device-follow; System re-selection re-arms it (FR-007/FR-008)', async ({ page }) => {
+    await authFixture.loginAs(page, 'Learner');
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.goto('/Account/Settings');
+    try {
+      // Device dark + System → dark from the head resolver.
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+      // Explicit Light wins over the device immediately…
+      await page.locator(THEME_SELECT).selectOption('Light');
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'light', { timeout: 5_000 });
+      // …and a device flip no longer overrides it (follow disarmed).
+      await page.emulateMedia({ colorScheme: 'light' });
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+      // System again: re-arms follow and resolves the (now light) device setting.
+      await page.locator(THEME_SELECT).selectOption('System');
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'light', { timeout: 5_000 });
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark', { timeout: 3_000 });
+    } finally {
+      await restoreSystemTheme(page);
+    }
+  });
+
+  test('anonymous visitors follow the device setting (FR-009)', async ({ page, browser }) => {
+    for (const scheme of ['dark', 'light'] as const) {
+      const ctx = await browser.newContext({ colorScheme: scheme });
+      const anon = await ctx.newPage();
+      await anon.goto('/Courses/Index');
+      await expect(anon.locator('html')).toHaveAttribute('data-theme', scheme);
+      await ctx.close();
+    }
+  });
+
+  test('anonymous dark: login primary button keeps AA contrast (T018 fix)', async ({ page, browser }) => {
+    // The login page is only reachable in Dark via the anonymous device path,
+    // so this is where the btn-primary --on-accent fix (T018) is exercised.
+    const ctx = await browser.newContext({ colorScheme: 'dark' });
+    const anon = await ctx.newPage();
+    await anon.goto('/Account/Login');
+    await expect(anon.locator('html')).toHaveAttribute('data-theme', 'dark');
+    const c = await anon.evaluate((): { fg: string; bg: string } | null => {
+      const btn = document.querySelector('.btn-primary');
+      if (!btn) return null;
+      return { fg: getComputedStyle(btn).color, bg: getComputedStyle(btn).backgroundColor };
+    });
+    expect(c, '.btn-primary missing on the login page').not.toBeNull();
+    expect(
+      contrastRatio(c!.fg, c!.bg),
+      `btn-primary contrast ${contrastRatio(c!.fg, c!.bg).toFixed(2)}:1`,
+    ).toBeGreaterThanOrEqual(4.5);
+    await ctx.close();
+  });
+});

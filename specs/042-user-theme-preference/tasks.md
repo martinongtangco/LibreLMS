@@ -137,12 +137,12 @@ from first paint; incognito (anonymous) → follows device.
 
 ### Tests for User Story 4 (write FIRST, must FAIL before T021) ⚠️
 
-- [ ] T020 [P] [US4] Extend `tests/Playwright.Tests/tests/18-theme-preference.spec.ts` with US4 scenarios using Playwright `colorScheme` emulation: (a) no-flash — intercept the FIRST response's HTML of a page load and assert the theme state is correct pre-settle (Light/Dark: `data-theme` present in served HTML; System: inline head script present in `<head>` before the `site.css` link); (b) live follow — with System active and `colorScheme: 'light'`, set `colorScheme: 'dark'` via `page.emulateMedia` and assert `<html>` attribute becomes `dark` with no reload/navigation; (c) anonymous — unauthenticated context with `colorScheme: 'dark'` browses `/Courses/Index` → attribute `dark`; with `light` → `light` (FR-007…FR-009)
+- [X] T02[012] [P] [US4] Extend `tests/Playwright.Tests/tests/18-theme-preference.spec.ts` with US4 scenarios using Playwright `colorScheme` emulation: (a) no-flash — intercept the FIRST response's HTML of a page load and assert the theme state is correct pre-settle (Light/Dark: `data-theme` present in served HTML; System: inline head script present in `<head>` before the `site.css` link); (b) live follow — with System active and `colorScheme: 'light'`, set `colorScheme: 'dark'` via `page.emulateMedia` and assert `<html>` attribute becomes `dark` with no reload/navigation; (c) anonymous — unauthenticated context with `colorScheme: 'dark'` browses `/Courses/Index` → attribute `dark`; with `light` → `light` (FR-007…FR-009)
 
 ### Implementation for User Story 4
 
-- [ ] T021 [US4] Verify and, if gaps exist, fix the head inline script in `src/Host/Pages/Shared/_Layout.cshtml`: `matchMedia('(prefers-color-scheme: dark)').addEventListener('change', …)` live-follow, the no-`matchMedia` fallback to `light`, and that the attribute is removed (not stale) when a signed-in user switches System↔explicit (T012's apply path) — contracts/theme-ui.md §1 guarantees (depends on T008)
-- [ ] T022 [US4] Rebuild + restart, run the US4 scenarios in `tests/Playwright.Tests/tests/18-theme-preference.spec.ts` and capture passing output
+- [X] T02[012] [US4] Verify and, if gaps exist, fix the head inline script in `src/Host/Pages/Shared/_Layout.cshtml`: `matchMedia('(prefers-color-scheme: dark)').addEventListener('change', …)` live-follow, the no-`matchMedia` fallback to `light`, and that the attribute is removed (not stale) when a signed-in user switches System↔explicit (T012's apply path) — contracts/theme-ui.md §1 guarantees (depends on T008)
+- [X] T02[012] [US4] Rebuild + restart, run the US4 scenarios in `tests/Playwright.Tests/tests/18-theme-preference.spec.ts` and capture passing output
 
 **Checkpoint**: All four user stories independently functional.
 
