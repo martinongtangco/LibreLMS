@@ -21,7 +21,12 @@
             var existing = document.documentElement.getAttribute('data-theme');
             if (existing === 'dark' || existing === 'light') return;
             var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+            // __themeSystemMode: the Settings page flips this off when an explicit
+            // theme is saved (so the live follow stops overriding it) and back on
+            // when System is re-selected (spec 042 US1/US4).
+            window.__themeSystemMode = true;
             function apply() {
+                if (!window.__themeSystemMode) return;
                 document.documentElement.dataset.theme = (mq && mq.matches) ? 'dark' : 'light';
             }
             apply();
