@@ -217,5 +217,11 @@ public sealed class UserProvisioningService : IUserProvisioning
     }
 
     private static StudentProvisionedDto ToDto(Student s) =>
-        new(s.Id, s.Name, s.Email, s.Roles, s.OrganizationId, s.CreatedAt, s.IsEmailVerified, s.AvatarPath);
+        new(s.Id, s.Name, s.Email, s.Roles, s.OrganizationId, s.CreatedAt, s.IsEmailVerified, s.AvatarPath,
+            NormalizeTheme(s.ThemePreference));
+
+    /// <summary>Normalize a stored theme preference to the spec 042 value set
+    /// ("System"/"Light"/"Dark"); anything else falls back to "System".</summary>
+    private static string NormalizeTheme(string? value) =>
+        value is null ? "System" : value switch { "System" or "Light" or "Dark" => value, _ => "System" };
 }
