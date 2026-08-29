@@ -57,7 +57,11 @@ public class IndexModel : PageModel
                 TotalLearners = metrics.TotalLearners;
                 TotalCourses = metrics.TotalCourses;
                 TotalEnrollments = metrics.TotalEnrollments;
-                CompletionRate = metrics.AverageCompletionRate.ToString("P1");
+                // "0.#%" is a CUSTOM format on purpose (bug-043): standard P* percent
+                // formats render through the ambient culture's PercentPositivePattern
+                // ("0.0 %" under .NET 10's invariant/en-US data), which made this UI
+                // string environment-dependent. Custom formats are culture-proof.
+                CompletionRate = metrics.AverageCompletionRate.ToString("0.#%");
             }
             else if (orgId.HasValue)
             {
@@ -66,7 +70,8 @@ public class IndexModel : PageModel
                 TotalLearners = metrics.LearnerCount;
                 TotalCourses = metrics.CourseCount;
                 TotalEnrollments = metrics.EnrollmentCount;
-                CompletionRate = metrics.AverageCompletionRate.ToString("P1");
+                // "0.#%" — see bug-043 comment above: deterministic, culture-proof percent.
+                CompletionRate = metrics.AverageCompletionRate.ToString("0.#%");
                 OrganizationName = metrics.OrganizationName;
             }
 
