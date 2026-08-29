@@ -7,7 +7,7 @@
 
 **Created**: 2026-08-29
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-29, post-merge full suite 167/167 green)
 
 **Input**: User description: "Lets finalize the Settings > Theme functionality for each profile of user. It should persist as long as the user is logged in. i like the System, Light, and Dark option. System is default, light should not be just white but something closer to a paper thats easy to the eyes. Dark should be a good balance of contrast for night reading"
 
