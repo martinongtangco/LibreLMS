@@ -29,7 +29,7 @@ and testing of each story.
 **Purpose**: Branch hygiene per Constitution Principle VIII (no task can edit files
 before this completes — the "Before You Touch Code" gate)
 
-- [ ] T001 Create branch `story/042-user-theme-preference` from `master` and confirm `git branch --show-current` reports it (run from repo root `/workspace`)
+- [X] T001 Create branch `story/042-user-theme-preference` from `master` and confirm `git branch --show-current` reports it (run from repo root `/workspace`)
 
 ---
 
