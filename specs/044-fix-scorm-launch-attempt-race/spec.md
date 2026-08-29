@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-29
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-29, post-merge full suite 151/151 green)
 
 **Input**: Discovered during spec 042's Phase-7 full-suite runs (2026-08-29):
 `tests/Playwright.Tests/tests/14-profile-courses.spec.ts` —

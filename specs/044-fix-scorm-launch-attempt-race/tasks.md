@@ -19,4 +19,4 @@
 
 ## Phase 4: Merge
 
-- [ ] T007 Merge `bug/044-fix-scorm-launch-attempt-race` into `master`, then on `master` rebuild + restart + re-run the full `npx playwright test` (Principle XIII gate 3), push, and switch back to `master` clean (Principle XII)
+- [X] T007 Merge `bug/044-fix-scorm-launch-attempt-race` into `master`, then on `master` rebuild + restart + re-run the full `npx playwright test` (Principle XIII gate 3), push, and switch back to `master` clean (Principle XII)
