@@ -114,12 +114,12 @@ secondary/semantic contrast, distinguishable controls (FR-005, SC-003).
 
 ### Tests for User Story 3 (write FIRST, must FAIL before T018) ⚠️
 
-- [ ] T017 [P] [US3] Extend `tests/Playwright.Tests/tests/18-theme-preference.spec.ts` with US3 scenarios: with Dark active on `/Courses/Index` + `/Account/Settings`: computed body background is not `rgb(0, 0, 0)`; body text, muted text, and (when present) brand/success/error element colors each compute ≥ 4.5:1 against their computed backgrounds in-test (SC-003); badge/alert background colors differ from surface (distinguishability spot-check)
+- [X] T01[789] [P] [US3] Extend `tests/Playwright.Tests/tests/18-theme-preference.spec.ts` with US3 scenarios: with Dark active on `/Courses/Index` + `/Account/Settings`: computed body background is not `rgb(0, 0, 0)`; body text, muted text, and (when present) brand/success/error element colors each compute ≥ 4.5:1 against their computed backgrounds in-test (SC-003); badge/alert background colors differ from surface (distinguishability spot-check)
 
 ### Implementation for User Story 3
 
-- [ ] T018 [US3] Audit `src/Host/wwwroot/css/site.css` (+ `src/Host/Pages/**/*.cshtml` inline styles) for hardcoded values that break Dark mode — literal white/light backgrounds or text, icon stroke colors (Lucide `<i>` inherit `currentColor` — verify nav/brand icons), focus outlines, shadows, `color-scheme` — fix by tokenizing or adding `[data-theme="dark"]` overrides so the R3 dark palette is what renders (depends on T004; runs after T015 to avoid same-file conflicts)
-- [ ] T019 [US3] Rebuild + restart, run the US3 scenarios in `tests/Playwright.Tests/tests/18-theme-preference.spec.ts` and capture passing output
+- [X] T01[789] [US3] Audit `src/Host/wwwroot/css/site.css` (+ `src/Host/Pages/**/*.cshtml` inline styles) for hardcoded values that break Dark mode — literal white/light backgrounds or text, icon stroke colors (Lucide `<i>` inherit `currentColor` — verify nav/brand icons), focus outlines, shadows, `color-scheme` — fix by tokenizing or adding `[data-theme="dark"]` overrides so the R3 dark palette is what renders (depends on T004; runs after T015 to avoid same-file conflicts)
+- [X] T01[789] [US3] Rebuild + restart, run the US3 scenarios in `tests/Playwright.Tests/tests/18-theme-preference.spec.ts` and capture passing output
 
 **Checkpoint**: Stories 1–3 independently functional — both palettes are quality-verified.
 

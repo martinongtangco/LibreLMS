@@ -237,3 +237,106 @@ test.describe('Theme — Light paper palette (spec 042 US2)', () => {
     });
   }
 });
+
+/* ── US3: Dark night-reading palette (FR-005, SC-003) ─────────────────── */
+
+interface SemanticSample {
+  label: string;
+  fg: string;
+  bg: string;
+}
+
+/**
+ * First visible element per semantic color group, with its computed
+ * foreground and EFFECTIVE (opaque-ancestor-walked) background. Groups
+ * mirror the token pairs in site.css: brand/accent, success, error.
+ */
+function sampleSemanticColors(page: Page): Promise<SemanticSample[]> {
+  return page.evaluate(() => {
+    const opaqueBg = (el: Element | null): string => {
+      let node: Element | null = el;
+      while (node) {
+        const bg = getComputedStyle(node).backgroundColor;
+        if (bg !== 'rgba(0, 0, 0, 0)') return bg;
+        node = node.parentElement;
+      }
+      return 'rgb(255, 255, 255)';
+    };
+    const groups: Array<{ label: string; selector: string }> = [
+      { label: 'brand', selector: '.btn-primary, .btn-ghost, .brand, [class*="brand"]' },
+      { label: 'success', selector: '.tag-accent-2, .alert-success, .text-success' },
+      { label: 'error', selector: '.alert-danger, .text-danger' },
+    ];
+    const out: SemanticSample[] = [];
+    for (const g of groups) {
+      const el = Array.from(document.querySelectorAll<HTMLElement>(g.selector)).find(
+        (n) => n.offsetWidth > 0 || n.offsetHeight > 0,
+      );
+      if (el) out.push({ label: g.label, fg: getComputedStyle(el).color, bg: opaqueBg(el) });
+    }
+    return out;
+  });
+}
+
+test.describe('Theme — Dark night-reading palette (spec 042 US3)', () => {
+  // US3 page set per T017: catalog + settings (the two dark-mode anchor pages).
+  const DARK_PAGES: Array<{ name: string; enter: (page: Page) => Promise<void> }> = [
+    { name: 'course catalog', enter: (p) => p.goto('/Courses/Index') },
+    { name: 'account settings', enter: (p) => p.goto('/Account/Settings') },
+  ];
+
+  for (const { name, enter } of DARK_PAGES) {
+    test(`Dark: ${name} — soft dark surfaces, AA text contrast (FR-005, SC-003)`, async ({ page }) => {
+      await authFixture.loginAs(page, 'Learner');
+      try {
+        await setTheme(page, 'Dark');
+        await enter(page);
+
+        const c = await samplePageColors(page);
+
+        // FR-005: soft dark, never pure black.
+        expect(c.bodyBg, `body background on "${name}" is pure black`).not.toBe('rgb(0, 0, 0)');
+
+        // SC-003: AA (4.5:1) for primary and secondary text.
+        expect(
+          contrastRatio(c.bodyFg, c.bodyBg),
+          `body text contrast ${contrastRatio(c.bodyFg, c.bodyBg).toFixed(2)}:1 on "${name}"`,
+        ).toBeGreaterThanOrEqual(4.5);
+        if (c.mutedFg !== null) {
+          expect(
+            contrastRatio(c.mutedFg, c.mutedBg),
+            `muted text contrast ${contrastRatio(c.mutedFg, c.mutedBg).toFixed(2)}:1 on "${name}"`,
+          ).toBeGreaterThanOrEqual(4.5);
+        }
+
+        // SC-003: semantic (brand/success/error) text ≥ 4.5:1 where present.
+        for (const s of await sampleSemanticColors(page)) {
+          expect(
+            contrastRatio(s.fg, s.bg),
+            `${s.label} text contrast ${contrastRatio(s.fg, s.bg).toFixed(2)}:1 on "${name}"`,
+          ).toBeGreaterThanOrEqual(4.5);
+        }
+
+        // Distinguishability spot-check: badge/tag backgrounds differ from the
+        // card surface so state chips read as shapes, not just hue.
+        const chip = await page.evaluate(() => {
+          const tag = document.querySelector<HTMLElement>('.tag, .badge');
+          const card = document.querySelector<HTMLElement>('.card');
+          if (!tag || !card) return null;
+          return {
+            tagBg: getComputedStyle(tag).backgroundColor,
+            cardBg: getComputedStyle(card).backgroundColor,
+          };
+        });
+        if (chip) {
+          expect(
+            chip.tagBg,
+            `tag background ${chip.tagBg} equals card surface ${chip.cardBg} on "${name}"`,
+          ).not.toBe(chip.cardBg);
+        }
+      } finally {
+        await restoreSystemTheme(page);
+      }
+    });
+  }
+});

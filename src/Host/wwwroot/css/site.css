@@ -70,6 +70,7 @@
   --page-bg:           #f5ead8;
   --accent:            #c67139;
   --accent-text:       #8a4f26;
+  --on-accent:         #ffffff; /* text/icons placed on accent/brand surfaces */
   --nav-text:          #c9c2ba;
   --border-light:      #e4d9c8;
   --mobile-active-bg:  #f3ddc9;
@@ -157,7 +158,7 @@ h1, h2, h3, h4, h5, h6 {
 /* ── Navigation Bar (spec 020) ──────────────────────────────────────────── */
 .navbar {
   background: var(--nav-bg);
-  color: var(--page-bg);
+  color: var(--nav-text); /* --page-bg is the page CANVAS (bug-042 US3: it goes dark in [data-theme=dark], nav text must not) */
   padding: 12px 24px;
   display: flex;
   align-items: center;
@@ -170,7 +171,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-size: 20px;
   font-weight: 400;
-  color: var(--page-bg);
+  color: var(--nav-text);
   margin-right: 16px;
   white-space: nowrap;
   text-decoration: none;
@@ -312,12 +313,12 @@ body.role-admin [data-role-link="admin"] {
 
 .role-pill .role-segment.active {
   background: var(--accent);
-  color: #ffffff;
+  color: var(--on-accent);
 }
 
 /* Account name — static, spec 020 */
 .account-name {
-  color: var(--page-bg);
+  color: var(--nav-text);
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
@@ -380,7 +381,7 @@ body.role-admin [data-role-link="admin"] {
   display: none;
   background: none;
   border: none;
-  color: var(--page-bg);
+  color: var(--nav-text);
   cursor: pointer;
   padding: 6px;
   min-width: var(--touch-target-min);
@@ -497,7 +498,9 @@ body.role-admin [data-role-link="admin"] {
 
 .btn-primary {
   background: var(--color-accent);
-  color: white;
+  /* --on-accent: white on terracotta in Light, near-black on the light dark-accent
+     in Dark (white on #d98a63 is only 2.7:1 — fails AA; bug-042 US3/T018). */
+  color: var(--on-accent);
 }
 
 .btn-primary:hover {
@@ -1099,7 +1102,7 @@ hr.separator {
   overflow: hidden;
   border: 1px solid var(--color-border-strong);
   border-radius: var(--border-radius-sm);
-  background: #fafafa;
+  background: var(--color-surface); /* was #fafafa — stayed light in Dark (bug-042 US3/T018) */
 }
 
 /* ── Back Link ─────────────────────────────────────────────────────────── */
@@ -1139,7 +1142,7 @@ hr.separator {
   left: 0;
   right: 0;
   background: var(--color-brand);
-  color: white;
+  color: var(--on-accent); /* white fails AA on the dark-mode brand (#d98a63); bug-042 US3/T018 */
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: var(--font-size-sm);
   display: flex;
@@ -1553,7 +1556,9 @@ hr.separator {
 
 /* Table hover highlight */
 .data-table tbody tr:hover {
-  background: var(--color-border-light, #f5f0ea);
+  /* --color-border-light was never defined (fallback #f5f0ea stayed light in Dark);
+     use the defined --color-border token instead (bug-042 US3/T018). */
+  background: var(--color-border);
 }
 
 /* Radio group spacing for SCORM options */
@@ -1586,7 +1591,7 @@ hr.separator {
   align-items: center;
   justify-content: center;
   background: var(--color-accent);
-  color: #ffffff;
+  color: var(--on-accent);
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -1630,7 +1635,7 @@ body.role-admin .account-avatar {
   align-items: center;
   justify-content: center;
   background: var(--color-accent);
-  color: #ffffff;
+  color: var(--on-accent);
   font-size: 1.8rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -1865,4 +1870,9 @@ body.role-admin .account-avatar {
   --color-success-text:  #b5cf9a;
   --color-error-bg:      #3a2626;
   --color-error-border:  #e57373;
+  /* spec 020 nav/palette tokens T004's dark block missed (bug-042 US3/T018): */
+  --page-bg:           #1d1a16; /* page canvas was stuck at the Light beige */
+  --accent:            #d98a63; /* legacy accent token tracks the R3 dark accent */
+  --on-accent:         #1d1a16; /* dark text on the light dark-accent (6.4:1) */
+  --border-light:      #3a342b; /* table row hover was stuck at Light beige */
 }
