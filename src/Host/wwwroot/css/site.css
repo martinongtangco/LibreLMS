@@ -12,12 +12,12 @@
 /* ── Design Tokens (Organic Design System) ─────────────────────────────── */
 :root {
   /* Colors — Organic palette */
-  --color-bg:          #faf8f4;
-  --color-surface:     #ffffff;
-  --color-text:        #2c2c2c;
-  --color-text-muted:  #6b6b6b;
+  --color-bg:          #f6f1e8;
+  --color-surface:     #fdfbf7;
+  --color-text:        #2c2a26;
+  --color-text-muted:  #6b6558;
   --color-text-faint:  #9e9e9e;
-  --color-brand:       #c45d3e;
+  --color-brand:       #b0522f;
   --color-brand-hover: #a84d33;
   --color-accent:      #c45d3e;
   --color-accent-2:    #7a9e7e;
@@ -29,11 +29,12 @@
   --color-category-bg:   #f0e4da;
   --color-category-text: #8b5e3c;
   --color-duration-bg:   #e4ecd5;
-  --color-duration-text: #5a7a3e;
+  --color-duration-text: #557a3a;
   --color-success-bg:    #e4ecd5;
-  --color-success-text:  #5a7a3e;
+  --color-success-text:  #557a3a;
   --color-error-bg:      #fdecea;
   --color-error-border:  #c62828;
+  color-scheme: light;
 
   /* Typography — Organic type scale */
   --font-heading: 'Caprasimo', Georgia, 'Times New Roman', serif;
@@ -1838,3 +1839,28 @@ body.role-admin .account-avatar {
         --org-tree-indent: 1.5rem;
       }
     }
+
+/* Theme: Dark (spec 042) — soft warm dark, WCAG AA verified (research R3) */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg:          #1d1a16;
+  --color-surface:     #262219;
+  --color-text:        #e9e4da;
+  --color-text-muted:  #a49c8e;
+  --color-text-faint:  #8f887b;
+  --color-brand:       #d98a63;
+  --color-brand-hover: #e29a75;
+  --color-accent:      #d98a63;
+  --color-accent-2:    #9db88f;
+  --color-accent-700:  #c4714a;
+  --color-border:      #3a342b;
+  --color-border-strong: #4a4337;
+  --color-category-bg:   #3a3025;
+  --color-category-text: #d9b48f;
+  --color-duration-bg:   #2f3a26;
+  --color-duration-text: #b5cf9a;
+  --color-success-bg:    #2f3a26;
+  --color-success-text:  #b5cf9a;
+  --color-error-bg:      #3a2626;
+  --color-error-border:  #e57373;
+}
