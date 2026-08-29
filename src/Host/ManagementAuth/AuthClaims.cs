@@ -21,7 +21,8 @@ public static class AuthClaims
     /// <summary>
     /// Build the full claim set for a sign-in cookie.
     /// Always present: NameIdentifier, Name, Email, SecurityStamp, OrganizationId
-    /// (org-scoped authorization — spec 009 T043, restored in bug-039).
+    /// (org-scoped authorization — spec 009 T043, restored in bug-039), ThemePreference
+    /// (default "System", unknown values normalized to "System" — spec 042 FR-010).
     /// Present only when non-empty: Role, AvatarPath (spec 030).
     /// </summary>
     public static List<Claim> Build(
@@ -31,7 +32,8 @@ public static class AuthClaims
         Guid securityStamp,
         Guid organizationId,
         string? role = null,
-        string? avatarPath = null)
+        string? avatarPath = null,
+        string? themePreference = null)
     {
         var claims = new List<Claim>
         {
@@ -40,6 +42,7 @@ public static class AuthClaims
             new(ClaimTypes.Email, email),
             new(SecurityClaims.SecurityStamp, securityStamp.ToString()),
             new(OrgClaimTypes.OrganizationId, organizationId.ToString()),
+            new(ThemeClaimTypes.ThemePreference, NormalizeTheme(themePreference)),
         };
 
         if (!string.IsNullOrWhiteSpace(role))
@@ -50,4 +53,7 @@ public static class AuthClaims
 
         return claims;
     }
+
+    private static string NormalizeTheme(string? value) =>
+        value is null ? "System" : value switch { "System" or "Light" or "Dark" => value, _ => "System" };
 }

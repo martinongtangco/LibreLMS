@@ -1,11 +1,39 @@
 @using System.Security.Claims
 @using LibreLms.Host.ManagementAuth
+@* Theme (spec 042): the always-present ThemePreference claim drives the data-theme
+   attribute. Explicit Dark/Light render server-side (correct from first paint);
+   System, anonymous, or unknown values render an empty attribute, which the inline
+   script below resolves from the device setting before site.css paints. *@
+@{
+    var themeClaim = User.FindFirstValue(ThemeClaimTypes.ThemePreference);
+    var dataTheme = themeClaim == "Dark" ? "dark" : themeClaim == "Light" ? "light" : string.Empty;
+}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="@dataTheme">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Libre LMS</title>
+    @* Theme: System resolution + live device follow (spec 042) — must run before site.css paints. *@
+    <script>
+        (function() {
+            // An explicit server-rendered theme (dark/light) wins; empty/absent means System.
+            var existing = document.documentElement.getAttribute('data-theme');
+            if (existing === 'dark' || existing === 'light') return;
+            var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+            // __themeSystemMode: the Settings page flips this off when an explicit
+            // theme is saved (so the live follow stops overriding it) and back on
+            // when System is re-selected (spec 042 US1/US4).
+            window.__themeSystemMode = true;
+            function apply() {
+                if (!window.__themeSystemMode) return;
+                document.documentElement.dataset.theme = (mq && mq.matches) ? 'dark' : 'light';
+            }
+            apply();
+            if (mq && mq.addEventListener) mq.addEventListener('change', apply);
+            else if (mq && mq.addListener) mq.addListener(apply);
+        })();
+    </script>
     <link href="/css/site.css" rel="stylesheet" />
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>

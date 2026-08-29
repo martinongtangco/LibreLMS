@@ -129,7 +129,8 @@ public sealed class UserProvisioningService : IUserProvisioning
 
             using var reader = await command.ExecuteReaderAsync();
 
-            // Result Set 1: learner rows (columns 0..7 map 1:1 onto StudentProvisionedDto)
+            // Result Set 1: learner rows (columns 0..8 map 1:1 onto StudentProvisionedDto;
+            // column 8 is ThemePreference — spec 042)
             while (reader.Read())
             {
                 items.Add(new StudentProvisionedDto(
@@ -140,7 +141,8 @@ public sealed class UserProvisioningService : IUserProvisioning
                     reader.GetGuid(4),
                     reader.GetDateTimeOffset(5),
                     reader.GetBoolean(6),
-                    reader.IsDBNull(7) ? null : reader.GetString(7)
+                    reader.IsDBNull(7) ? null : reader.GetString(7),
+                    NormalizeTheme(reader.IsDBNull(8) ? null : reader.GetString(8))
                 ));
             }
 
@@ -217,5 +219,11 @@ public sealed class UserProvisioningService : IUserProvisioning
     }
 
     private static StudentProvisionedDto ToDto(Student s) =>
-        new(s.Id, s.Name, s.Email, s.Roles, s.OrganizationId, s.CreatedAt, s.IsEmailVerified, s.AvatarPath);
+        new(s.Id, s.Name, s.Email, s.Roles, s.OrganizationId, s.CreatedAt, s.IsEmailVerified, s.AvatarPath,
+            NormalizeTheme(s.ThemePreference));
+
+    /// <summary>Normalize a stored theme preference to the spec 042 value set
+    /// ("System"/"Light"/"Dark"); anything else falls back to "System".</summary>
+    private static string NormalizeTheme(string? value) =>
+        value is null ? "System" : value switch { "System" or "Light" or "Dark" => value, _ => "System" };
 }

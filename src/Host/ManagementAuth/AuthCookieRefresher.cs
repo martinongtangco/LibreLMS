@@ -11,8 +11,10 @@ namespace LibreLms.Host.ManagementAuth;
 /// change (name or photo save) the nav would show stale data until re-login. This
 /// helper rebuilds the exact claim list <c>LoginModel.OnPostAsync</c> builds —
 /// NameIdentifier, Name, Email, SecurityStamp, Role (when set) — plus the new
-/// <c>AvatarPath</c> claim (R3) and signs in again. The claim shape is identical, so
-/// the OnValidatePrincipal stamp re-check and role authorization are unaffected.
+/// <c>AvatarPath</c> claim (R3) and signs in again. The cookie is also re-issued
+/// after a theme save in Settings (spec 042), so the ThemePreference claim tracks
+/// the account. The claim shape is identical, so the OnValidatePrincipal stamp
+/// re-check and role authorization are unaffected.
 /// </summary>
 public sealed class AuthCookieRefresher
 {
@@ -39,7 +41,8 @@ public sealed class AuthCookieRefresher
 
         var claims = AuthClaims.Build(
             student.Id, student.Name, student.Email, stamp ?? Guid.Empty,
-            student.OrganizationId, student.Role, student.AvatarPath);
+            student.OrganizationId, student.Role, student.AvatarPath,
+            student.ThemePreference);
 
         var identity = new ClaimsIdentity(claims, AuthScheme);
         await context.SignInAsync(

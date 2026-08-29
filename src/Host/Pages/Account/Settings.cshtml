@@ -35,8 +35,7 @@
                 <div class="settings-label">Theme</div>
                 <div class="settings-description">Choose your preferred theme appearance.</div>
             </div>
-            <select asp-for="ThemePreference" class="form-select" style="width: auto; min-width: 120px;"
-                    onchange="document.getElementById('settings-form').requestSubmit()">
+            <select asp-for="ThemePreference" class="form-select" style="width: auto; min-width: 120px;">
                 <option value="System">System</option>
                 <option value="Light">Light</option>
                 <option value="Dark">Dark</option>
@@ -44,6 +43,64 @@
         </div>
     </div>
 </form>
+
+<script>
+    // Theme AJAX save (spec 042 US1): no full-page navigation, in-progress form
+    // input untouched, theme applied client-side only after a confirmed save
+    // (FR-003/FR-011). Anti-forgery token travels in the FormData body.
+    (function() {
+        var select = document.querySelector('select[name="ThemePreference"]');
+        if (!select) return;
+        var form = document.getElementById('settings-form');
+        var initialValue = select.value;
+
+        select.addEventListener('change', function() {
+            var url = new URL(form.action, window.location.href);
+            url.searchParams.set('handler', 'Theme');
+            fetch(url.toString(), {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'X-Requested-With': 'fetch' }
+            })
+            .then(function(res) { return res.json().then(function(j) { return { ok: res.ok, j: j }; }); })
+            .then(function(r) {
+                if (r.ok && r.j && r.j.success) {
+                    applyTheme(select.value);
+                    showAlert('success', 'Settings saved.');
+                } else {
+                    showAlert('error', (r.j && r.j.message) || 'Failed to save theme.');
+                    select.value = initialValue; // failed save: displayed theme unchanged (FR-011)
+                }
+            })
+            .catch(function() {
+                showAlert('error', 'Failed to save theme.');
+                select.value = initialValue;
+            });
+        });
+
+        function applyTheme(value) {
+            var root = document.documentElement;
+            if (value === 'System') {
+                // Re-arm live device-follow (head script) and resolve the current setting.
+                window.__themeSystemMode = true;
+                var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+                root.dataset.theme = (mq && mq.matches) ? 'dark' : 'light';
+            } else {
+                window.__themeSystemMode = false;
+                root.dataset.theme = value.toLowerCase();
+            }
+        }
+
+        function showAlert(kind, text) {
+            var existing = document.querySelector('.alert.alert-' + kind);
+            if (existing) existing.remove();
+            var div = document.createElement('div');
+            div.className = 'alert alert-' + kind + ' mb-md';
+            div.textContent = text;
+            form.before(div);
+        }
+    })();
+</script>
 
 <div class="card mt-md">
     <div class="settings-row">
