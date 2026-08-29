@@ -21,7 +21,7 @@ public class AuthClaimsTests
     private static readonly Guid Stamp = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
 
     [Fact]
-    public void Build_produces_exactly_the_seven_expected_claim_types_for_a_complete_account()
+    public void Build_produces_exactly_the_eight_expected_claim_types_for_a_complete_account()
     {
         var claims = AuthClaims.Build(
             StudentId, "Alice Johnson", "alice@example.com", Stamp, OrgId,
@@ -29,7 +29,8 @@ public class AuthClaimsTests
 
         var byType = claims.ToDictionary(c => c.Type);
 
-        // The contract: exactly these seven types — no more, no fewer.
+        // The contract: exactly these eight types — no more, no fewer.
+        // (ThemePreference was added by spec 042 and is always present.)
         var expected = new HashSet<string>
         {
             ClaimTypes.NameIdentifier,
@@ -39,6 +40,7 @@ public class AuthClaimsTests
             OrgClaimTypes.OrganizationId,
             ClaimTypes.Role,
             AvatarClaimTypes.AvatarPath,
+            ThemeClaimTypes.ThemePreference,
         };
         Assert.Equal(expected, byType.Keys.ToHashSet());
     }
@@ -48,7 +50,7 @@ public class AuthClaimsTests
     {
         var claims = AuthClaims.Build(
             StudentId, "Alice Johnson", "alice@example.com", Stamp, OrgId,
-            RoleNames.OrgAdmin, "/avatars/alice.png");
+            RoleNames.OrgAdmin, "/avatars/alice.png", "Dark");
         var byType = claims.ToDictionary(c => c.Type, c => c.Value);
 
         Assert.Equal(StudentId.ToString("D"), byType[ClaimTypes.NameIdentifier]);
@@ -57,6 +59,7 @@ public class AuthClaimsTests
         Assert.Equal(Stamp.ToString("D"), byType[SecurityClaims.SecurityStamp]);
         Assert.Equal(RoleNames.OrgAdmin, byType[ClaimTypes.Role]);
         Assert.Equal("/avatars/alice.png", byType[AvatarClaimTypes.AvatarPath]);
+        Assert.Equal("Dark", byType[ThemeClaimTypes.ThemePreference]);
     }
 
     [Fact]
@@ -86,6 +89,39 @@ public class AuthClaimsTests
         // The always-present core must survive even for a minimal account.
         Assert.Contains(OrgClaimTypes.OrganizationId, types);
         Assert.Contains(SecurityClaims.SecurityStamp, types);
+        // Spec 042: ThemePreference is always present too — unlike Role/AvatarPath —
+        // defaulting to "System" when no preference was set.
+        Assert.Contains(ThemeClaimTypes.ThemePreference, types);
+        Assert.Equal("System", claims.Single(c => c.Type == ThemeClaimTypes.ThemePreference).Value);
+    }
+
+    [Fact]
+    public void Build_without_theme_argument_defaults_ThemePreference_to_System()
+    {
+        var claims = AuthClaims.Build(
+            StudentId, "Bob Smith", "bob@example.com", Stamp, OrgId);
+
+        Assert.Equal("System", claims.Single(c => c.Type == ThemeClaimTypes.ThemePreference).Value);
+    }
+
+    [Fact]
+    public void Build_with_null_theme_preference_defaults_ThemePreference_to_System()
+    {
+        var claims = AuthClaims.Build(
+            StudentId, "Bob Smith", "bob@example.com", Stamp, OrgId,
+            themePreference: null);
+
+        Assert.Equal("System", claims.Single(c => c.Type == ThemeClaimTypes.ThemePreference).Value);
+    }
+
+    [Fact]
+    public void Build_with_unknown_theme_preference_normalizes_ThemePreference_to_System()
+    {
+        var claims = AuthClaims.Build(
+            StudentId, "Bob Smith", "bob@example.com", Stamp, OrgId,
+            themePreference: "Neon");
+
+        Assert.Equal("System", claims.Single(c => c.Type == ThemeClaimTypes.ThemePreference).Value);
     }
 
     [Fact]
