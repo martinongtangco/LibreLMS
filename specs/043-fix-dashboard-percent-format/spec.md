@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-29
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-29, post-merge full suite 151/151 green)
 
 **Input**: Discovered while running spec 042's full-suite verification
 (pre-merge, T023 prep) on 2026-08-29:

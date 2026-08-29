@@ -18,4 +18,4 @@
 
 ## Phase 4: Merge
 
-- [ ] T006 Merge `bug/043-fix-dashboard-percent-format` into `master`, then on `master` rebuild + restart + re-run the full `npx playwright test` (Principle XIII gate 3 — post-merge regression), and switch back to `master` clean (Principle XII)
+- [X] T006 Merge `bug/043-fix-dashboard-percent-format` into `master`, then on `master` rebuild + restart + re-run the full `npx playwright test` (Principle XIII gate 3 — post-merge regression), and switch back to `master` clean (Principle XII)
