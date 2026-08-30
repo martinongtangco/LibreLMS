@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-30
 
-**Status**: Active
+**Status**: Complete (merged 2026-08-30, post-merge gate 3 green — full suite 169/169, 1 documented verify-email skip)
 
 **Input**: User bug report (screenshot) — "when you go to My Courses, there's a weird
 blank bar underneath the 'Enrolled <date> · 0% complete' message." Screenshot shows
