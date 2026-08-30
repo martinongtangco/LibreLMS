@@ -236,6 +236,24 @@ test.describe('Theme — Light paper palette (spec 042 US2)', () => {
       }
     });
   }
+
+  test('Light: My Courses progress track keeps the cream groove (bug-045, no Light regression)', async ({ page }) => {
+    // The bug-045 fix split the track onto its own --color-track token; this
+    // pins that Light still renders the old --color-bg groove (#f6f1e8).
+    await authFixture.loginAs(page, 'Learner');
+    try {
+      await setTheme(page, 'Light');
+      await page.goto('/MyCourses/Index');
+
+      const trackBg = await page
+        .locator('.progress-track')
+        .first()
+        .evaluate((el) => getComputedStyle(el).backgroundColor);
+      expect(trackBg, 'My Courses track is not the light groove #f6f1e8').toBe('rgb(246, 241, 232)');
+    } finally {
+      await restoreSystemTheme(page);
+    }
+  });
 });
 
 /* ── US3: Dark night-reading palette (FR-005, SC-003) ─────────────────── */
@@ -339,6 +357,34 @@ test.describe('Theme — Dark night-reading palette (spec 042 US3)', () => {
       }
     });
   }
+
+  test('Dark: My Courses progress track is a subtle groove, not the page canvas (bug-045)', async ({ page }) => {
+    // Regression: .progress-track painted var(--color-bg), which in Dark is the
+    // page canvas (#1d1a16) — a near-black blank bar under "Enrolled … 0% complete".
+    await authFixture.loginAs(page, 'Learner');
+    try {
+      await setTheme(page, 'Dark');
+      await page.goto('/MyCourses/Index');
+
+      const colors = await page.evaluate(() => {
+        const track = document.querySelector<HTMLElement>('.progress-track');
+        if (!track) return null;
+        const card = track.closest<HTMLElement>('.card');
+        return {
+          trackBg: getComputedStyle(track).backgroundColor,
+          bodyBg: getComputedStyle(document.body).backgroundColor,
+          cardBg: card ? getComputedStyle(card).backgroundColor : 'rgba(0, 0, 0, 0)',
+        };
+      });
+      expect(colors, 'no .progress-track on My Courses (expected seeded enrollments)').not.toBeNull();
+      expect(colors!.trackBg, 'track still paints the page canvas').not.toBe(colors!.bodyBg);
+      expect(colors!.trackBg, 'track equals the card surface').not.toBe(colors!.cardBg);
+      // Pin the spec'd dark groove token (#211d17).
+      expect(colors!.trackBg).toBe('rgb(33, 29, 23)');
+    } finally {
+      await restoreSystemTheme(page);
+    }
+  });
 });
 
 /* ── US4: System follows the device, no flash (FR-007…FR-009, SC-004/005) ─ */
