@@ -4,7 +4,7 @@
 
 **Created**: 2026-07-30
 
-**Status**: In progress
+**Status**: Complete (merged 2026-07-30, post-merge full suite 169/169, 1 documented verify-email skip)
 
 **Input**: Workspace code review (2026-07-30) of spec 044's fix in
 `src/Modules/Scorm/Application/ScormSessionService.cs` `LaunchAsync`:

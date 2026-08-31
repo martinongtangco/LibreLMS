@@ -23,4 +23,4 @@
 
 ## Phase 4: Merge
 
-- [ ] T011 Merge `bug/046-fix-scorm-launch-retry-dead-catch` into `master`, then on `master` rebuild + restart + re-run the full `npx playwright test` (Principle XIII gate 3), push, and switch back to `master` clean (Principle XII)
+- [X] T011 Merge `bug/046-fix-scorm-launch-retry-dead-catch` into `master`, then on `master` rebuild + restart + re-run the full `npx playwright test` (Principle XIII gate 3), push, and switch back to `master` clean (Principle XII)
