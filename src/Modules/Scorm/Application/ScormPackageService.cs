@@ -89,6 +89,25 @@ public class ScormPackageService : IScormPackageService
         return await _context.ScormPackages.AnyAsync(p => p.CourseId == courseId);
     }
 
+    /// <summary>
+    /// Bulk variant of <see cref="HasPackageAsync"/> (spec 048 E6): returns the subset of
+    /// <paramref name="courseIds"/> that have an associated SCORM package in a single
+    /// <c>WHERE CourseId IN @ids</c> query. Empty input short-circuits to an empty result
+    /// with no database round trip.
+    /// </summary>
+    public async Task<IReadOnlyCollection<Guid>> GetCourseIdsWithPackagesAsync(IEnumerable<Guid> courseIds)
+    {
+        var ids = courseIds.Distinct().ToList();
+        if (ids.Count == 0)
+            return Array.Empty<Guid>();
+
+        return await _context.ScormPackages
+            .Where(p => p.CourseId != null && ids.Contains(p.CourseId.Value))
+            .Select(p => p.CourseId!.Value)
+            .Distinct()
+            .ToListAsync();
+    }
+
     /// <summary>Get the content directory path for a course's SCORM package, if any.</summary>
     public async Task<string?> GetContentDirectoryAsync(Guid courseId)
     {

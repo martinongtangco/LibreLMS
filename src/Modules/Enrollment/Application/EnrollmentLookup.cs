@@ -15,4 +15,17 @@ public class EnrollmentLookup(EnrollmentDbContext context) : IEnrollmentLookup
         return await context.Enrollments
             .AnyAsync(e => e.StudentId == studentId && e.CourseId == courseId);
     }
+
+    public async Task<IReadOnlyCollection<Guid>> GetEnrolledCourseIdsAsync(Guid studentId, IEnumerable<Guid> courseIds)
+    {
+        var ids = courseIds.ToList();
+        if (ids.Count == 0)
+            return Array.Empty<Guid>();
+
+        // One query: WHERE StudentId = @s AND CourseId IN @ids (unique (StudentId, CourseId) index).
+        return await context.Enrollments
+            .Where(e => e.StudentId == studentId && ids.Contains(e.CourseId))
+            .Select(e => e.CourseId)
+            .ToListAsync();
+    }
 }

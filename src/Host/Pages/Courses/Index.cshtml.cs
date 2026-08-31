@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using LibreLms.Contracts.Catalog;
 using LibreLms.Contracts.Enrollment;
 using LibreLms.Host.ManagementAuth;
 using LibreLms.Modules.Catalog.Application;
@@ -14,15 +15,18 @@ public class CourseIndexModel : PageModel
     private readonly CourseCatalogService _catalogService;
     private readonly IEnrollmentLookup _enrollmentLookup;
     private readonly CourseVisibilityService _visibilityService;
+    private readonly ICourseLookup _courseLookup;
 
     public CourseIndexModel(
         CourseCatalogService catalogService,
         IEnrollmentLookup enrollmentLookup,
-        CourseVisibilityService visibilityService)
+        CourseVisibilityService visibilityService,
+        ICourseLookup courseLookup)
     {
         _catalogService = catalogService;
         _enrollmentLookup = enrollmentLookup;
         _visibilityService = visibilityService;
+        _courseLookup = courseLookup;
     }
 
     public List<CourseItem> Courses { get; set; } = new();
@@ -64,14 +68,22 @@ public class CourseIndexModel : PageModel
         // category select include the hidden #page-reset field (name="page" value="1")
         // via hx-include — so filtering always restarts at page 1, while pagination
         // requests carry the actual target page in the query string.
-        var browseResult = await _catalogService.BrowseAsync(search, category, 1, PageSize);
-        var totalPages = browseResult.TotalCount > 0
-            ? (int)Math.Ceiling((double)browseResult.TotalCount / PageSize)
-            : 1;
+        // Fetch the requested page directly — ONE stored-procedure call on the common
+        // in-range path (spec 048 E2). The BrowseCourses SP tolerates out-of-range pages:
+        // OFFSET/FETCH returns an empty set (no error) and the second result set still
+        // carries the total. So an empty page with a nonzero total means "past the last
+        // page" — clamp to the last page and re-fetch (2 calls, same as the old
+        // probe-then-fetch flow).
+        var requestedPage = Math.Max(1, page);
+        var result = await GetPagedCourses(search, category, requestedPage, PageSize);
 
-        var effectivePage = Math.Max(1, Math.Min(page, totalPages));
-
-        var result = await GetPagedCourses(search, category, effectivePage, PageSize);
+        var effectivePage = requestedPage;
+        if (requestedPage > 1 && result.Items.Count == 0 && result.TotalCount > 0)
+        {
+            var totalPages = (int)Math.Ceiling((double)result.TotalCount / PageSize);
+            effectivePage = Math.Min(requestedPage, totalPages);
+            result = await GetPagedCourses(search, category, effectivePage, PageSize);
+        }
 
         // Build combined model: courses + pagination info
         var model = new BrowseViewModel(
@@ -90,7 +102,7 @@ public class CourseIndexModel : PageModel
     private async Task<BrowseResultWithEnrollments> GetPagedCourses(string? search, string? category, int pageNumber, int pageSize)
     {
         var studentId = ScormHelpers.GetStudentId(HttpContext);
-        HashSet<Guid> enrolledIds = new();
+        var enrolledIds = new HashSet<Guid>();
         BrowseResult browseResult;
 
         // Check if user is authenticated with org context
@@ -121,13 +133,12 @@ public class CourseIndexModel : PageModel
                 search, category, pageNumber, pageSize);
         }
 
-        // Check enrollment status for each course
-        foreach (var item in browseResult.Items)
+        // One bulk enrollment check for the whole page (spec 048 E1) — replaces the
+        // per-row IsEnrolledAsync loop; membership is a HashSet lookup below.
+        var pageCourseIds = browseResult.Items.Select(c => c.Id).ToList();
+        if (pageCourseIds.Count > 0)
         {
-            if (await _enrollmentLookup.IsEnrolledAsync(studentId, item.Id))
-            {
-                enrolledIds.Add(item.Id);
-            }
+            enrolledIds = (await _enrollmentLookup.GetEnrolledCourseIdsAsync(studentId, pageCourseIds)).ToHashSet();
         }
 
         // Map CourseItemDto to CourseItem (with enrollment status)
@@ -138,7 +149,12 @@ public class CourseIndexModel : PageModel
         return new BrowseResultWithEnrollments(courseItems, browseResult.TotalCount, browseResult.PageNumber, browseResult.PageSize);
     }
 
-    /// <summary>Get distinct categories from all visible courses (for the dropdown).</summary>
+    /// <summary>
+    /// Get distinct categories for the dropdown (spec 048 E3):
+    /// org-scoped users derive them from the already-fetched visible course DTOs
+    /// (zero extra queries; hidden courses stay excluded — spec 009 scenario 5 / bug-047);
+    /// everyone else gets one SELECT DISTINCT via the Catalog contract.
+    /// </summary>
     private async Task<List<string>> GetCategoriesAsync()
     {
         var role = HttpContext.User.Identity?.IsAuthenticated == true
@@ -148,23 +164,18 @@ public class CourseIndexModel : PageModel
             ? AuthHelpers.GetCurrentUserOrgId(HttpContext.User)
             : null;
 
-        IEnumerable<LibreLms.Modules.Catalog.Domain.Course> courses;
-
         if (orgId.HasValue)
         {
-            // Hidden courses are excluded from the category dropdown too —
-            // spec 009 scenario 5 / bug-047.
             var visible = await _visibilityService.GetVisibleCoursesAsync(orgId.Value);
-            var visibleCourseIds = visible.Where(v => !v.IsHidden).ToDictionary(v => v.CourseId);
-            var allCourses = await _catalogService.ListAsync();
-            courses = allCourses.Where(c => visibleCourseIds.ContainsKey(c.Id));
-        }
-        else
-        {
-            courses = await _catalogService.ListAsync();
+            return visible
+                .Where(v => !v.IsHidden)
+                .Select(v => v.Category)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
         }
 
-        return courses.Select(c => c.Category).Distinct().OrderBy(c => c).ToList();
+        return (await _courseLookup.GetDistinctCategoriesAsync()).ToList();
     }
 }
 

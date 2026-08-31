@@ -12,6 +12,14 @@ public interface IScormPackageService
     /// <summary>Check if a course has an associated SCORM package.</summary>
     Task<bool> HasPackageAsync(Guid courseId);
 
+    /// <summary>
+    /// Bulk variant of <see cref="HasPackageAsync"/> (spec 048 E6): returns the subset of
+    /// <paramref name="courseIds"/> that have an associated SCORM package, resolved with a
+    /// single <c>WHERE CourseId IN @ids</c> query instead of one query per course.
+    /// Empty input returns an empty result without hitting the database.
+    /// </summary>
+    Task<IReadOnlyCollection<Guid>> GetCourseIdsWithPackagesAsync(IEnumerable<Guid> courseIds);
+
     /// <summary>Get the content directory path for a course's SCORM package, if any.</summary>
     Task<string?> GetContentDirectoryAsync(Guid courseId);
 

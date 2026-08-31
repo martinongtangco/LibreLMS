@@ -123,13 +123,11 @@ public class IndexModel : PageModel
 
         var items = browseResult.Items.ToList();
 
-        // Build SCORM lookup for all course IDs in this page
-        var scormLookup = new Dictionary<Guid, bool>();
-        foreach (var item in items)
-        {
-            var hasScorm = await _scormService.GetPackageByCourseIdAsync(item.Id);
-            scormLookup[item.Id] = hasScorm != null;
-        }
+        // Build SCORM lookup for all course IDs in this page — one bulk query
+        // (spec 048 E6) instead of a per-row GetPackageByCourseIdAsync call.
+        var packageCourseIds = (await _scormService.GetCourseIdsWithPackagesAsync(
+            items.Select(i => i.Id))).ToHashSet();
+        var scormLookup = items.ToDictionary(i => i.Id, i => packageCourseIds.Contains(i.Id));
         HasScormPerCourse = scormLookup;
 
         Courses = items.Select(item =>

@@ -85,13 +85,10 @@ public class DashboardService(
             .Where(c => descendantIds.Contains(c.OrganizationId))
             .Sum(c => c.Count);
 
-        var courseCount = 0;
-        var enrollmentCount = 0;
-        foreach (var id in descendantIds)
-        {
-            courseCount += await courseLookup.CountByOrgAsync(id);
-            enrollmentCount += await enrollmentAdmin.CountEnrollmentsAsync(id);
-        }
+        // Subtree counts in two bulk queries (spec 048 E7) — sum of the per-org counts.
+        var courseCounts = await courseLookup.GetCourseCountsByOrgsAsync(descendantIds);
+        var courseCount = courseCounts.Values.Sum();
+        var enrollmentCount = await enrollmentAdmin.CountEnrollmentsByOrgsAsync(descendantIds);
 
         return new OrgMetricsDto(
             descendantIds.Count - 1, // Exclude the org itself from the count

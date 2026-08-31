@@ -29,11 +29,21 @@ public class ScormAttemptService
             .OrderByDescending(a => a.LastCommitAt)
             .ToListAsync();
 
+        // One batched cross-module lookup for all attempted courses (spec 048 E5) —
+        // missing courses are simply absent from the map ("Unknown Course" fallback below).
+        var courseIds = attempts.Select(a => a.CourseId).Distinct().ToList();
+        var courseMap = new Dictionary<Guid, CourseSummary>();
+        if (courseIds.Count > 0)
+        {
+            var courses = await _courseLookup.GetCoursesAsync(courseIds);
+            courseMap = courses.ToDictionary(c => c.Id);
+        }
+
         var summaries = new List<AttemptSummary>();
 
         foreach (var attempt in attempts)
         {
-            var course = await _courseLookup.GetCourseAsync(attempt.CourseId);
+            courseMap.TryGetValue(attempt.CourseId, out var course);
             summaries.Add(new AttemptSummary(
                 Id: attempt.Id,
                 CourseId: attempt.CourseId,

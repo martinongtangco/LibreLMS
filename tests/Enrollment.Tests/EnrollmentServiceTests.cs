@@ -180,6 +180,19 @@ public class MockCourseLookup : ICourseLookup
 
     public Task<int> CountByOrgAsync(Guid organizationId) => Task.FromResult(_courses.Values.Count(c => c.OrganizationId == organizationId));
 
+    public Task<IReadOnlyDictionary<Guid, int>> GetCourseCountsByOrgsAsync(IEnumerable<Guid> organizationIds)
+    {
+        var orgs = organizationIds.ToHashSet();
+        var dict = _courses.Values
+            .Where(c => orgs.Contains(c.OrganizationId))
+            .GroupBy(c => c.OrganizationId)
+            .ToDictionary(g => g.Key, g => g.Count());
+        return Task.FromResult<IReadOnlyDictionary<Guid, int>>(dict);
+    }
+
+    public Task<IList<string>> GetDistinctCategoriesAsync() =>
+        Task.FromResult<IList<string>>(_courses.Values.Select(c => c.Category).Distinct().OrderBy(c => c).ToList());
+
     public Task<IList<CourseSummary>> GetCoursesAsync(IEnumerable<Guid> courseIds)
     {
         var ids = courseIds.ToHashSet();

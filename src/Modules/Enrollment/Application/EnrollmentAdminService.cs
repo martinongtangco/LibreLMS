@@ -125,6 +125,22 @@ public sealed class EnrollmentAdminService : IEnrollmentAdmin
                 .CountAsync(x => x.OrganizationId == organizationId.Value);
     }
 
+    /// <summary>
+    /// Bulk variant of <see cref="CountEnrollmentsAsync"/> — same join semantics (Enrollments
+    /// joined to Students, scoped by the STUDENT's organization), collapsed to one query with
+    /// an IN filter. The result equals the sum of the per-org calls.
+    /// </summary>
+    public async Task<int> CountEnrollmentsByOrgsAsync(IEnumerable<Guid> organizationIds)
+    {
+        var orgIds = organizationIds.Distinct().ToList();
+        if (orgIds.Count == 0)
+            return 0;
+
+        return await _context.Enrollments
+            .Join(_context.Students, e => e.StudentId, s => s.Id, (e, s) => new { e.Id, s.OrganizationId })
+            .CountAsync(x => orgIds.Contains(x.OrganizationId));
+    }
+
     public async Task<IList<RecentEnrollmentInfo>> GetRecentEnrollmentsAsync(int take)
     {
         var rows = await _context.Enrollments

@@ -195,12 +195,9 @@ public class OrganizationService(
             .Where(c => orgIds.Contains(c.OrganizationId))
             .ToDictionary(c => c.OrganizationId, c => c.Count);
 
-        // Course counts per org (cross-module contract; dev scale: one count per org)
-        var courseCounts = new Dictionary<Guid, int>();
-        foreach (var orgId in orgIds)
-        {
-            courseCounts[orgId] = await courseLookup.CountByOrgAsync(orgId);
-        }
+        // Course counts per org in one bulk query (spec 048 E7); orgs with zero
+        // courses are absent — TryGetValue below already treats them as 0.
+        var courseCounts = await courseLookup.GetCourseCountsByOrgsAsync(orgIds);
 
         // Build DTOs from layout results
         return layoutResults
