@@ -59,10 +59,20 @@ public class EnrollmentService
             .OrderByDescending(e => e.EnrolledAt)
             .ToListAsync();
 
+        // One batched cross-module lookup for all enrolled courses (spec 048 E4) —
+        // missing courses are simply absent from the map ("Unknown Course" fallback below).
+        var courseIds = enrollments.Select(e => e.CourseId).Distinct().ToList();
+        var courseMap = new Dictionary<Guid, CourseSummary>();
+        if (courseIds.Count > 0)
+        {
+            var summaries = await _courseLookup.GetCoursesAsync(courseIds);
+            courseMap = summaries.ToDictionary(c => c.Id);
+        }
+
         var results = new List<(LibreLms.Modules.Enrollment.Domain.Enrollment, string)>();
         foreach (var enrollment in enrollments)
         {
-            var summary = await _courseLookup.GetCourseAsync(enrollment.CourseId);
+            courseMap.TryGetValue(enrollment.CourseId, out var summary);
             results.Add((enrollment, summary?.Title ?? "Unknown Course"));
         }
 

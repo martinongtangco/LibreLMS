@@ -152,5 +152,7 @@ public class ConcurrentLaunchRetryTests : IAsyncLifetime
     {
         public static readonly AlwaysEnrolledLookup Instance = new();
         public Task<bool> IsEnrolledAsync(Guid studentId, Guid courseId) => Task.FromResult(true);
+        public Task<IReadOnlyCollection<Guid>> GetEnrolledCourseIdsAsync(Guid studentId, IEnumerable<Guid> courseIds)
+            => Task.FromResult<IReadOnlyCollection<Guid>>(courseIds.ToList());
     }
 }

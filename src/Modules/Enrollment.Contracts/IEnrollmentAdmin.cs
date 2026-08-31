@@ -22,6 +22,11 @@ public interface IEnrollmentAdmin
     /// <summary>Enrollment count, optionally scoped to one organization (by the student's org).</summary>
     Task<int> CountEnrollmentsAsync(Guid? organizationId = null);
 
+    /// <summary>Bulk variant of <see cref="CountEnrollmentsAsync"/>: total enrollment count across the
+    /// given organizations (by the student's org, same join semantics as the per-org call, in one
+    /// query). Equals the sum of the per-org calls. Empty input yields 0 without hitting the database.</summary>
+    Task<int> CountEnrollmentsByOrgsAsync(IEnumerable<Guid> organizationIds);
+
     /// <summary>Most recent enrollments with learner info (courses that no longer exist are omitted).</summary>
     Task<IList<RecentEnrollmentInfo>> GetRecentEnrollmentsAsync(int take);
 

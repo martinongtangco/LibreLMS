@@ -28,6 +28,32 @@ public class CourseLookup(CatalogDbContext context) : ICourseLookup
         return await context.Courses.CountAsync(c => c.OrganizationId == organizationId);
     }
 
+    public async Task<IReadOnlyDictionary<Guid, int>> GetCourseCountsByOrgsAsync(IEnumerable<Guid> organizationIds)
+    {
+        var orgIds = organizationIds.ToList();
+        if (orgIds.Count == 0)
+            return new Dictionary<Guid, int>();
+
+        // One query: WHERE OrganizationId IN @ids GROUP BY OrganizationId.
+        var counts = await context.Courses
+            .Where(c => orgIds.Contains(c.OrganizationId))
+            .GroupBy(c => c.OrganizationId)
+            .Select(g => new { OrganizationId = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        return counts.ToDictionary(c => c.OrganizationId, c => c.Count);
+    }
+
+    public async Task<IList<string>> GetDistinctCategoriesAsync()
+    {
+        // One query: SELECT DISTINCT Category ORDER BY Category.
+        return await context.Courses
+            .Select(c => c.Category)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync();
+    }
+
     public async Task<IList<CourseSummary>> GetCoursesAsync(IEnumerable<Guid> courseIds)
     {
         var ids = courseIds.ToList();

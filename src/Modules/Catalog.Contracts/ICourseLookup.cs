@@ -16,6 +16,14 @@ public interface ICourseLookup
     /// <summary>Course count owned by one organization.</summary>
     Task<int> CountByOrgAsync(Guid organizationId);
 
+    /// <summary>Bulk variant of <see cref="CountByOrgAsync"/>: course count per organization in a
+    /// single GROUP BY query. Organizations with zero courses are absent from the result.
+    /// Empty input yields an empty dictionary without hitting the database.</summary>
+    Task<IReadOnlyDictionary<Guid, int>> GetCourseCountsByOrgsAsync(IEnumerable<Guid> organizationIds);
+
+    /// <summary>Distinct category names across the whole catalog, ordered ascending.</summary>
+    Task<IList<string>> GetDistinctCategoriesAsync();
+
     /// <summary>Batch lookup of courses by id (missing ids are simply absent from the result).</summary>
     Task<IList<CourseSummary>> GetCoursesAsync(IEnumerable<Guid> courseIds);
 
