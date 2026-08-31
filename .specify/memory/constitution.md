@@ -1,19 +1,31 @@
 <!--
   Sync Impact Report
   ==================
-  Version change: 1.7.0 → 1.7.1 (PATCH: strengthened Principle XIII)
-  Added sections: none
+  Version change: 1.7.1 → 1.8.0 (MINOR: three principles added — XIV, XV, XVI —
+  no existing principle removed or redefined)
+  Added sections:
+    - XIV. Bounded Retry — Every Loop Has a Ceiling
+    - XV. Triage Before Retry
+    - XVI. Independent Verification for Merge
   Modified principles:
-    - XIII. Verification Before Claim — added concrete proof requirements for each gate;
-      agent must show build output, test results, and restart evidence — not just claim
-      a gate is passed
+    - XIII. Verification Before Claim — cross-reference sentence added to the body
+      (a Principle XIV diagnosis in lieu of a passing gate is not an exemption)
   Removed sections: none
   Templates updated:
-    - .specify/templates/tasks-template.md — ✅ no changes needed
-    - .specify/templates/plan-template.md — ✅ no changes needed
-    - .specify/templates/spec-template.md — ✅ no changes needed
-    - README.md — ✅ no changes needed (references constitution as source of truth)
-    - AGENTS.md — ✅ no changes needed (references constitution as source of truth)
+    - .specify/templates/tasks-template.md — ✅ no changes needed (verified: new
+      principles constrain agent behavior at verification gates, not task
+      categorization or template structure)
+    - .specify/templates/plan-template.md — ✅ no changes needed (verified:
+      Constitution Check gate is generic, filled from the constitution file; no new
+      mandatory plan section)
+    - .specify/templates/spec-template.md — ✅ no changes needed (verified: no new
+      mandatory spec sections or constraints)
+    - README.md — ✅ no changes needed (verified: references the constitution as
+      source of truth; no per-principle listing or version reference)
+    - AGENTS.md — ✅ no changes needed (verified: references the constitution as
+      authoritative; no per-principle listing)
+    - .pi/prompts/speckit.*.md — ✅ no changes needed (verified: only Principle VIII
+      branch-naming references; no outdated principle references)
   Deferred items: none
 -->
 
@@ -197,10 +209,66 @@ gates pass **with concrete proof** from each:
 A fix that compiles but has no E2E test is unverified. A test that passes on a feature branch
 but isn't re-run after merge is incomplete. Claiming a gate is passed without showing evidence
 from running that gate is a violation. All three gates are mandatory — no exemptions.
+A diagnosis produced under Principle XIV in lieu of a passing gate is not an exemption — it
+is the required output when the gate cannot be satisfied.
 
 Rationale: Without automated verification, the agent has no way to distinguish "works on my
 machine" from "actually fixed." Playwright tests provide the observable evidence that a change
 behaves as intended from the user's perspective, not just that it compiles.
+
+### XIV. Bounded Retry — Every Loop Has a Ceiling
+An agent MUST NOT attempt the same verification gate more than 2 times against the same
+failure without a change in approach. On the second consecutive failure of a gate (build,
+E2E test, or post-merge regression), the agent MUST STOP and produce a written diagnosis
+instead of a third attempt:
+
+- What was tried (the specific fix attempted each time)
+- Why each attempt failed (the actual error, not a restatement of the gate)
+- Whether the blocker is inside the current spec's scope or reveals a scope/spec problem
+
+The diagnosis is written to the spec's task notes and the session ends there, pending human
+review. Silently retrying a fourth, fifth, or Nth time is a constitution violation regardless
+of how close the agent believes it is to success.
+
+Rationale: Principle XIII requires proof at each gate but never says what happens when
+proof can't be produced. Without a ceiling, an agent hitting a flaky test or a genuinely
+wrong approach has no instruction other than "keep trying," which burns tokens and produces
+no signal. A mandatory stop-and-diagnose step turns a failing loop into information instead
+of noise.
+
+### XV. Triage Before Retry
+Before any second attempt at a failing gate, the agent MUST classify the failure as one of:
+
+1. **Recoverable — local**: syntax error, missing import, wrong config value, test fixture
+   mismatch. Fix and retry once.
+2. **Recoverable — design**: the approach was reasonable but wrong; a different
+   implementation strategy is needed. Requires stating the new strategy in one sentence
+   before retrying — a retry with no stated change of approach is not a retry, it's a
+   repeat, and is disallowed under Principle XIV.
+3. **Blocking**: missing credentials, undefined/contradictory requirement in the spec,
+   environment not available, or a failure that recurs identically after a design change.
+   Blocking failures go straight to the Principle XIV diagnosis-and-stop, no second attempt
+   required.
+
+Rationale: This is the difference between a loop that adapts and a loop that spins.
+Retrying the exact same action after the same error isn't learning — the classification
+step forces the agent to name what changed before it's allowed to try again.
+
+### XVI. Independent Verification for Merge
+The subagent (or session) that authored an implementation MUST NOT be the sole verifier of
+its own XIII gates before a merge to `master`. At minimum one of the following MUST occur
+before merge:
+
+- A separate subagent, dispatched fresh (no shared context with the implementer), re-runs
+  the build and Playwright suite from a clean checkout of the branch and reports results
+  independently, or
+- If no second subagent is dispatched, the human reviews the XIII evidence (build output,
+  test output, restart log) directly before approving the merge — the agent MUST NOT merge
+  on its own authority in this case.
+
+Rationale: Principle XI already provides parallel subagents for throughput; this reuses that
+capability for verification instead of just speed. Self-reported proof from the same
+context that wrote the code is weaker evidence than independent confirmation.
 
 ## Technology & Scope Constraints
 
@@ -241,4 +309,4 @@ simplify the instruction, not to add more words explaining it. Amendments requir
 file, bumping the version below, and — if the amendment reverses a prior ADR — recording that
 reversal as a new ADR rather than editing the old one.
 
-**Version**: 1.7.1 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-08-10
+**Version**: 1.8.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-08-31
