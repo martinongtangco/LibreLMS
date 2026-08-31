@@ -4,7 +4,7 @@
 
 **Created**: 2026-07-30
 
-**Status**: In progress
+**Status**: Complete (merged 2026-07-30; post-merge gate 3: full suite 170/170, 1 documented verify-email skip — one first-pass gate-3 run hit the pre-existing 16-admin-pagination parallel-isolation flake (backlog B8), re-run green)
 
 **Input**: Workspace code review (2026-07-30), items E1–E8. Every hot read path in the
 app fans out to one query per row (or one KEYS scan per SCORM launch). At dev
