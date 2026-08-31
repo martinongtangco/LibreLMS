@@ -103,9 +103,11 @@ public class CourseIndexModel : PageModel
 
         if (orgId.HasValue)
         {
-            // Authenticated user with org — get visible course IDs first
+            // Authenticated user with org — get visible course IDs first.
+            // Courses the org admin marked hidden (IsHidden) are excluded from the
+            // browse filter — spec 009 scenario 5 / bug-047.
             var visible = await _visibilityService.GetVisibleCoursesAsync(orgId.Value);
-            var visibleCourseIds = visible.Select(v => v.CourseId).ToHashSet();
+            var visibleCourseIds = visible.Where(v => !v.IsHidden).Select(v => v.CourseId).ToHashSet();
 
             // Call stored procedure; filter by visible IDs in C# (avoids TVP complexity)
             browseResult = await _catalogService.BrowseAsync(
@@ -150,8 +152,10 @@ public class CourseIndexModel : PageModel
 
         if (orgId.HasValue)
         {
+            // Hidden courses are excluded from the category dropdown too —
+            // spec 009 scenario 5 / bug-047.
             var visible = await _visibilityService.GetVisibleCoursesAsync(orgId.Value);
-            var visibleCourseIds = visible.ToDictionary(v => v.CourseId);
+            var visibleCourseIds = visible.Where(v => !v.IsHidden).ToDictionary(v => v.CourseId);
             var allCourses = await _catalogService.ListAsync();
             courses = allCourses.Where(c => visibleCourseIds.ContainsKey(c.Id));
         }
