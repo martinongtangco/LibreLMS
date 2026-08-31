@@ -4,7 +4,7 @@
 
 **Created**: 2026-07-30
 
-**Status**: In progress
+**Status**: Complete (merged 2026-07-30, post-merge full suite 170/170, 1 documented verify-email skip)
 
 **Input**: Workspace code review (2026-07-30). Spec 009 (RBAC management portal)
 scenario 5: *"Given a learner in Organization B views their available courses,
