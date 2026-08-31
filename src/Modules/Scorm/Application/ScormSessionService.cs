@@ -52,13 +52,19 @@ public class ScormSessionService
         // IX_CourseAttempts_StudentId_CourseId_AttemptNumber rejects the second
         // insert (SQL 2601). Retry with a fresh read — the losing insert is
         // rolled back, so the next try sees the new max (bug-044).
+        //
+        // bug-046: the duplicate key surfaces as a DbUpdateException wrapping
+        // the SqlException — EF Core never lets the raw SqlException escape
+        // SaveChangesAsync, so catching SqlException here (as spec 044 did)
+        // was dead code and the race still 500'd. Catch the wrapper and
+        // inspect the inner SqlException's number.
         for (var attempt = 1; ; attempt++)
         {
             try
             {
                 return await TryLaunchCoreAsync(studentId, courseId);
             }
-            catch (SqlException ex) when (ex.Number == 2601)
+            catch (DbUpdateException ex) when (IsDuplicateKeyViolation(ex))
             {
                 if (attempt >= 3)
                     return LaunchResult.CreateConflict();
@@ -242,6 +248,15 @@ public class ScormSessionService
 
         return FinishResult.CreateSuccess(attempt.Status, attempt.ScoreRaw);
     }
+
+    /// <summary>
+    /// True when the DbUpdateException wraps a SQL 2601 (unique-index violation)
+    /// — EF Core's SaveChangesAsync always reports provider errors wrapped in
+    /// DbUpdateException; the SqlException is the InnerException (verified by
+    /// tests/Scorm.Tests DuplicateKeyExceptionContractTests).
+    /// </summary>
+    private static bool IsDuplicateKeyViolation(DbUpdateException ex) =>
+        ex.InnerException is SqlException sql && sql.Number == 2601;
 
     private static bool IsValidCmiElement(string element)
     {
