@@ -7,7 +7,8 @@ namespace LibreLms.Modules.Scorm.Infrastructure;
 /// Valkey-backed session state for live SCORM sessions.
 /// Uses StackExchange.Redis against Valkey (Redis-protocol-compatible).
 /// Key pattern: scorm:session:{sessionId}
-/// TTL: 30 minutes
+/// Secondary index (spec 048 E8): scorm:active:{studentId}:{courseId} → sessionId
+/// TTL: 30 minutes (both the session hash and its index entry)
 /// </summary>
 public class ScormSessionStore : IScormSessionStore
 {
@@ -19,13 +20,24 @@ public class ScormSessionStore : IScormSessionStore
         _redis = connectionMultiplexer.GetDatabase();
     }
 
-    /// <summary>Create a new session with default CMI values.</summary>
+    /// <summary>
+    /// Create a new session with default CMI values. Also writes the secondary index
+    /// <c>scorm:active:{studentId}:{courseId} → sessionId</c> (spec 048 E8) with the same
+    /// TTL as the session hash.
+    /// </summary>
     public async Task CreateSessionAsync(SessionData data)
     {
-        var hashEntries = data.ToHashEntries();
         var key = SessionKey(data.SessionId.ToString());
-        await _redis.HashSetAsync(key, hashEntries);
+
+        await _redis.HashSetAsync(key, data.ToHashEntries());
         await _redis.KeyExpireAsync(key, DefaultTtl);
+
+        // The hash stores student/course as lowercase guid strings (SessionData.ToString()).
+        if (Guid.TryParse(data.StudentId, out var studentId)
+            && Guid.TryParse(data.CourseId, out var courseId))
+        {
+            await _redis.StringSetAsync(ActiveIndexKey(studentId, courseId), data.SessionId, DefaultTtl);
+        }
     }
 
     /// <summary>Set a CMI value in an existing session. Returns false if session not found.</summary>
@@ -39,6 +51,22 @@ public class ScormSessionStore : IScormSessionStore
         await _redis.HashSetAsync(key, element, value);
         // Reset TTL on activity
         await _redis.KeyExpireAsync(key, DefaultTtl);
+
+        // Refresh the secondary-index TTL in step with the hash TTL (spec 048 E8):
+        // the hash TTL is extended on every commit, so the index must be too —
+        // otherwise an actively-committing session older than 30 minutes would lose
+        // its scorm:active:{student}:{course} entry and a relaunch would start a
+        // second live attempt (regression vs. the old full-keyspace scan).
+        // One round trip reads both identity fields. Skip silently if either is
+        // missing or not a guid (defensive; CreateSessionAsync always writes both).
+        var identity = await _redis.HashGetAsync(key, new RedisValue[] { "studentId", "courseId" });
+        if (identity.Length == 2
+            && Guid.TryParse(identity[0].ToString(), out var studentId)
+            && Guid.TryParse(identity[1].ToString(), out var courseId))
+        {
+            await _redis.KeyExpireAsync(ActiveIndexKey(studentId, courseId), DefaultTtl);
+        }
+
         return true;
     }
 
@@ -66,11 +94,21 @@ public class ScormSessionStore : IScormSessionStore
         return SessionData.FromHashEntries(entries);
     }
 
-    /// <summary>Delete a session (cleanup on LMSFinish).</summary>
+    /// <summary>Delete a session and its secondary-index entry (cleanup on LMSFinish).</summary>
     public async Task DeleteSessionAsync(Guid sessionId)
     {
-        var key = SessionKey(sessionId);
-        await _redis.KeyDeleteAsync(key);
+        // Read first so we know the student/course pair for the index key.
+        // A missing session has nothing to do (spec 048 E8).
+        var session = await ReadSessionAsync(sessionId);
+        if (session is null)
+            return;
+
+        if (Guid.TryParse(session.StudentId, out var studentId)
+            && Guid.TryParse(session.CourseId, out var courseId))
+        {
+            await _redis.KeyDeleteAsync(ActiveIndexKey(studentId, courseId));
+        }
+        await _redis.KeyDeleteAsync(SessionKey(sessionId));
     }
 
     /// <summary>Check if a session exists (for concurrent session detection).</summary>
@@ -80,42 +118,47 @@ public class ScormSessionStore : IScormSessionStore
         return await _redis.KeyExistsAsync(key);
     }
 
-    /// <summary>Find active session key for a student/course pair. Returns null if none found.</summary>
+    /// <summary>
+    /// Find the active session ID for a student/course pair via the secondary index
+    /// <c>scorm:active:{studentId}:{courseId}</c> (spec 048 E8) — O(1) in the live
+    /// session count, unlike the old blocking KEYS scan. If the index points at a
+    /// hash that no longer exists (session expired/deleted while the index TTL was
+    /// still live), the stale index is deleted and null is returned.
+    /// </summary>
     public async Task<string?> FindActiveSessionKeyAsync(Guid studentId, Guid courseId)
     {
-        // Scan for sessions belonging to this student/course.
-        // In production with high concurrency, use a secondary index key instead.
-        var endPoints = _redis.Multiplexer.GetEndPoints();
-        foreach (var endPoint in endPoints)
-        {
-            var server = _redis.Multiplexer.GetServer(endPoint);
-            if (!server.IsConnected)
-                continue;
+        var indexKey = ActiveIndexKey(studentId, courseId);
+        var value = await _redis.StringGetAsync(indexKey);
+        if (value.IsNullOrEmpty)
+            return null;
 
-            foreach (var key in server.Keys(pattern: "scorm:session:*"))
-            {
-                var rawKey = key.ToString();
-                // Extract sessionId from key pattern "scorm:session:{guid}"
-                var sessionIdStr = rawKey["scorm:session:".Length..];
-                if (Guid.TryParse(sessionIdStr, out var sid))
-                {
-                    var sessionData = await ReadSessionAsync(sid);
-                    if (sessionData is not null
-                        && Guid.TryParse(sessionData.StudentId, out var sId)
-                        && sId == studentId
-                        && Guid.TryParse(sessionData.CourseId, out var cId)
-                        && cId == courseId)
-                    {
-                        return sessionIdStr;
-                    }
-                }
-            }
+        if (!Guid.TryParse(value.ToString(), out var sessionId))
+        {
+            // Corrupt index entry — self-clean and report no active session.
+            await _redis.KeyDeleteAsync(indexKey);
+            return null;
         }
-        return null;
+
+        var session = await ReadSessionAsync(sessionId);
+        if (session is null)
+        {
+            await _redis.KeyDeleteAsync(indexKey);
+            return null;
+        }
+
+        return sessionId.ToString();
     }
 
     private static RedisKey SessionKey(Guid sessionId) => $"scorm:session:{sessionId}";
     private static RedisKey SessionKey(string sessionId) => $"scorm:session:{sessionId}";
+
+    /// <summary>
+    /// Secondary-index key (spec 048 E8). Guid.ToString() emits lowercase "D" format,
+    /// matching the lowercase guid strings stored in the session hash, so the key is
+    /// stable across create (SessionData fields) and lookup (parsed guids).
+    /// </summary>
+    private static RedisKey ActiveIndexKey(Guid studentId, Guid courseId)
+        => $"scorm:active:{studentId.ToString()}:{courseId.ToString()}";
 }
 
 /// <summary>Interface for session store — allows mocking in tests.</summary>
