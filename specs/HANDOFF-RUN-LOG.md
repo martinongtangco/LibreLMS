@@ -69,3 +69,12 @@ Item 3 findings for final report:
 - Environment: recreating the devcontainer wipes /ms-playwright (browsers + system deps are in the writable layer — not in image/volume/Dockerfile). Restored with `npx playwright install chromium` + `install-deps chromium`. Candidate future spec: stage E2E browsers/deps in the devcontainer Dockerfile.
 - Environment: Catalog.Tests perf tests seed ~11.7k filler courses with no teardown — any E2E run after a full unit run must do the documented filler-clean first (bit the independent verification once; triaged, not a branch defect).
 - Secret-scan regression guard added (Host.Tests 9/9 now).
+
+### Item 4 — organization scope never enforced — spec 052 (story/052-enforce-org-scope)
+- [ ] A  spec        commit 6dd015c
+- [ ] B  plan + ADR  commit
+- [ ] C  tasks       commit
+- [ ] D  implement   commit
+- [ ] E  merge       commit
+- [ ] F  gate 3      commit
+RESULT: (pending)     consecutive_blocked = 0
