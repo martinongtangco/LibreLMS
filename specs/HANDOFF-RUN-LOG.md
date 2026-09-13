@@ -30,7 +30,7 @@ Constitution (`.specify/memory/constitution.md` v1.8.0) outranks the handoff.
 - [x] A  spec        commit 4df66d0
 - [x] B  plan        commit d6aab32
 - [x] C  tasks       commit 6103380
-- [ ] D  implement   commit
+- [x] D  implement   commit c5742c3   build 0 errors / E2E 170 passed 1 skipped (unit: Arch 14, Host 8, Catalog 32, Scorm 15, Enrollment 41/42 — 1 pre-existing master failure, worktree-proven)
 - [ ] E  merge       commit
 - [ ] F  gate 3      commit
 RESULT: (pending)     consecutive_blocked = 0
