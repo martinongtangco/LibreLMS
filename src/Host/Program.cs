@@ -71,7 +71,10 @@ builder.Services.ConfigureScormModule(wwwRootPath);
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var config = ConfigurationOptions.Parse(
-        builder.Configuration.GetConnectionString("Valkey") ?? "localhost:6379",
+        // Host fallback is 6380 (spec 051): docker-compose publishes Valkey on
+        // host port 6380 — 6379 on this machine belongs to another project, so
+        // the old fallback silently connected to the wrong Redis.
+        builder.Configuration.GetConnectionString("Valkey") ?? "localhost:6380",
         true);
     config.AbortOnConnectFail = false; // Graceful degradation
     return ConnectionMultiplexer.Connect(config);

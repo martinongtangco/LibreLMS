@@ -20,7 +20,9 @@ services:
       valkey:
         condition: service_started
     environment:
-      ConnectionStrings__DefaultConnection: "Server=mssql,1433;Database=LearningLms;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      # Key is `Sql` (spec 051): Program.cs reads GetConnectionString("Sql");
+      # the old DefaultConnection name was never read by the code.
+      ConnectionStrings__Sql: "Server=mssql,1433;Database=LearningLms;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
       ConnectionStrings__Valkey: "valkey:6379"
 
   mssql:
