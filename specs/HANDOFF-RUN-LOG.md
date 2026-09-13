@@ -53,3 +53,12 @@ Item 2 findings for final report:
 - Cookie-auth challenge semantics (verified empirically): unauthenticated GET and bodyless POST → 302 to /Account/Login; JSON-body POST → plain 401. E2E asserts the raw challenge (maxRedirects: 0) for both shapes.
 - Process: in-container app restart requires `docker exec -d` (fully detached); the `nohup &`-inside-`docker exec` pattern races with exec-session teardown (SIGTERM seconds after start, nondeterministic).
 - Process: unit suites write to the shared LearningLms DB — the E2E filler-clean must run after the last unit run.
+
+### Item 3 — configuration not reproducible / committed secret — spec 051 (bug/051-fix-config-reproducibility)
+- [ ] A  spec        commit
+- [ ] B  plan        commit
+- [ ] C  tasks       commit
+- [ ] D  implement   commit
+- [ ] E  merge       commit
+- [ ] F  gate 3      commit
+RESULT: (pending)     consecutive_blocked = 0
