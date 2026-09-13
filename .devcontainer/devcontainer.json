@@ -15,5 +15,5 @@
     }
   },
   "forwardPorts": [5000, 5001, 1433, 6380],
-  "postCreateCommand": "dotnet restore LearningLms.slnx"
+  "postCreateCommand": "dotnet restore LibreLms.slnx"
 }

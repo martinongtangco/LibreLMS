@@ -49,9 +49,33 @@ dotnet test tests/ArchitectureTests   # the module-boundary check
 
 ### 3. Run the host
 
+The app reads its database connection from the `ConnectionStrings__Sql`
+environment variable (spec 051) — there is no connection string committed to
+the repo, on purpose (the SA password must not live in git).
+
+**Inside the Dev Container** — compose already exports `ConnectionStrings__Sql`
+(points at `mssql:1433` with the password from your `.env`), so just:
+
 ```bash
-dotnet run --project src/Host
+dotnet run --project src/Host --urls http://localhost:5000
 ```
+
+**On the host machine** — compose publishes MSSQL on `localhost:1433`; export
+the variable from your `.env`, then run:
+
+```bash
+export ConnectionStrings__Sql="Server=localhost,1433;Database=LearningLms;User Id=sa;Password=$(grep MSSQL_SA_PASSWORD .env | cut -d= -f2-);TrustServerCertificate=True"
+dotnet run --project src/Host --urls http://localhost:5000
+```
+
+The same variable is what the test suites expect (`ConnectionStrings__Valkey`
+defaults to `localhost:6380`, the compose-published Valkey port).
+
+> **Security note (spec 051)**: a previous revision of this repo committed the
+> live SA password in `appsettings.Development.json`. It has been removed, but
+> the value remains in git history — **rotate the SA password** (see
+> `specs/051-fix-config-reproducibility/quickstart.md`) and never commit
+> credentials again.
 
 ## Development workflow
 
