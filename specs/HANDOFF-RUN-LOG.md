@@ -41,10 +41,10 @@ Item 1 findings for final report:
 - Pre-existing: POST /api/scorm/upload 500s (minimal API binds IFormCollection ⇒ anti-forgery metadata, but app.UseAntiforgery() is never called). API surface is fail-closed (never reaches UploadAsync); Razor-page upload surfaces work and enforce the 049 fix. Candidate: add app.UseAntiforgery() or opt the endpoint out.
 
 ### Item 2 — SCORM session API unauthenticated/unowned — spec 050 (bug/050-fix-scorm-session-authz)
-- [ ] A  spec        commit
-- [ ] B  plan        commit
-- [ ] C  tasks       commit
-- [ ] D  implement   commit
+- [x] A  spec        commit 13e0e80
+- [x] B  plan        commit 58df486
+- [x] C  tasks       commit 64fdd30
+- [x] D  implement   commit 7b5a04c   build 0 errors / E2E 172 passed 1 skipped (unit: Arch 14, Host 8, Catalog 32, Scorm 18, Enrollment 41/42 — 1 pre-existing master failure)
 - [ ] E  merge       commit
 - [ ] F  gate 3      commit
 RESULT: (pending)     consecutive_blocked = 0
