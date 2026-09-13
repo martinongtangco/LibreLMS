@@ -45,6 +45,11 @@ Item 1 findings for final report:
 - [x] B  plan        commit 58df486
 - [x] C  tasks       commit 64fdd30
 - [x] D  implement   commit 7b5a04c   build 0 errors / E2E 172 passed 1 skipped (unit: Arch 14, Host 8, Catalog 32, Scorm 18, Enrollment 41/42 — 1 pre-existing master failure)
-- [ ] E  merge       commit
-- [ ] F  gate 3      commit
-RESULT: (pending)     consecutive_blocked = 0
+- [x] E  merge       commit 0256914   (independent verification GREEN: worktree build 0 errors, Scorm 18/18, Playwright 172+1 skip)
+- [x] F  gate 3      commit (this commit)   build 0 errors / E2E 172 passed 1 skipped (unit: Arch 14, Host 8, Catalog 32, Scorm 18, Enrollment 41/42 — 1 pre-existing master failure)
+RESULT: COMPLETED     consecutive_blocked = 0
+
+Item 2 findings for final report:
+- Cookie-auth challenge semantics (verified empirically): unauthenticated GET and bodyless POST → 302 to /Account/Login; JSON-body POST → plain 401. E2E asserts the raw challenge (maxRedirects: 0) for both shapes.
+- Process: in-container app restart requires `docker exec -d` (fully detached); the `nohup &`-inside-`docker exec` pattern races with exec-session teardown (SIGTERM seconds after start, nondeterministic).
+- Process: unit suites write to the shared LearningLms DB — the E2E filler-clean must run after the last unit run.
