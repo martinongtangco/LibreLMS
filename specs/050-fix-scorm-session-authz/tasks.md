@@ -73,8 +73,8 @@ baseline 170 passed + 1 documented skip.
 
 - [x] T009 Gate 1: `dotnet build LibreLms.slnx` (0 errors) + app restarted in the devcontainer (`Now listening on:` + HTTP 302 probe) — paste evidence in Verification Notes
 - [x] T010 Gate 2: `dotnet test tests/ArchitectureTests`, `dotnet test LibreLms.slnx`, full E2E in the devcontainer (CI=1; DB filler-cleaned first) — paste evidence
-- [ ] T011 Independent verification (Constitution XVI): fresh subagent re-runs build + Playwright from a clean worktree checkout of `bug/050-fix-scorm-session-authz` and reports independently; merge to master only after it is green (`git merge --no-ff`)
-- [ ] T012 Gate 3 (post-merge, on master): rebuild, restart, re-run gate 2 — paste evidence; mark all tasks `[X]`, set spec Status to Complete, commit F
+- [x] T011 Independent verification (Constitution XVI): fresh subagent re-runs build + Playwright from a clean worktree checkout of `bug/050-fix-scorm-session-authz` and reports independently; merge to master only after it is green (`git merge --no-ff`)
+- [x] T012 Gate 3 (post-merge, on master): rebuild, restart, re-run gate 2 — paste evidence; mark all tasks `[X]`, set spec Status to Complete, commit F
 
 ## Verification Notes
 
@@ -141,3 +141,29 @@ courses remain):
 1 skipped
 172 passed (2.9m)   ← baseline 170 + 2 new (20-scorm-session-authz)
 ```
+
+### T011 — independent verification (Constitution XVI)
+
+Fresh no-context subagent, clean worktree (detached at branch tip 7925b72,
+verified clean checkout): **VERDICT: GREEN** — build 0 errors; Scorm.Tests
+18/18; Playwright 172 passed + 1 skipped (the documented verify-email skip);
+worktree removed, main app restored.
+
+### T012 — gate 3 (post-merge, on master, 2026-08-31)
+
+```
+dotnet build LibreLms.slnx → 0 Error(s)
+App rebuilt + restarted in the devcontainer (Now listening on :5000)
+Unit: Arch 14/14, Host 8/8, Catalog 32/32, Scorm 18/18,
+      Enrollment 41/42 (1 pre-existing master failure, documented item 1)
+Full E2E (CI=1 serial, filler-cleaned): 1 skipped, 172 passed (3.8m)
+```
+
+Process notes for the final report:
+- The in-container app restart must use `docker exec -d --user root ... sh -c
+  'sh /tmp/app-in-container.sh'` (fully detached). The earlier
+  `nohup ... &` inside a non-detached `docker exec sh -c` races with the exec
+  session teardown: the app receives SIGTERM seconds after start (graceful
+  "shutting down", no error) — nondeterministic, observed twice this run.
+- Gate ordering: unit suites write to the shared LearningLms DB (they create
+  rows), so the E2E filler-clean must run AFTER the last unit run, not before.
