@@ -28,8 +28,8 @@ Constitution (`.specify/memory/constitution.md` v1.8.0) outranks the handoff.
 
 ### Item 1 — Zip Slip in SCORM package upload — spec 049 (bug/049-fix-scorm-zip-traversal)
 - [x] A  spec        commit 4df66d0
-- [ ] B  plan        commit
-- [ ] C  tasks       commit
+- [x] B  plan        commit d6aab32
+- [x] C  tasks       commit 6103380
 - [ ] D  implement   commit
 - [ ] E  merge       commit
 - [ ] F  gate 3      commit
