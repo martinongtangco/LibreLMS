@@ -366,14 +366,23 @@ scorm.MapGet("/attempts/my", [Authorize] async (
 });
 
 // === Scorm Session Endpoints ===
-var sessionGroup = app.MapGroup("/api/scorm/session/{sessionId:guid}").WithTags("Scorm Session");
+// Authentication is required on the whole session surface (spec 050): the
+// session GUID is a bearer token, so anonymous callers must get 401. The
+// api.js shim below is a separate route (not in the group) and stays
+// anonymous — it serves static script text, no session data.
+var sessionGroup = app.MapGroup("/api/scorm/session/{sessionId:guid}").RequireAuthorization().WithTags("Scorm Session");
 
 sessionGroup.MapPost("/setValue", async (
     ScormSessionService sessionService,
+    HttpContext httpContext,
     [FromBody] SetValueRequest request,
     Guid sessionId) =>
 {
-    var result = await sessionService.SetValueAsync(sessionId, request.Element, request.Value);
+    var result = await sessionService.SetValueAsync(sessionId, GetStudentId(httpContext), request.Element, request.Value);
+    if (result.Forbidden)
+        // A real 403 JSON (not Results.Forbid()): cookie auth would 302 to
+        // AccessDeniedPath, which clients misparse (same pattern as /launch).
+        return Results.Json(new { success = false, errorCode = "403", errorMsg = "Not authorized to access this session." }, statusCode: StatusCodes.Status403Forbidden);
     if (!result.Success)
         return Results.BadRequest(new { success = false, errorCode = result.ErrorCode, errorMsg = result.ErrorMsg });
     return Results.Ok(new { success = true });
@@ -381,10 +390,13 @@ sessionGroup.MapPost("/setValue", async (
 
 sessionGroup.MapGet("/getValue", async (
     ScormSessionService sessionService,
+    HttpContext httpContext,
     Guid sessionId,
     [FromQuery] string element) =>
 {
-    var result = await sessionService.GetValueAsync(sessionId, element);
+    var result = await sessionService.GetValueAsync(sessionId, GetStudentId(httpContext), element);
+    if (result.Forbidden)
+        return Results.Json(new { error = "Not authorized to access this session." }, statusCode: StatusCodes.Status403Forbidden);
     if (!result.Found)
         return Results.NotFound();
     return Results.Ok(new { value = result.Value });
@@ -392,9 +404,12 @@ sessionGroup.MapGet("/getValue", async (
 
 sessionGroup.MapPost("/commit", async (
     ScormSessionService sessionService,
+    HttpContext httpContext,
     Guid sessionId) =>
 {
-    var result = await sessionService.CommitAsync(sessionId);
+    var result = await sessionService.CommitAsync(sessionId, GetStudentId(httpContext));
+    if (result.Forbidden)
+        return Results.Json(new { success = false, error = "Not authorized to access this session." }, statusCode: StatusCodes.Status403Forbidden);
     if (!result.Success)
         return Results.NotFound(new { error = result.Error });
     return Results.Ok(new { success = true, committedAt = result.CommittedAt });
@@ -402,10 +417,13 @@ sessionGroup.MapPost("/commit", async (
 
 sessionGroup.MapPost("/finish", async (
     ScormSessionService sessionService,
+    HttpContext httpContext,
     [FromBody] FinishRequest? request,
     Guid sessionId) =>
 {
-    var result = await sessionService.FinishAsync(sessionId, request?.Exit ?? "normal");
+    var result = await sessionService.FinishAsync(sessionId, GetStudentId(httpContext), request?.Exit ?? "normal");
+    if (result.Forbidden)
+        return Results.Json(new { success = false, error = "Not authorized to access this session." }, statusCode: StatusCodes.Status403Forbidden);
     if (!result.Success)
         return Results.NotFound(new { error = result.Error });
     return Results.Ok(new { success = true, status = result.Status, score = result.Score });

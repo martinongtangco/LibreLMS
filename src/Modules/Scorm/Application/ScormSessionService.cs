@@ -139,8 +139,16 @@ public class ScormSessionService
     /// <summary>
     /// Set a CMI value in the current session. Validates the field and value.
     /// </summary>
-    public async Task<SetValueResult> SetValueAsync(Guid sessionId, string element, string value)
+    public async Task<SetValueResult> SetValueAsync(Guid sessionId, Guid studentId, string element, string value)
     {
+        // Ownership gate (spec 050) — before element validation and before any
+        // write, so a non-owner learns nothing (no "unknown element", no partial state).
+        var session = await _sessionStore.ReadSessionAsync(sessionId);
+        if (session is null)
+            return SetValueResult.CreateError("404", "Session not found or expired.");
+        if (!IsSessionOwner(session, studentId))
+            return SetValueResult.CreateForbidden();
+
         // Validate the element is a known CMI field
         if (!IsValidCmiElement(element))
             return SetValueResult.CreateError("401", $"Unknown element: {element}");
@@ -171,8 +179,15 @@ public class ScormSessionService
     /// <summary>
     /// Get a CMI value from the current session.
     /// </summary>
-    public async Task<GetValueResult> GetValueAsync(Guid sessionId, string element)
+    public async Task<GetValueResult> GetValueAsync(Guid sessionId, Guid studentId, string element)
     {
+        // Ownership gate (spec 050) — no CMI data may leak to a non-owner.
+        var session = await _sessionStore.ReadSessionAsync(sessionId);
+        if (session is null)
+            return GetValueResult.CreateNotFound();
+        if (!IsSessionOwner(session, studentId))
+            return GetValueResult.CreateForbidden();
+
         var value = await _sessionStore.GetValueAsync(sessionId, element);
         if (value is null)
             return GetValueResult.CreateNotFound();
@@ -184,11 +199,16 @@ public class ScormSessionService
     /// Commit session state to MSSQL (LMSCommit).
     /// Reads full CMI bag from Valkey, updates CourseAttempt in MSSQL.
     /// </summary>
-    public async Task<CommitResult> CommitAsync(Guid sessionId)
+    public async Task<CommitResult> CommitAsync(Guid sessionId, Guid studentId)
     {
         var sessionData = await _sessionStore.ReadSessionAsync(sessionId);
         if (sessionData is null)
             return CommitResult.CreateNotFound();
+
+        // Ownership gate (spec 050) — a non-owner must not be able to commit
+        // state into the owner's attempt.
+        if (!IsSessionOwner(sessionData, studentId))
+            return CommitResult.CreateForbidden();
 
         if (!Guid.TryParse(sessionData.AttemptId, out var attemptId))
             return CommitResult.CreateNotFound();
@@ -216,11 +236,16 @@ public class ScormSessionService
     /// <summary>
     /// Finish the session (LMSFinish). Commits data, sets CompletedAt, deletes Valkey session.
     /// </summary>
-    public async Task<FinishResult> FinishAsync(Guid sessionId, string exitReason = "normal")
+    public async Task<FinishResult> FinishAsync(Guid sessionId, Guid studentId, string exitReason = "normal")
     {
         var sessionData = await _sessionStore.ReadSessionAsync(sessionId);
         if (sessionData is null)
             return FinishResult.CreateNotFound();
+
+        // Ownership gate (spec 050) — a non-owner must not be able to complete
+        // the owner's attempt or delete the session.
+        if (!IsSessionOwner(sessionData, studentId))
+            return FinishResult.CreateForbidden();
 
         if (!Guid.TryParse(sessionData.AttemptId, out var attemptId))
             return FinishResult.CreateNotFound();
@@ -257,6 +282,15 @@ public class ScormSessionService
     /// </summary>
     private static bool IsDuplicateKeyViolation(DbUpdateException ex) =>
         ex.InnerException is SqlException sql && sql.Number == 2601;
+
+    /// <summary>
+    /// True when <paramref name="studentId"/> is the session's stored owner
+    /// (spec 050). <c>SessionData.StudentId</c> is GUID text in the Valkey hash —
+    /// compared as a parsed Guid (case/separator-insensitive); a malformed owner
+    /// string is treated as not-the-caller (fail closed).
+    /// </summary>
+    private static bool IsSessionOwner(SessionData sessionData, Guid studentId) =>
+        Guid.TryParse(sessionData.StudentId, out var ownerId) && ownerId == studentId;
 
     private static bool IsValidCmiElement(string element)
     {
@@ -315,42 +349,54 @@ public record LaunchResult
 public record SetValueResult
 {
     public bool Success { get; init; }
+    /// <summary>True when the caller is not the session's owner (spec 050) — maps to 403.</summary>
+    public bool Forbidden { get; init; }
     public string? ErrorCode { get; init; }
     public string? ErrorMsg { get; init; }
 
     public static SetValueResult CreateSuccess() => new() { Success = true };
     public static SetValueResult CreateError(string errorCode, string errorMsg) => new() { Success = false, ErrorCode = errorCode, ErrorMsg = errorMsg };
+    public static SetValueResult CreateForbidden() => new() { Success = false, Forbidden = true, ErrorCode = "403", ErrorMsg = "Not authorized to access this session." };
 }
 
 /// <summary>Result of getting a CMI value.</summary>
 public record GetValueResult
 {
     public bool Found { get; init; }
+    /// <summary>True when the caller is not the session's owner (spec 050) — maps to 403.</summary>
+    public bool Forbidden { get; init; }
     public string? Value { get; init; }
 
     public static GetValueResult CreateSuccess(string value) => new() { Found = true, Value = value };
     public static GetValueResult CreateNotFound() => new() { Found = false };
+    public static GetValueResult CreateForbidden() => new() { Found = false, Forbidden = true };
 }
 
 /// <summary>Result of committing a session.</summary>
 public record CommitResult
 {
     public bool Success { get; init; }
+    /// <summary>True when the caller is not the session's owner (spec 050) — maps to 403.</summary>
+    public bool Forbidden { get; init; }
     public DateTimeOffset? CommittedAt { get; init; }
     public string? Error { get; init; }
 
     public static CommitResult CreateSuccess(DateTimeOffset? committedAt = null) => new() { Success = true, CommittedAt = committedAt ?? DateTimeOffset.UtcNow };
     public static CommitResult CreateNotFound() => new() { Success = false, Error = "Session not found or expired." };
+    public static CommitResult CreateForbidden() => new() { Success = false, Forbidden = true, Error = "Not authorized to access this session." };
 }
 
 /// <summary>Result of finishing a session.</summary>
 public record FinishResult
 {
     public bool Success { get; init; }
+    /// <summary>True when the caller is not the session's owner (spec 050) — maps to 403.</summary>
+    public bool Forbidden { get; init; }
     public string? Status { get; init; }
     public double? Score { get; init; }
     public string? Error { get; init; }
 
     public static FinishResult CreateSuccess(string? status = null, double? score = null) => new() { Success = true, Status = status ?? "completed", Score = score };
     public static FinishResult CreateNotFound() => new() { Success = false, Error = "Session not found or expired." };
+    public static FinishResult CreateForbidden() => new() { Success = false, Forbidden = true, Error = "Not authorized to access this session." };
 }
