@@ -55,10 +55,17 @@ Item 2 findings for final report:
 - Process: unit suites write to the shared LearningLms DB — the E2E filler-clean must run after the last unit run.
 
 ### Item 3 — configuration not reproducible / committed secret — spec 051 (bug/051-fix-config-reproducibility)
-- [ ] A  spec        commit
-- [ ] B  plan        commit
-- [ ] C  tasks       commit
-- [ ] D  implement   commit
-- [ ] E  merge       commit
-- [ ] F  gate 3      commit
-RESULT: (pending)     consecutive_blocked = 0
+- [x] A  spec        commit 728f56f
+- [x] B  plan        commit 72d72f7
+- [x] C  tasks       commit 771b86d
+- [x] D  implement   commit bdca2cc (D1: compose key + devcontainer + Valkey fallback) + d344c71 (D2: secret removal + scan test + README) + docs 9763b2c   gate 1 re-verified after EACH of the four changes (bare in-container start on compose env only; old solution name → MSB1009; host start with documented export)
+- [x] E  merge       commit 6dd1519   (independent verification: first pass RED on the E2E — triaged to the omitted filler-clean step, not a branch defect; re-run under the documented procedure GREEN: 172+1 skip, 0 retries)
+- [x] F  gate 3      commit (this commit)   build 0 errors / E2E 172 passed 1 skipped (unit: Arch 14, Host 9, Catalog 32, Scorm 18, Enrollment 41/42 — 1 pre-existing master failure)
+RESULT: COMPLETED     consecutive_blocked = 0
+
+Item 3 findings for final report:
+- The committed SA password (Lms#vZdV361x…, also the .env value) REMAINS IN GIT HISTORY — rotation is the follow-up (ALTER LOGIN sa, then .env; procedure in the spec's quickstart). Not attempted here (out of scope, per handoff).
+- Historical: spec 012 changed the code to read ConnectionStrings:Sql but never updated the config side; this spec finished that job.
+- Environment: recreating the devcontainer wipes /ms-playwright (browsers + system deps are in the writable layer — not in image/volume/Dockerfile). Restored with `npx playwright install chromium` + `install-deps chromium`. Candidate future spec: stage E2E browsers/deps in the devcontainer Dockerfile.
+- Environment: Catalog.Tests perf tests seed ~11.7k filler courses with no teardown — any E2E run after a full unit run must do the documented filler-clean first (bit the independent verification once; triaged, not a branch defect).
+- Secret-scan regression guard added (Host.Tests 9/9 now).
