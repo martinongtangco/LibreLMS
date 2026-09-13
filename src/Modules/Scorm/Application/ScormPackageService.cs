@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.IO.Compression;
 using Microsoft.EntityFrameworkCore;
 using LibreLms.Contracts.Scorm;
@@ -12,15 +13,30 @@ namespace LibreLms.Modules.Scorm.Application;
 /// </summary>
 public class ScormPackageService : IScormPackageService
 {
+    /// <summary>Spec 049: maximum number of entries in an uploaded SCORM package.</summary>
+    public const int DefaultMaxEntryCount = 5_000;
+
+    /// <summary>Spec 049: maximum total uncompressed bytes in an uploaded SCORM package.</summary>
+    public const long DefaultMaxUncompressedBytes = 100_000_000; // 100 MB
+
     private readonly ScormDbContext _context;
     private readonly ManifestParser _manifestParser;
     private readonly string _wwwRootPath;
+    private readonly int _maxEntryCount;
+    private readonly long _maxUncompressedBytes;
 
-    public ScormPackageService(ScormDbContext context, ManifestParser manifestParser, string wwwRootPath)
+    public ScormPackageService(
+        ScormDbContext context,
+        ManifestParser manifestParser,
+        string wwwRootPath,
+        int maxEntryCount = DefaultMaxEntryCount,
+        long maxUncompressedBytes = DefaultMaxUncompressedBytes)
     {
         _context = context;
         _manifestParser = manifestParser;
         _wwwRootPath = wwwRootPath;
+        _maxEntryCount = maxEntryCount;
+        _maxUncompressedBytes = maxUncompressedBytes;
     }
 
     /// <summary>Get the SCORM package for a course.</summary>
@@ -171,26 +187,73 @@ public class ScormPackageService : IScormPackageService
         if (parsed is null)
             return (null, "Failed to parse imsmanifest.xml — no launchable SCO found.");
 
+        // Spec 049: entry-count cap — reject before anything touches the disk.
+        var entryCount = archive.Entries.Count;
+        if (entryCount > _maxEntryCount)
+            return (null, $"SCORM package rejected: {entryCount} entries exceeds the maximum of {_maxEntryCount}.");
+
         // Extract ZIP to content directory
         var packageId = Guid.NewGuid();
         var contentDir = $"scorm-content/{packageId}";
         var contentFullPath = Path.Combine(_wwwRootPath, contentDir);
         Directory.CreateDirectory(contentFullPath);
 
+        // Spec 049 (zip-slip guard): every entry's destination must resolve inside
+        // the content directory. Path.GetFullPath collapses ".." and resolves
+        // rooted names (on Windows Path.Combine discards the base for a rooted
+        // second argument), so the StartsWith(root + separator) test is the
+        // complete check. Applied to directory entries too, not just files.
+        var contentRoot = Path.GetFullPath(contentFullPath) + Path.DirectorySeparatorChar;
+        long uncompressedTotal = 0;
+
         foreach (var entry in archive.Entries)
         {
+            var targetPath = Path.GetFullPath(Path.Combine(contentFullPath, entry.FullName));
+            if (!targetPath.StartsWith(contentRoot, StringComparison.Ordinal))
+            {
+                DeleteContentDirectoryQuiet(contentFullPath);
+                return (null, $"SCORM package rejected: entry '{entry.FullName}' escapes the content directory.");
+            }
+
+            // Cheap pre-check on declared sizes (a lying archive is caught by the
+            // per-byte count below during the actual copy).
+            if (uncompressedTotal + entry.Length > _maxUncompressedBytes)
+            {
+                DeleteContentDirectoryQuiet(contentFullPath);
+                return (null, $"SCORM package rejected: uncompressed size exceeds the maximum of {_maxUncompressedBytes} bytes.");
+            }
+
             if (entry.FullName.EndsWith('/'))
             {
-                var dirPath = Path.Combine(contentFullPath, entry.FullName);
-                Directory.CreateDirectory(dirPath);
+                Directory.CreateDirectory(targetPath);
             }
             else
             {
-                var filePath = Path.Combine(contentFullPath, entry.FullName);
-                Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+                Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
                 using var stream = entry.Open();
-                using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
-                await stream.CopyToAsync(fileStream);
+                await using var fileStream = new FileStream(targetPath, FileMode.Create, FileAccess.Write);
+                // Spec 049 (zip-bomb guard): count the bytes actually written, not
+                // just the declared entry length, so the on-disk total is bounded.
+                var buffer = ArrayPool<byte>.Shared.Rent(81_920);
+                try
+                {
+                    int read;
+                    while ((read = await stream.ReadAsync(buffer)) > 0)
+                    {
+                        uncompressedTotal += read;
+                        if (uncompressedTotal > _maxUncompressedBytes)
+                        {
+                            await fileStream.DisposeAsync();
+                            DeleteContentDirectoryQuiet(contentFullPath);
+                            return (null, $"SCORM package rejected: uncompressed size exceeds the maximum of {_maxUncompressedBytes} bytes.");
+                        }
+                        await fileStream.WriteAsync(buffer.AsMemory(0, read));
+                    }
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(buffer);
+                }
             }
         }
 
@@ -217,6 +280,25 @@ public class ScormPackageService : IScormPackageService
         if (Directory.Exists(fullPath))
         {
             Directory.Delete(fullPath, true);
+        }
+    }
+
+    /// <summary>
+    /// Spec 049: best-effort removal of a partially extracted content directory
+    /// after a rejected upload. The directory is brand-new per upload (fresh Guid),
+    /// so deleting it restores the pre-upload state.
+    /// </summary>
+    private static void DeleteContentDirectoryQuiet(string fullPath)
+    {
+        try
+        {
+            if (Directory.Exists(fullPath))
+                Directory.Delete(fullPath, true);
+        }
+        catch
+        {
+            // The upload is already rejected; a leftover partial directory must
+            // not mask the rejection error.
         }
     }
 

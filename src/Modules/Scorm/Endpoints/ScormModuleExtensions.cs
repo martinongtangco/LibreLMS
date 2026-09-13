@@ -20,15 +20,24 @@ public static class ScormModuleExtensions
     /// <summary>
     /// Bind the wwwRootPath to the ScormPackageService constructor parameter.
     /// Call this after AddScormModule() and pass the WebRootPath from Host.
+    /// Spec 049: the upload caps default to <see cref="ScormPackageService.DefaultMaxEntryCount"/>
+    /// and <see cref="ScormPackageService.DefaultMaxUncompressedBytes"/>; pass overrides here
+    /// (e.g. from Host configuration) to change them.
     /// </summary>
-    public static IServiceCollection ConfigureScormModule(this IServiceCollection services, string wwwRootPath)
+    public static IServiceCollection ConfigureScormModule(
+        this IServiceCollection services,
+        string wwwRootPath,
+        int maxEntryCount = ScormPackageService.DefaultMaxEntryCount,
+        long maxUncompressedBytes = ScormPackageService.DefaultMaxUncompressedBytes)
     {
         // Register ScormPackageService with wwwRootPath, as both concrete type and IScormPackageService contract
         services.AddScoped<ScormPackageService>(sp =>
             new ScormPackageService(
                 sp.GetRequiredService<ScormDbContext>(),
                 sp.GetRequiredService<ManifestParser>(),
-                wwwRootPath));
+                wwwRootPath,
+                maxEntryCount,
+                maxUncompressedBytes));
         // Register the contract interface for cross-module access (Constitution Principle III)
         services.AddScoped<IScormPackageService>(sp =>
             sp.GetRequiredService<ScormPackageService>());
