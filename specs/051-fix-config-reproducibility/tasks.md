@@ -55,8 +55,8 @@ without any tracked credential.
 from US1.
 
 - [x] T012 Gate 2: `dotnet test tests/ArchitectureTests`, `dotnet test LibreLms.slnx`, full E2E in the devcontainer (CI=1 serial; filler-clean AFTER the last unit run) — paste evidence
-- [ ] T013 Independent verification (Constitution XVI): fresh subagent re-runs build + Playwright from a clean worktree checkout of `bug/051-fix-config-reproducibility` and reports independently; merge to master only after it is green (`git merge --no-ff`)
-- [ ] T014 Gate 3 (post-merge, on master): rebuild, restart, re-run gate 2 — paste evidence; mark all tasks `[X]`, set spec Status to Complete, commit F
+- [x] T013 Independent verification (Constitution XVI): fresh subagent re-runs build + Playwright from a clean worktree checkout of `bug/051-fix-config-reproducibility` and reports independently; merge to master only after it is green (`git merge --no-ff`)
+- [x] T014 Gate 3 (post-merge, on master): rebuild, restart, re-run gate 2 — paste evidence; mark all tasks `[X]`, set spec Status to Complete, commit F
 
 ## Verification Notes
 
@@ -117,3 +117,28 @@ the writable-layer E2E setup (browsers + system deps at /ms-playwright —
 neither is in the image, volume, or Dockerfile). Restored with `npx playwright
 install chromium` + `npx playwright install-deps chromium`. Candidate: stage
 the E2E browsers/deps in the devcontainer Dockerfile (future spec).
+
+### T013 — independent verification (Constitution XVI)
+
+Fresh no-context subagent, clean detached worktree at 9763b2c. First pass
+VERDICT: RED — build 0 errors and units green (Host.Tests 9/9 incl. the new
+secret-scan test; Enrollment 41/42 the documented pre-existing one), but the
+E2E showed 8 failures + 3 did-not-run, all in the course-count/search/visibility
+cluster. Triage (Constitution XV): the subagent's own unit run re-contaminated
+the shared DB (11,668 filler courses from Catalog.Tests perf seeds, no
+telemetry) because the documented filler-clean step was omitted from its
+instructions — not a branch defect. Re-ran the E2E gate under the spec's
+documented procedure (filler-clean after the last unit run): **VERDICT: GREEN**
+— `1 skipped, 172 passed (2.9m)`, zero retries. Worktree removed, main app
+restored, DB restored to the 10-seeded state.
+
+### T014 — gate 3 (post-merge, on master, 2026-08-31)
+
+```
+dotnet build LibreLms.slnx → 0 Error(s)
+App rebuilt + restarted in the devcontainer (compose env only) → probe 302
+Unit: Arch 14/14, Host 9/9, Catalog 32/32, Scorm 18/18,
+      Enrollment 41/42 (1 pre-existing master failure, documented item 1)
+Full E2E (CI=1 serial, filler-cleaned after the last unit run): 1 skipped,
+172 passed (3.2m)
+```
