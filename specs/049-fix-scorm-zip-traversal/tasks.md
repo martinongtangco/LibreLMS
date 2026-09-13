@@ -70,8 +70,8 @@ clear messages and cleanup.
 
 - [X] T008 Gate 1: `dotnet build LibreLms.slnx` (0 errors) + `./scripts/restart-app.sh --background` (`Now listening on:` line) — paste evidence in Verification Notes
 - [X] T009 Gate 2: `dotnet test tests/ArchitectureTests`, `dotnet test LibreLms.slnx`, `cd tests/Playwright.Tests && npx playwright test` — expect 170 passed + 1 documented skip (verify-email) — paste evidence
-- [ ] T010 Independent verification (Constitution XVI): fresh subagent re-runs build + Playwright from a clean worktree checkout of `bug/049-fix-scorm-zip-traversal` and reports independently; merge to master only after it is green (`git merge --no-ff`)
-- [ ] T011 Gate 3 (post-merge, on master): rebuild, restart, re-run gate 2 — paste evidence; mark all tasks `[X]`, set spec Status to Complete, commit F
+- [X] T010 Independent verification (Constitution XVI): fresh subagent re-runs build + Playwright from a clean worktree checkout of `bug/049-fix-scorm-zip-traversal` and reports independently; merge to master only after it is green (`git merge --no-ff`)
+- [X] T011 Gate 3 (post-merge, on master): rebuild, restart, re-run gate 2 — paste evidence; mark all tasks `[X]`, set spec Status to Complete, commit F
 
 ## Verification Notes
 
@@ -154,3 +154,36 @@ this change):
 - The app/tests only run if ConnectionStrings__Sql + ConnectionStrings__Valkey
   are supplied from the environment — neither key exists in any repo file
   (item 3 of the hardening queue).
+
+### T010 — Independent verification (Constitution XVI, fresh subagent, 2026-08-31)
+
+VERDICT: GREEN (independent report, no shared context):
+- Clean worktree build: 0 Error(s).
+- Unit from worktree: ArchitectureTests 14/14, Scorm.Tests 15/15; the 6
+  ScormUploadTraversalTests all pass (file/directory/rooted traversal, size
+cap, count cap, legitimate nested package).
+- Behavioral probes against the running app: malicious `../` upload rejected
+  with "entry … escapes the content directory", nothing written outside the
+  content dir; 5,002-entry zip rejected with the count-cap message.
+- Full E2E (in-container, serial CI=1 mode): 170 passed, 1 documented skip.
+- The bare (non-CI) E2E command hits a pre-existing parallel-isolation race
+  (16-admin-pagination filler courses vs 19-course-visibility small-catalog
+  assumption) — reproduced 2× by the verifier, passes in serial; pre-existing
+  infra defect, recorded as future spec candidate, NOT caused by 049.
+- New finding (pre-existing, out of scope, future spec candidate):
+  `POST /api/scorm/upload` 500s on every request — the minimal API binds
+  IFormCollection (implicit anti-forgery metadata) but `app.UseAntiforgery()`
+  is never called (absent from all commits); the API surface is fail-closed
+  (it never reaches UploadAsync), the Razor-page upload surfaces work.
+- Merged to master: `git merge --no-ff` → 975eb00.
+
+### T011 — Gate 3 (post-merge, master, 2026-08-31)
+
+```
+dotnet build LibreLms.slnx → 0 Error(s)
+App restarted in devcontainer (merged code): Now listening on: http://localhost:5000, HTTP 302
+Unit: ArchitectureTests 14/14 · Host.Tests 8/8 · Catalog.Tests 32/32 ·
+      Scorm.Tests 15/15 · Enrollment.Tests 41/42 (1 pre-existing master failure)
+E2E (in-container, CI=1 serial, DB cleaned to 10 seeded courses):
+      170 passed, 1 skipped (documented verify-email skip)  ← baseline match
+```

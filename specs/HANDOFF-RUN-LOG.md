@@ -31,6 +31,11 @@ Constitution (`.specify/memory/constitution.md` v1.8.0) outranks the handoff.
 - [x] B  plan        commit d6aab32
 - [x] C  tasks       commit 6103380
 - [x] D  implement   commit c5742c3   build 0 errors / E2E 170 passed 1 skipped (unit: Arch 14, Host 8, Catalog 32, Scorm 15, Enrollment 41/42 — 1 pre-existing master failure, worktree-proven)
-- [ ] E  merge       commit
-- [ ] F  gate 3      commit
-RESULT: (pending)     consecutive_blocked = 0
+- [x] E  merge       commit 975eb00
+- [x] F  gate 3      commit (this commit)   E2E 170 passed 1 skipped (unit: Arch 14, Host 8, Catalog 32, Scorm 15, Enrollment 41/42 — 1 pre-existing master failure)
+RESULT: COMPLETED     consecutive_blocked = 0
+
+Item 1 findings for final report:
+- Pre-existing master unit failure: AdminListLearnersTests.never_exposes_credential_columns asserts 8 SP columns; spec 042 migration 20260829105050 re-created the SP with 9 — reproducible in a clean master worktree (NOT caused by 049). Candidate: update the assertion to 9 (or pin the SP column contract).
+- Pre-existing E2E parallel-isolation race: 16-admin-pagination creates 'AdmPg032C' filler courses mid-run that push 19-course-visibility's target course off page 1 (12/page). Passes serially (CI=1). Candidate: test-infra fix (isolate filler state / run serial).
+- Pre-existing: POST /api/scorm/upload 500s (minimal API binds IFormCollection ⇒ anti-forgery metadata, but app.UseAntiforgery() is never called). API surface is fail-closed (never reaches UploadAsync); Razor-page upload surfaces work and enforce the 049 fix. Candidate: add app.UseAntiforgery() or opt the endpoint out.

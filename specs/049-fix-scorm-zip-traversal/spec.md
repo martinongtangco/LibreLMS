@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-31
 
-**Status**: Draft
+**Status**: Complete (merged 2026-08-31 to master via 975eb00; post-merge gate 3: build 0 errors, E2E 170 passed + 1 documented verify-email skip, unit suites green except 1 pre-existing master failure proven in a clean worktree — see tasks.md Verification Notes)
 
 **Input**: Hardening-loop handoff, item 1 (verified against the code):
 
