@@ -95,9 +95,13 @@ in the same shell or the DB-backed suites fail on the missing env var.
 - [X] B  plan + ADR  commit c419c26 (ADR 0011: single GH Actions job, job-level mssql+valkey services, Host starts before unit steps, NU1903→error, CryptXml pin)
 - [X] C  tasks       commit 54101c5 (T001–T009)
 - [X] D  implement   commit 3b670a7 (ci.yml 15 steps; Directory.Build.props: NU1903 error + System.Security.Cryptography.Xml 9.0.20 pin + centralized Nullable/ImplicitUsings)
-- [ ] E  merge       commit
-- [ ] F  gate 3      commit
-RESULT: (pending)     consecutive_blocked = 0
+- [X] E  merge       commit 2843f32 (--no-ff, after independent verification GREEN)
+- [X] F  gate 3      commit d5515a5 (build 0 errors/0 NU1903, units 170/170 no-flake, E2E 177+1 on master)
+RESULT: COMPLETED   consecutive_blocked = 0
+Process note: 053's A–D commits initially landed on master (branch step
+skipped); restored to the house shape before merging — branch parked at
+the 053 tip, master reset to f953717, then a proper --no-ff merge (E).
+Commit hashes unchanged.
 Notes: baseline (red) = no .github/, build with 96 NU1903 lines. Post-fix build:
 0 errors, 0 NU1903. Version gotcha: an early 9.0.11 pin still failed (truncated
 version list) — OSV check shows the 8 advisories require up to 9.0.18; pin
