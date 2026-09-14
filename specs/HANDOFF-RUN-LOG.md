@@ -71,10 +71,17 @@ Item 3 findings for final report:
 - Secret-scan regression guard added (Host.Tests 9/9 now).
 
 ### Item 4 — organization scope never enforced — spec 052 (story/052-enforce-org-scope)
-- [ ] A  spec        commit 6dd015c
-- [ ] B  plan + ADR  commit
-- [ ] C  tasks       commit
-- [ ] D  implement   commit
+- [X] A  spec        commit 6dd015c
+- [X] B  plan + ADR  commit ec33aca (ADR 0010: enforce in Management services via required OrgScope param)
+- [X] C  tasks       commit aee4b0c (T001–T027)
+- [X] D  implement   commit 1755c77 (OrgScope + OrgSubtree; 4 surfaces scoped; 2 SP migrations w/ @RootOrgId; Management.Tests 55 tests; 08-rbac subtree block; DashboardService on shared OrgSubtree)
 - [ ] E  merge       commit
 - [ ] F  gate 3      commit
 RESULT: (pending)     consecutive_blocked = 0
+Verification (XVI, fresh no-context subagent, clean detached worktree @1755c77): GREEN —
+build 0 errors; units 170/170 (one documented Catalog parallel-flake, 32/32 in isolation);
+app on branch code (302 probe); filler-clean 10 courses; Playwright 177 passed + 1 skip, 0 failed.
+Notes: E2E red pre-fix (alice@example.com visible to a child OrgAdmin, 08-rbac:273); unit red
+pre-fix (CS1501 on all scoped calls); SP migrations need the .Designer.cs [Migration] partial
+or EF silently skips them; run `dotnet test LibreLms.slnx` with ConnectionStrings__Sql sourced
+in the same shell or the DB-backed suites fail on the missing env var.

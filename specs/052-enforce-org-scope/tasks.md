@@ -75,9 +75,9 @@ returns only the subtree.
 
 - [X] T022 [P] [US6] `DashboardService`: private BFS removed, `GetOrgMetricsAsync` now uses the shared `OrgSubtree` (identical set: org + live descendants; `DashboardServiceBulkCountsTests` still 9/9 green with the real `OrganizationLookup`). **Adjacent finding (future-spec candidate, not fixed)**: `GET /api/dashboard/activity` (`GetRecentActivityAsync`) is system-wide for OrgAdmins too — the dashboard activity feed is not one of the four 052 surfaces. **Note**: `Pages/Admin/Upload` calls the Scorm module's package service, not a Management course-create — no Management scope plumbing applicable
 - [X] T023 [P] [US6] `Pages/Courses/Index.cshtml.cs` (learner-facing): it calls `GetVisibleCoursesAsync(ownOrg)` (claim-derived org) — now passes `OrgScope.ForOrgAdmin(ownOrg)` with a comment (the check always passes; no behavior change)
-- [ ] T024 Gate 1: `dotnet build LibreLms.slnx` (0 errors) + app restart in the devcontainer — paste evidence
-- [ ] T025 Gate 2: ArchitectureTests, full `dotnet test LibreLms.slnx` (AdminListLearnersTests should now PASS — 9 columns), filler-clean AFTER the last unit run, full Playwright serial — paste evidence
-- [ ] T026 Independent verification (Constitution XVI): fresh subagent re-runs build + Playwright from a clean worktree checkout of `story/052-enforce-org-scope` (its instructions MUST include the filler-clean step) and reports independently; merge to master only after GREEN (`git merge --no-ff`)
+- [X] T024 Gate 1: `dotnet build LibreLms.slnx` (0 errors) + app restart in the devcontainer — paste evidence
+- [X] T025 Gate 2: ArchitectureTests, full `dotnet test LibreLms.slnx` (AdminListLearnersTests should now PASS — 9 columns), filler-clean AFTER the last unit run, full Playwright serial — paste evidence
+- [X] T026 Independent verification (Constitution XVI): fresh subagent re-runs build + Playwright from a clean worktree checkout of `story/052-enforce-org-scope` (its instructions MUST include the filler-clean step) and reports independently; merge to master only after GREEN (`git merge --no-ff`)
 - [ ] T027 Gate 3 (post-merge, on master): rebuild, restart, re-run gate 2 — paste evidence; mark all tasks `[X]`, set spec Status to Complete, commit F
 
 ## Verification Notes
@@ -114,6 +114,11 @@ returns only the subtree.
   as the pre-052 baseline). Filler-clean after the last unit run (11,668 filler rows →
   10 seeded courses), then full Playwright serial: **177 passed + 1 documented skip**
   (verify-email), incl. the 5 new `08-rbac` subtree tests.
+- **T026 (independent verification)**: fresh no-context subagent, detached clean
+  worktree at 1755c77: build 0 errors; units 170/170 (the single Catalog
+  parallel-flake re-ran 32/32 in isolation); in-container app on the branch commit
+  (302 probe); filler-clean to 10 courses; Playwright **177 passed + 1 skip, 0
+  failed**. Verdict GREEN → merge authorized.
 
 ## Verification Notes
 
