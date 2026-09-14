@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-31
 
-**Status**: Draft
+**Status**: Complete (2026-09-14)
 
 **Input**: Hardening-loop handoff, item 4 (verified against the code on 2026-08-31):
 

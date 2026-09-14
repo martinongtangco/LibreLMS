@@ -78,7 +78,7 @@ returns only the subtree.
 - [X] T024 Gate 1: `dotnet build LibreLms.slnx` (0 errors) + app restart in the devcontainer — paste evidence
 - [X] T025 Gate 2: ArchitectureTests, full `dotnet test LibreLms.slnx` (AdminListLearnersTests should now PASS — 9 columns), filler-clean AFTER the last unit run, full Playwright serial — paste evidence
 - [X] T026 Independent verification (Constitution XVI): fresh subagent re-runs build + Playwright from a clean worktree checkout of `story/052-enforce-org-scope` (its instructions MUST include the filler-clean step) and reports independently; merge to master only after GREEN (`git merge --no-ff`)
-- [ ] T027 Gate 3 (post-merge, on master): rebuild, restart, re-run gate 2 — paste evidence; mark all tasks `[X]`, set spec Status to Complete, commit F
+- [X] T027 Gate 3 (post-merge, on master): rebuild, restart, re-run gate 2 — paste evidence; mark all tasks `[X]`, set spec Status to Complete, commit F
 
 ## Verification Notes
 
@@ -119,6 +119,12 @@ returns only the subtree.
   parallel-flake re-ran 32/32 in isolation); in-container app on the branch commit
   (302 probe); filler-clean to 10 courses; Playwright **177 passed + 1 skip, 0
   failed**. Verdict GREEN → merge authorized.
+- **T027 (Gate 3, post-merge on master @66748c2)**: `dotnet build LibreLms.slnx`
+  → Build succeeded (0 errors); in-container restart → Now listening + 302 probe;
+  full `dotnet test LibreLms.slnx` → Management 55 / Arch 14 / Host 9 / Enrollment
+  42 / Catalog 32 / Scorm 18 = **170/170** (no flake this run); filler-clean (11,668
+  → 10 courses); full Playwright serial → **177 passed + 1 documented skip, 0
+  failed**.
 
 ## Verification Notes
 
