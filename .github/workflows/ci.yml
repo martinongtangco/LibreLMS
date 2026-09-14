@@ -1,0 +1,124 @@
+# CI — the constitution's gate stack, run mechanically (spec 053, ADR 0011).
+#
+# One job: MSSQL + Valkey as job-level service containers, then the exact
+# command sequence the local development workflow uses:
+#   restore -> build -> ArchitectureTests -> Host start (EF migrations +
+#   seeders run at startup; readiness = HTTP 302) -> filler-clean -> the
+#   five unit test projects -> Playwright.
+#
+# The MSSQL SA password below is a throwaway CI fixture (disposable
+# service container, per-run database) — not a real credential.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: "CiFixture!Passw0rd"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CiFixture!Passw0rd' -C -Q 'SELECT 1' -b || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 30
+      valkey:
+        image: valkey/valkey:8
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping || exit 1"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+
+    env:
+      ConnectionStrings__Sql: "Server=localhost,1433;Database=LearningLms;User Id=sa;Password=CiFixture!Passw0rd;TrustServerCertificate=True"
+      ConnectionStrings__Valkey: "localhost:6379"
+      ASPNETCORE_ENVIRONMENT: "Development"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Restore
+        run: dotnet restore LibreLms.slnx
+
+      - name: Build
+        run: dotnet build LibreLms.slnx --no-restore
+
+      - name: Architecture tests
+        run: dotnet test tests/ArchitectureTests/ArchitectureTests.csproj --no-build
+
+      - name: Start Host (runs EF migrations + seeders) and wait for readiness
+        run: |
+          dotnet run --project src/Host --urls http://localhost:5000 > /tmp/host.log 2>&1 &
+          HOST_PID=$!
+          code=""
+          for i in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:5000/ || true)
+            [ "$code" = "302" ] && break
+            kill -0 "$HOST_PID" 2>/dev/null || break
+            sleep 2
+          done
+          if [ "$code" != "302" ]; then
+            echo "::error::Host did not reach readiness (last HTTP code: ${code:-none})"
+            tail -n 100 /tmp/host.log
+            exit 1
+          fi
+          echo "Host ready (HTTP 302)"
+
+      - name: Filler-clean (removes Catalog perf-seed residue so E2E sees the seeded state)
+        run: |
+          sqlcmd -S localhost,1433 -U sa -P "CiFixture!Passw0rd" -C -W -Q "
+            SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;
+            DELETE e FROM Enrollments e JOIN Courses c ON e.CourseId=c.Id WHERE c.Id NOT LIKE '11111111-%';
+            DELETE ca FROM CourseAttempts ca JOIN Courses c ON ca.CourseId=c.Id WHERE c.Id NOT LIKE '11111111-%';
+            DELETE sp FROM ScormPackages sp WHERE sp.CourseId NOT IN (SELECT Id FROM Courses WHERE Id LIKE '11111111-%');
+            DELETE c FROM Courses c WHERE c.Id NOT LIKE '11111111-%';
+          "
+
+      - name: Unit tests — Catalog
+        run: dotnet test tests/Catalog.Tests/Catalog.Tests.csproj --no-build
+
+      - name: Unit tests — Enrollment
+        run: dotnet test tests/Enrollment.Tests/Enrollment.Tests.csproj --no-build
+
+      - name: Unit tests — Host
+        run: dotnet test tests/Host.Tests/Host.Tests.csproj --no-build
+
+      - name: Unit tests — Management
+        run: dotnet test tests/Management.Tests/Management.Tests.csproj --no-build
+
+      - name: Unit tests — Scorm
+        run: dotnet test tests/Scorm.Tests/Scorm.Tests.csproj --no-build
+
+      - name: Playwright browsers
+        working-directory: tests/Playwright.Tests
+        run: npx playwright install chromium --with-deps
+
+      - name: E2E (Playwright)
+        working-directory: tests/Playwright.Tests
+        env:
+          CI: "1"
+        run: npx playwright test

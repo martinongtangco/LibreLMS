@@ -89,3 +89,25 @@ Notes: E2E red pre-fix (alice@example.com visible to a child OrgAdmin, 08-rbac:2
 pre-fix (CS1501 on all scoped calls); SP migrations need the .Designer.cs [Migration] partial
 or EF silently skips them; run `dotnet test LibreLms.slnx` with ConnectionStrings__Sql sourced
 in the same shell or the DB-backed suites fail on the missing env var.
+
+### Item 5 — no continuous integration — spec 053 (story/053-add-ci-pipeline)
+- [X] A  spec        commit bf6f4e6
+- [X] B  plan + ADR  commit c419c26 (ADR 0011: single GH Actions job, job-level mssql+valkey services, Host starts before unit steps, NU1903→error, CryptXml pin)
+- [X] C  tasks       commit 54101c5 (T001–T009)
+- [X] D  implement   commit 3b670a7 (ci.yml 15 steps; Directory.Build.props: NU1903 error + System.Security.Cryptography.Xml 9.0.20 pin + centralized Nullable/ImplicitUsings)
+- [ ] E  merge       commit
+- [ ] F  gate 3      commit
+RESULT: (pending)     consecutive_blocked = 0
+Notes: baseline (red) = no .github/, build with 96 NU1903 lines. Post-fix build:
+0 errors, 0 NU1903. Version gotcha: an early 9.0.11 pin still failed (truncated
+version list) — OSV check shows the 8 advisories require up to 9.0.18; pin
+settled at 9.0.20 (latest stable 9.0 line; no stable 10.x on NuGet).
+Gate 2 for this item = the workflow's command sequence passed locally in
+order (Principle V: no remote CI trigger/observation): restore → build →
+ArchTests 14 → Host start (in-container equivalent: Now listening + 302) →
+units Catalog 32 / Enrollment 42 / Host 9 / Management 55 / Scorm 18 →
+filler-clean (11,668 → 10 courses) → Playwright 177 passed + 1 skip, 0 failed.
+Verification (XVI, fresh no-context subagent, clean detached worktree @3b670a7):
+GREEN — build 0 errors / 0 NU1903; units 170/170 (one documented Catalog
+flake, 32/32 on re-run); app commit-matched (302); filler-clean 10 courses;
+Playwright 177 passed + 1 skip, 0 failed.

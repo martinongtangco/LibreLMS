@@ -1,0 +1,28 @@
+<Project>
+
+  <!--
+    Shared build settings for every project in the solution (spec 053).
+
+    NU1903 (package with a known high-severity vulnerability) is promoted
+    to an ERROR: a vulnerable dependency must fail the build instead of
+    landing as a waved-through warning.
+
+    System.Security.Cryptography.Xml is pinned because 9.0.0 (pulled
+    transitively by Microsoft.EntityFrameworkCore.Design ->
+    Microsoft.Build.Tasks.Core) carries high-severity advisories (8 GHSA,
+    incl. CVE-2026-50648); 9.0.20 is the latest stable 9.0 line as of
+    2026-09-14 (latest required fix across the advisories: 9.0.18; no
+    stable 10.x on NuGet yet). The package is a framework-provided
+    assembly on net10.0, so the pin changes no runtime behavior.
+  -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <WarningsAsErrors>NU1903</WarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.20" />
+  </ItemGroup>
+
+</Project>
