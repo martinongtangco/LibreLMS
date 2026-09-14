@@ -65,8 +65,8 @@ Consequences (all reproduced by construction, red-verified before the fix):
    `@VisibleCourseIds NVARCHAR(MAX) = NULL` — a JSON array of course-id
    GUIDs (e.g. `["<guid>", ...]`). Both the row SELECT and the COUNT SELECT
    gain
-   `AND (@VisibleCourseIds IS NULL OR c.Id IN (SELECT [value] FROM
-   OPENJSON(@VisibleCourseIds) WITH ([value] UNIQUEIDENTIFIER)))`.
+   `AND (@VisibleCourseIds IS NULL OR c.Id IN (SELECT CAST([value] AS UNIQUEIDENTIFIER) FROM
+   OPENJSON(@VisibleCourseIds)))`.
    Semantics: `NULL` = no visibility restriction (unauthenticated/no-org
    callers — legacy behavior, unchanged); a JSON array = rows and count
    restricted to the set; `[]` = nothing visible. Filtering, paging and

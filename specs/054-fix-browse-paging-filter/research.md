@@ -67,8 +67,8 @@ same direct-INSERT/cleanup pattern as `BrowseCoursesSortTests`):
 - Visible set = 8 of the 13:
   - rows on the requested page are a subset of the visible set;
   - `TotalCount` == 8 (the visible count) — RED pre-fix (returns 13);
-  - `pageSize` 5, pages 1–2 full (5 items each), page 3 = 3 items;
-    no page past page 3 renders a row while total > 0.
+  - `pageSize` 5: page 1 full (5 items), page 2 = the 3-item remainder,
+    page 3 empty; no page renders a row past the visible set.
 - `NULL` param (legacy): TotalCount == 13 (unfiltered behavior preserved).
 - `[]` (empty set): 0 rows, TotalCount == 0 — the org-hides-everything
   edge the old in-memory filter got wrong.

@@ -12,8 +12,8 @@ NULL = legacy unfiltered (written BEFORE code, per Principle IV).
 
 `BrowseCourses` gains `@VisibleCourseIds NVARCHAR(MAX) = NULL`; the
 predicate
-`AND (@VisibleCourseIds IS NULL OR c.Id IN (SELECT [value] FROM
-OPENJSON(@VisibleCourseIds) WITH ([value] UNIQUEIDENTIFIER)))` is added to
+`AND (@VisibleCourseIds IS NULL OR c.Id IN (SELECT CAST([value] AS UNIQUEIDENTIFIER) FROM
+OPENJSON(@VisibleCourseIds)))` is added to
 both the row SELECT and the COUNT SELECT (new Catalog migration, house
 idempotent DROP+CREATE + `.Designer.cs`). `BrowseAsync` serializes the
 visible set (null → NULL param, empty → `[]`) and drops the in-memory

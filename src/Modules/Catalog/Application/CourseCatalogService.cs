@@ -173,6 +173,16 @@ public class CourseCatalogService(CatalogDbContext context)
             command.Parameters.Add("@SortBy", SqlDbType.NVarChar, 20).Value = sortBy;
             command.Parameters.Add("@SortDirection", SqlDbType.NVarChar, 4).Value = sortDirection;
 
+            // Spec 054 (ADR 0012): the visible set is applied INSIDE the SP —
+            // NULL = no visibility restriction (legacy behavior), [] = nothing
+            // visible, otherwise a JSON array of course-id GUIDs. Filtering,
+            // paging and counting happen in one place and agree by construction
+            // (the old in-memory post-paging filter is gone).
+            command.Parameters.Add("@VisibleCourseIds", SqlDbType.NVarChar, -1).Value =
+                visibleCourseIds is null ? (object)DBNull.Value
+                    : visibleCourseIds.Count == 0 ? "[]"
+                    : "[" + string.Join(",", visibleCourseIds.OrderBy(i => i.ToString()).Select(i => $"\"{i}\"")) + "]";
+
             var allItems = new List<CourseItemDto>();
             var totalCount = 0;
 
@@ -198,14 +208,7 @@ public class CourseCatalogService(CatalogDbContext context)
                 totalCount = reader.GetInt32(0);
             }
 
-            // Apply org visibility filter in C# (avoids TVP complexity)
-            var filteredItems = allItems;
-            if (visibleCourseIds != null && visibleCourseIds.Count > 0)
-            {
-                filteredItems = allItems.Where(c => visibleCourseIds.Contains(c.Id)).ToList();
-            }
-
-            return new BrowseResult(filteredItems, totalCount, pageNumber, pageSize);
+            return new BrowseResult(allItems, totalCount, pageNumber, pageSize);
         }
         finally
         {

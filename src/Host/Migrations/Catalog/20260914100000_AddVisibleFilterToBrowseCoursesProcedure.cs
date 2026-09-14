@@ -1,0 +1,116 @@
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace Host.Migrations.Catalog
+{
+    /// <summary>
+    /// Spec 054 (ADR 0012): the visible-course set moves INTO the BrowseCourses
+    /// procedure as @VisibleCourseIds NVARCHAR(MAX) — a JSON array of course-id
+    /// GUIDs (e.g. ["&lt;guid&gt;", ...]). NULL = no visibility restriction
+    /// (legacy behavior, the parameter default); [] = nothing visible. The
+    /// predicate is applied to BOTH the row SELECT and the COUNT SELECT so
+    /// filtering, paging and counting agree in one place.
+    /// </summary>
+    public partial class AddVisibleFilterToBrowseCoursesProcedure : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.Sql("IF OBJECT_ID('BrowseCourses', 'P') IS NOT NULL DROP PROCEDURE BrowseCourses;");
+            migrationBuilder.Sql(@"
+                CREATE PROCEDURE BrowseCourses
+                    @SearchTerm NVARCHAR(200) = NULL,
+                    @Category NVARCHAR(100) = NULL,
+                    @PageSize INT = 10,
+                    @PageNumber INT = 1,
+                    @SortBy NVARCHAR(20) = N'title',
+                    @SortDirection NVARCHAR(4) = N'asc',
+                    @VisibleCourseIds NVARCHAR(MAX) = NULL
+                AS
+                BEGIN
+                    SET NOCOUNT ON;
+
+                    IF @PageSize <= 0 SET @PageSize = 10;
+                    IF @PageNumber <= 0 SET @PageNumber = 1;
+
+                    -- Normalize sort inputs to the allowed set (unknown values fall back to defaults).
+                    IF @SortBy IS NULL OR @SortBy NOT IN (N'title', N'category', N'duration') SET @SortBy = N'title';
+                    IF @SortDirection IS NULL OR @SortDirection NOT IN (N'asc', N'desc') SET @SortDirection = N'asc';
+
+                    DECLARE @Offset INT = (@PageNumber - 1) * @PageSize;
+
+                    SELECT c.Id, c.Title, c.ShortDescription, c.Category, c.Duration, c.OrganizationId
+                    FROM Courses c
+                    WHERE (@Category IS NULL OR @Category = '' OR c.Category = @Category)
+                        AND (@SearchTerm IS NULL OR @SearchTerm = '' OR c.Title LIKE '%' + @SearchTerm + '%')
+                        AND (@VisibleCourseIds IS NULL OR c.Id IN (
+                            SELECT CAST([value] AS UNIQUEIDENTIFIER) FROM OPENJSON(@VisibleCourseIds)))
+                    ORDER BY
+                        CASE WHEN @SortBy = N'title' AND @SortDirection = N'asc' THEN c.Title END ASC,
+                        CASE WHEN @SortBy = N'title' AND @SortDirection = N'desc' THEN c.Title END DESC,
+                        CASE WHEN @SortBy = N'category' AND @SortDirection = N'asc' THEN c.Category END ASC,
+                        CASE WHEN @SortBy = N'category' AND @SortDirection = N'desc' THEN c.Category END DESC,
+                        CASE WHEN @SortBy = N'duration' AND @SortDirection = N'asc' THEN c.Duration END ASC,
+                        CASE WHEN @SortBy = N'duration' AND @SortDirection = N'desc' THEN c.Duration END DESC,
+                        c.Id ASC
+                    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+
+                    SELECT COUNT(*) AS TotalCount
+                    FROM Courses c
+                    WHERE (@Category IS NULL OR @Category = '' OR c.Category = @Category)
+                        AND (@SearchTerm IS NULL OR @SearchTerm = '' OR c.Title LIKE '%' + @SearchTerm + '%')
+                        AND (@VisibleCourseIds IS NULL OR c.Id IN (
+                            SELECT CAST([value] AS UNIQUEIDENTIFIER) FROM OPENJSON(@VisibleCourseIds)));
+                END;
+            ");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.Sql("IF OBJECT_ID('BrowseCourses', 'P') IS NOT NULL DROP PROCEDURE BrowseCourses;");
+            migrationBuilder.Sql(@"
+                CREATE PROCEDURE BrowseCourses
+                    @SearchTerm NVARCHAR(200) = NULL,
+                    @Category NVARCHAR(100) = NULL,
+                    @PageSize INT = 10,
+                    @PageNumber INT = 1,
+                    @SortBy NVARCHAR(20) = N'title',
+                    @SortDirection NVARCHAR(4) = N'asc'
+                AS
+                BEGIN
+                    SET NOCOUNT ON;
+
+                    IF @PageSize <= 0 SET @PageSize = 10;
+                    IF @PageNumber <= 0 SET @PageNumber = 1;
+
+                    -- Normalize sort inputs to the allowed set (unknown values fall back to defaults).
+                    IF @SortBy IS NULL OR @SortBy NOT IN (N'title', N'category', N'duration') SET @SortBy = N'title';
+                    IF @SortDirection IS NULL OR @SortDirection NOT IN (N'asc', N'desc') SET @SortDirection = N'asc';
+
+                    DECLARE @Offset INT = (@PageNumber - 1) * @PageSize;
+
+                    SELECT c.Id, c.Title, c.ShortDescription, c.Category, c.Duration, c.OrganizationId
+                    FROM Courses c
+                    WHERE (@Category IS NULL OR @Category = '' OR c.Category = @Category)
+                        AND (@SearchTerm IS NULL OR @SearchTerm = '' OR c.Title LIKE '%' + @SearchTerm + '%')
+                    ORDER BY
+                        CASE WHEN @SortBy = N'title' AND @SortDirection = N'asc' THEN c.Title END ASC,
+                        CASE WHEN @SortBy = N'title' AND @SortDirection = N'desc' THEN c.Title END DESC,
+                        CASE WHEN @SortBy = N'category' AND @SortDirection = N'asc' THEN c.Category END ASC,
+                        CASE WHEN @SortBy = N'category' AND @SortDirection = N'desc' THEN c.Category END DESC,
+                        CASE WHEN @SortBy = N'duration' AND @SortDirection = N'asc' THEN c.Duration END ASC,
+                        CASE WHEN @SortBy = N'duration' AND @SortDirection = N'desc' THEN c.Duration END DESC,
+                        c.Id ASC
+                    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+
+                    SELECT COUNT(*) AS TotalCount
+                    FROM Courses c
+                    WHERE (@Category IS NULL OR @Category = '' OR c.Category = @Category)
+                        AND (@SearchTerm IS NULL OR @SearchTerm = '' OR c.Title LIKE '%' + @SearchTerm + '%');
+                END;
+            ");
+        }
+    }
+}

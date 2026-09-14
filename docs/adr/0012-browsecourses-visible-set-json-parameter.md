@@ -18,7 +18,7 @@ Options:
    + `@VisibleCourseIds CourseIdList READONLY` + a C# POCO mapped to the
    type.
 2. **JSON parameter** — `@VisibleCourseIds NVARCHAR(MAX) = NULL` +
-   `OPENJSON(... WITH ([value] UNIQUEIDENTIFIER))` in both SELECTs.
+   `OPENJSON(...)` + `CAST([value] AS UNIQUEIDENTIFIER)` in both SELECTs. (For a JSON array of scalar GUID strings, WITH must NOT be used: WITH applies object-property extraction to each array element and silently returns NULL rows.)
 3. Comma-separated string + `STRING_SPLIT` — no, GUIDs need typed handling
    and `STRING_SPLIT` on 500+ ids is the same machinery as OPENJSON with
    worse semantics. Rejected.
@@ -41,8 +41,8 @@ Options:
   empty-set edge where an org with zero visible courses sees everything).
 - The predicate is added to **both** the row SELECT and the COUNT SELECT,
   so paging and counting agree by construction:
-  `AND (@VisibleCourseIds IS NULL OR c.Id IN (SELECT [value] FROM
-  OPENJSON(@VisibleCourseIds) WITH ([value] UNIQUEIDENTIFIER)))`.
+  `AND (@VisibleCourseIds IS NULL OR c.Id IN (SELECT CAST([value] AS UNIQUEIDENTIFIER) FROM
+  OPENJSON(@VisibleCourseIds)))). Gotcha (hit during implementation): `WITH` on a scalar array is object-property extraction and returns NULL rows — no `WITH`, plain `CAST` instead.
 
 **Rejected**
 

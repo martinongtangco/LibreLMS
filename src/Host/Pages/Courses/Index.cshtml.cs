@@ -40,12 +40,20 @@ public class CourseIndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        var result = await GetPagedCourses(Search, Category, PageNumber, PageSize);
+        // Spec 054: resolve the org's visible catalog ONCE and share it between
+        // the list and the category dropdown (was: two full
+        // GetVisibleCoursesAsync fetches per request).
+        var visible = await ResolveVisibleCatalogAsync();
+
+        var result = await GetPagedCourses(Search, Category, PageNumber, PageSize, visible?.CourseIds);
 
         Courses = result.Items;
         TotalCount = result.TotalCount;
-        // Derive categories from the full filtered result set for the dropdown
-        Categories = await GetCategoriesAsync();
+        // Derive categories from the already-resolved visible set for the
+        // dropdown (zero extra queries; hidden courses stay excluded —
+        // spec 009 scenario 5 / bug-047).
+        Categories = visible?.Categories
+            ?? (await _courseLookup.GetDistinctCategoriesAsync()).ToList();
     }
 
     /// <summary>HTMX handler: return course list + pagination partial for inline swap.</summary>
@@ -75,14 +83,17 @@ public class CourseIndexModel : PageModel
         // page" — clamp to the last page and re-fetch (2 calls, same as the old
         // probe-then-fetch flow).
         var requestedPage = Math.Max(1, page);
-        var result = await GetPagedCourses(search, category, requestedPage, PageSize);
+        // Spec 054: one visible-catalog resolution per request, reused by the
+        // (rare) clamp re-fetch below.
+        var visible = await ResolveVisibleCatalogAsync();
+        var result = await GetPagedCourses(search, category, requestedPage, PageSize, visible?.CourseIds);
 
         var effectivePage = requestedPage;
         if (requestedPage > 1 && result.Items.Count == 0 && result.TotalCount > 0)
         {
             var totalPages = (int)Math.Ceiling((double)result.TotalCount / PageSize);
             effectivePage = Math.Min(requestedPage, totalPages);
-            result = await GetPagedCourses(search, category, effectivePage, PageSize);
+            result = await GetPagedCourses(search, category, effectivePage, PageSize, visible?.CourseIds);
         }
 
         // Build combined model: courses + pagination info
@@ -99,41 +110,16 @@ public class CourseIndexModel : PageModel
     }
 
     /// <summary>Get paginated courses using the T-SQL stored procedure.</summary>
-    private async Task<BrowseResultWithEnrollments> GetPagedCourses(string? search, string? category, int pageNumber, int pageSize)
+    private async Task<BrowseResultWithEnrollments> GetPagedCourses(string? search, string? category, int pageNumber, int pageSize, HashSet<Guid>? visibleCourseIds)
     {
         var studentId = ScormHelpers.GetStudentId(HttpContext);
         var enrolledIds = new HashSet<Guid>();
-        BrowseResult browseResult;
 
-        // Check if user is authenticated with org context
-        var role = HttpContext.User.Identity?.IsAuthenticated == true
-            ? HttpContext.User.FindFirstValue(ClaimTypes.Role)
-            : null;
-        var orgId = role is not null
-            ? AuthHelpers.GetCurrentUserOrgId(HttpContext.User)
-            : null;
-
-        if (orgId.HasValue)
-        {
-            // Authenticated user with org — get visible course IDs first.
-            // Courses the org admin marked hidden (IsHidden) are excluded from the
-            // browse filter — spec 009 scenario 5 / bug-047.
-            // ADR 0010: the read is scoped to the learner's own org subtree
-            // (orgId comes from the auth claim, so the check always passes).
-            var visible = await _visibilityService.GetVisibleCoursesAsync(orgId.Value, LibreLms.Contracts.Management.OrgScope.ForOrgAdmin(orgId.Value));
-            var visibleCourseIds = visible.Where(v => !v.IsHidden).Select(v => v.CourseId).ToHashSet();
-
-            // Call stored procedure; filter by visible IDs in C# (avoids TVP complexity)
-            browseResult = await _catalogService.BrowseAsync(
-                search, category, pageNumber, pageSize,
-                visibleCourseIds);
-        }
-        else
-        {
-            // Unauthenticated or no org — show all courses
-            browseResult = await _catalogService.BrowseAsync(
-                search, category, pageNumber, pageSize);
-        }
+        // The visible set (null = unauthenticated/no org → unfiltered) is
+        // applied inside the BrowseCourses SP (spec 054, ADR 0012) — rows,
+        // page size and total count all agree.
+        var browseResult = await _catalogService.BrowseAsync(
+            search, category, pageNumber, pageSize, visibleCourseIds);
 
         // One bulk enrollment check for the whole page (spec 048 E1) — replaces the
         // per-row IsEnrolledAsync loop; membership is a HashSet lookup below.
@@ -152,12 +138,16 @@ public class CourseIndexModel : PageModel
     }
 
     /// <summary>
-    /// Get distinct categories for the dropdown (spec 048 E3):
-    /// org-scoped users derive them from the already-fetched visible course DTOs
-    /// (zero extra queries; hidden courses stay excluded — spec 009 scenario 5 / bug-047);
-    /// everyone else gets one SELECT DISTINCT via the Catalog contract.
+    /// The org's visible catalog, resolved ONCE per request (spec 054): the
+    /// course ids (browse filter, applied inside the SP) and the distinct
+    /// non-hidden categories (dropdown). Null when the user has no org scope
+    /// (unauthenticated / no org claim) — callers then browse unfiltered.
+    /// Courses the org admin marked hidden (IsHidden) are excluded —
+    /// spec 009 scenario 5 / bug-047. ADR 0010: the read is scoped to the
+    /// caller's own org subtree (orgId comes from the auth claim, so the
+    /// check always passes).
     /// </summary>
-    private async Task<List<string>> GetCategoriesAsync()
+    private async Task<VisibleCatalog?> ResolveVisibleCatalogAsync()
     {
         var role = HttpContext.User.Identity?.IsAuthenticated == true
             ? HttpContext.User.FindFirstValue(ClaimTypes.Role)
@@ -166,21 +156,19 @@ public class CourseIndexModel : PageModel
             ? AuthHelpers.GetCurrentUserOrgId(HttpContext.User)
             : null;
 
-        if (orgId.HasValue)
-        {
-            // ADR 0010: same own-org read scope as GetPagedCourses.
-            var visible = await _visibilityService.GetVisibleCoursesAsync(orgId.Value, LibreLms.Contracts.Management.OrgScope.ForOrgAdmin(orgId.Value));
-            return visible
-                .Where(v => !v.IsHidden)
-                .Select(v => v.Category)
-                .Distinct()
-                .OrderBy(c => c)
-                .ToList();
-        }
+        if (orgId is not { } id)
+            return null;
 
-        return (await _courseLookup.GetDistinctCategoriesAsync()).ToList();
+        var visible = await _visibilityService.GetVisibleCoursesAsync(id, LibreLms.Contracts.Management.OrgScope.ForOrgAdmin(id));
+        var visibleCourses = visible.Where(v => !v.IsHidden).ToList();
+        return new VisibleCatalog(
+            visibleCourses.Select(v => v.CourseId).ToHashSet(),
+            visibleCourses.Select(v => v.Category).Distinct().OrderBy(c => c).ToList());
     }
 }
+
+/// <summary>One org's visible catalog, resolved once per request (spec 054).</summary>
+public record VisibleCatalog(HashSet<Guid> CourseIds, List<string> Categories);
 
 /// <summary>ViewModel for the combined course list + pagination partial.</summary>
 public record BrowseViewModel(

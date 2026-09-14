@@ -6,8 +6,8 @@
 
 - [ ] T001 [US1] `tests/Catalog.Tests/BrowseCoursesVisibilityTests.cs`
       (house marker pattern, real MSSQL): 13 marker courses; visible set =
-      8 — page rows ⊆ visible, `TotalCount` == 8, pageSize 5 → pages 1–2
-      full (5), page 3 = 3, nothing past page 3; `NULL` param → 13 (legacy);
+      8 — page rows ⊆ visible, `TotalCount` == 8, pageSize 5 → page 1 full
+      (5), page 2 = 3-item remainder, page 3 empty; `NULL` param → 13 (legacy);
       `[]` → 0 rows / 0 count; service-level `BrowseAsync` (null set →
       unfiltered, empty set → 0). Run against current code: RED (filtered
       TotalCount returns 13; `[]` returns 13 — the empty-set edge).
@@ -25,8 +25,8 @@
       + `.Designer.cs` (copy the previous Catalog Designer body — model
       unchanged): `BrowseCourses` recreated with
       `@VisibleCourseIds NVARCHAR(MAX) = NULL`; predicate
-      `AND (@VisibleCourseIds IS NULL OR c.Id IN (SELECT [value] FROM
-      OPENJSON(@VisibleCourseIds) WITH ([value] UNIQUEIDENTIFIER)))` on the
+      `AND (@VisibleCourseIds IS NULL OR c.Id IN (SELECT CAST([value] AS UNIQUEIDENTIFIER) FROM
+      OPENJSON(@VisibleCourseIds)))` on the
       row SELECT and the COUNT SELECT; `Down` restores the pre-054 SP
       verbatim. Verify: `dotnet ef migrations list --context
       CatalogDbContext` lists the new id (Designer gotcha, spec 052).
