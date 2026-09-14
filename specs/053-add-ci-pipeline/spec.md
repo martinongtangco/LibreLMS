@@ -68,8 +68,10 @@ light it should not give.
    `<WarningsAsErrors>NU1903</WarningsAsErrors>` so a known-vulnerable
    package can no longer land silently.
 3. **Bump the vulnerable package**: `System.Security.Cryptography.Xml`
-   9.0.0 → **9.0.11** (latest 9.0-line stable as of 2026-09-14; no stable
-   10.x exists yet — 10.0.x/11.x on NuGet are pre-releases/RCs). Added as a
+   9.0.0 → **9.0.20** (latest 9.0-line stable as of 2026-09-14; the 8
+   advisories require at most 9.0.18 — verified against the OSV advisory
+   database; no stable 10.x exists yet — 10.0.x/11.x on NuGet are
+   pre-releases/RCs). Added as a
    shared `<PackageReference>` in `Directory.Build.props`, which pins the
    transitive version for the whole graph. This makes the NU1903 error
    promotion land with a clean build in the same change (the handoff allows

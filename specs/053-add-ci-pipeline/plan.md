@@ -7,7 +7,7 @@
 **ADR**: [docs/adr/0011](../../../docs/adr/0011-ci-single-job-services-nu1903-error.md) —
 one GitHub Actions job with job-level MSSQL+Valkey services; Host starts
 before the unit steps; NU1903 promoted to a build error with the vulnerable
-package bumped to 9.0.11 (written BEFORE code, per Principle IV).
+package bumped to 9.0.20 (written BEFORE code, per Principle IV).
 
 ## Summary
 
@@ -16,7 +16,7 @@ ArchitectureTests → Host start (migrate + seed, 302 readiness) → the five
 unit test projects → Playwright, with `mssql` and `valkey` job-level service
 containers and the `ConnectionStrings__Sql` / `ConnectionStrings__Valkey`
 env keys the code already reads. Add `Directory.Build.props` (NU1903 →
-error, `System.Security.Cryptography.Xml` pinned to 9.0.11, centralized
+error, `System.Security.Cryptography.Xml` pinned to 9.0.20, centralized
 `Nullable`/`ImplicitUsings`). Gate 2 for this item: every workflow command
 passes locally in workflow order (container-bound steps via their
 established local equivalents) — no remote CI observation (Principle V).

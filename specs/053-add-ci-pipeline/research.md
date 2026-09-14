@@ -16,13 +16,23 @@ Catalog/Host) → `Microsoft.Build.Tasks.Core 17.14.28` →
 `System.Security.Cryptography.Xml 9.0.0`. No project references it
 directly, so the fix is a version pin, not a csproj edit.
 
-Version choice (NuGet flat-container index, 2026-09-14): the 9.0 line goes
-9.0.0 … 9.0.11 (stable); 10.0.x exists only as pre-releases
-(`10.0.0-preview.5` etc.) and 11.x as RCs. **9.0.11** = latest stable 9.0
-line, includes the security fixes for all listed advisories. Pinned via a
-shared `<PackageReference>` in `Directory.Build.props` (applies to the whole
+Version choice (NuGet flat-container index + OSV advisory database,
+2026-09-14): the 9.0 line goes 9.0.0 … **9.0.20** (stable); 10.0.x exists
+only as pre-releases (`10.0.0-preview.5` etc.) and 11.x as RCs. Per-
+advisory required fixes on the 9.0 line: GHSA-23rf-6693-g89p
+(CVE-2026-50648) → 9.0.18, GHSA-8q5v-6pqq-x66h → 9.0.18,
+GHSA-cvvh-rhrc-wg4q → 9.0.18, GHSA-g8r8-53c2-pm3f → 9.0.18,
+GHSA-mmjf-rqrv-855v → 9.0.18, GHSA-37gx-xxp4-5rgx → 9.0.15,
+GHSA-6588-8gv4-xfgh → 9.0.15, GHSA-w3x6-4m5h-cxqf → 9.0.15. **9.0.20** =
+latest stable 9.0 line, covers every listed advisory. Pinned via a shared
+`<PackageReference>` in `Directory.Build.props` (applies to the whole
 graph; the package is a framework-provided assembly on net10.0, so the pin
 changes no runtime behavior).
+
+Gotcha hit during implementation: pinning to 9.0.11 (an early read of the
+version list, truncated by `head`) still failed — 9.0.11 is affected by
+GHSA-23rf-6693-g89p. Always confirm the pin against the advisory's
+`fixed` version, not just "latest I saw".
 
 ## 2. What the unit tests need from the environment
 

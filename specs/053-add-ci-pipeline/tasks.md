@@ -11,7 +11,7 @@
       `Nullable=enable`, `ImplicitUsings=enable` (already universal
       per-project), `<WarningsAsErrors>NU1903</WarningsAsErrors>`,
       `<PackageReference Include="System.Security.Cryptography.Xml"
-      Version="9.0.11" />`
+      Version="9.0.20" />`
 - [ ] T003 [US1] Verify: `dotnet build LibreLms.slnx` → 0 errors and **0
       NU1903 warnings** (warning-set diff vs baseline = exactly the NU1903
       lines); no other build outcome changes

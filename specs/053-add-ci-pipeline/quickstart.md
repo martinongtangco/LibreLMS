@@ -6,7 +6,7 @@
 
 1. `Directory.Build.props` (repo root) — shared build settings:
    `Nullable`/`ImplicitUsings` defaults, **NU1903 promoted to a build
-   error**, `System.Security.Cryptography.Xml` pinned to 9.0.11 (fixes the
+   error**, `System.Security.Cryptography.Xml` pinned to 9.0.20 (fixes the
    current vulnerable-transitive warning).
 2. `.github/workflows/ci.yml` — one job on `push` + `pull_request`:
    MSSQL + Valkey service containers → restore → build → ArchitectureTests
