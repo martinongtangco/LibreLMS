@@ -121,9 +121,9 @@ Playwright 177 passed + 1 skip, 0 failed.
 - [X] B  plan + ADR  commit 4ab510d (ADR 0012: visible set moves into BrowseCourses as JSON param; OPENJSON, no TVP DDL; NULL = legacy, [] = empty)
 - [X] C  tasks       commit 15ae68c (T001–T010)
 - [X] D  implement   commit 63d486a (Catalog migration 20260914100000 + Designer; BrowseAsync JSON param, in-memory filter deleted; page model resolves the visible catalog once per request; Catalog.Tests +7; 19-course-visibility pagination test)
-- [ ] E  merge       commit
-- [ ] F  gate 3      commit
-RESULT: (pending)     consecutive_blocked = 0
+- [X] E  merge       commit 1f08dc3 (--no-ff, after independent verification GREEN)
+- [X] F  gate 3      commit 5996b99 (units 177/177 no-flake, E2E 178+1 on master)
+RESULT: COMPLETED   consecutive_blocked = 0
 Notes: unit red pre-fix (TotalCount Expected 8/Actual 13; empty-set Expected 0/Actual 13; 4× "too many arguments");
 E2E red pre-fix (nav.pagination present: "Page 1 of 2 (24 total)" — 24 total / 8 visible fixture, 14
 admin-UI courses `ZZ Pag <ts>` + 16 hides). Gotchas hit: (1) OPENJSON WITH on a scalar GUID array is
