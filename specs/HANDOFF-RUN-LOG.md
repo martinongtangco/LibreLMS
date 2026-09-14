@@ -75,9 +75,13 @@ Item 3 findings for final report:
 - [X] B  plan + ADR  commit ec33aca (ADR 0010: enforce in Management services via required OrgScope param)
 - [X] C  tasks       commit aee4b0c (T001–T027)
 - [X] D  implement   commit 1755c77 (OrgScope + OrgSubtree; 4 surfaces scoped; 2 SP migrations w/ @RootOrgId; Management.Tests 55 tests; 08-rbac subtree block; DashboardService on shared OrgSubtree)
-- [ ] E  merge       commit
-- [ ] F  gate 3      commit
-RESULT: (pending)     consecutive_blocked = 0
+- [X] E  merge       commit 66748c2 (--no-ff, after independent verification GREEN)
+- [X] F  gate 3      commit 4f691fd (units 170/170 no-flake, E2E 177+1 on master)
+RESULT: COMPLETED   consecutive_blocked = 0
+Future-spec candidates (adjacent, not fixed in 052): (1) GET /api/dashboard/activity
+is system-wide for OrgAdmins (activity feed, not one of the four surfaces);
+(2) Catalog.Tests perf-seed flake under parallel `dotnet test LibreLms.slnx`
+(shared-DB sensitivity — serial/per-project runs are stable).
 Verification (XVI, fresh no-context subagent, clean detached worktree @1755c77): GREEN —
 build 0 errors; units 170/170 (one documented Catalog parallel-flake, 32/32 in isolation);
 app on branch code (302 probe); filler-clean 10 courses; Playwright 177 passed + 1 skip, 0 failed.
