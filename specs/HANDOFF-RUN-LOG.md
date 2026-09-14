@@ -115,3 +115,24 @@ Verification (XVI, fresh no-context subagent, clean detached worktree @3b670a7):
 GREEN — build 0 errors / 0 NU1903; units 170/170 (one documented Catalog
 flake, 32/32 on re-run); app commit-matched (302); filler-clean 10 courses;
 Playwright 177 passed + 1 skip, 0 failed.
+
+### Item 6 — browse filters after paging, so the page count is wrong — spec 054 (bug/054-fix-browse-filter-after-paging)
+- [X] A  spec        commit 4f9b3ac
+- [X] B  plan + ADR  commit 4ab510d (ADR 0012: visible set moves into BrowseCourses as JSON param; OPENJSON, no TVP DDL; NULL = legacy, [] = empty)
+- [X] C  tasks       commit 15ae68c (T001–T010)
+- [X] D  implement   commit 63d486a (Catalog migration 20260914100000 + Designer; BrowseAsync JSON param, in-memory filter deleted; page model resolves the visible catalog once per request; Catalog.Tests +7; 19-course-visibility pagination test)
+- [ ] E  merge       commit
+- [ ] F  gate 3      commit
+RESULT: (pending)     consecutive_blocked = 0
+Notes: unit red pre-fix (TotalCount Expected 8/Actual 13; empty-set Expected 0/Actual 13; 4× "too many arguments");
+E2E red pre-fix (nav.pagination present: "Page 1 of 2 (24 total)" — 24 total / 8 visible fixture, 14
+admin-UI courses `ZZ Pag <ts>` + 16 hides). Gotchas hit: (1) OPENJSON WITH on a scalar GUID array is
+object-property extraction — silently NULL rows; the predicate is plain `CAST([value] AS UNIQUEIDENTIFIER)
+FROM OPENJSON(...)`; (2) an already-recorded migration is never re-applied — the live DB needed a manual
+DROP+CREATE (separate batches) of the corrected SP; (3) a mid-creation E2E failure orphans the run's
+courses and poisons later runs (teardown now re-resolves by title prefix). E2E test-data math: 10 seeded +
+14 created = 24; hide 16 → 8 visible; pre-fix total 24 → 2 advertised pages, page 2 empty; post-fix total
+8 → 1 page.
+Verification (XVI, fresh no-context subagent, clean detached worktree @63d486a): GREEN — build 0 errors;
+units 14+39+42+9+55+18 (no flake); app commit-matched (302); filler-clean 10 courses; Playwright
+178 passed + 1 skip, 0 failed (both 19-course-visibility tests green).
