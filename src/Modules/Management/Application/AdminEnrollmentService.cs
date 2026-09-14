@@ -41,17 +41,37 @@ public class AdminEnrollmentService(
     ICourseLookup courseLookup,
     IOrganizationLookup orgLookup)
 {
-    /// <summary>Enroll a single learner in a course.</summary>
-    public async Task<AdminEnrollResult> EnrollAsync(Guid studentId, Guid courseId)
+    /// <summary>True when the learner's organization is within the scope (ADR 0010).
+    /// A missing learner fails closed (not in scope).</summary>
+    private async Task<bool> StudentOrgInScopeAsync(Guid studentId, OrgScope scope)
     {
+        if (scope.IsSuperUser)
+            return true;
+
+        var learnerScope = await userLookup.GetUserScopeAsync(studentId);
+        return learnerScope is not null &&
+            await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, learnerScope.OrganizationId);
+    }
+    /// <summary>
+    /// Enroll a single learner in a course. The student's organization must be
+    /// within the caller's scope (ADR 0010).
+    /// </summary>
+    public async Task<AdminEnrollResult> EnrollAsync(Guid studentId, Guid courseId, OrgScope scope)
+    {
+        if (!await StudentOrgInScopeAsync(studentId, scope))
+            throw new ForbiddenAccessException("This learner is outside your organization scope.");
+
         var result = await enrollmentAdmin.EnrollAsync(studentId, courseId);
         if (result.AlreadyEnrolled)
             throw new InvalidOperationException("Student is already enrolled in this course.");
         return result;
     }
 
-    /// <summary>Bulk enroll learners in a course (up to 500).</summary>
-    public async Task<BulkEnrollmentResult> BulkEnrollAsync(IList<Guid> studentIds, Guid courseId)
+    /// <summary>
+    /// Bulk enroll learners in a course (up to 500). Learners whose organization is
+    /// outside the caller's scope are skipped with an error message (ADR 0010).
+    /// </summary>
+    public async Task<BulkEnrollmentResult> BulkEnrollAsync(IList<Guid> studentIds, Guid courseId, OrgScope scope)
     {
         if (studentIds.Count > 500)
             throw new ArgumentException("Maximum 500 learners per bulk enrollment.", nameof(studentIds));
@@ -70,11 +90,19 @@ public class AdminEnrollmentService(
         {
             try
             {
-                var scope = await userLookup.GetUserScopeAsync(studentId);
-                if (scope is null)
+                var learnerScope = await userLookup.GetUserScopeAsync(studentId);
+                if (learnerScope is null)
                 {
                     skipped++;
                     errorMessages.Add($"Student {studentId} not found — skipped.");
+                    continue;
+                }
+
+                // ADR 0010: out-of-scope learners are refused per student.
+                if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, learnerScope.OrganizationId))
+                {
+                    skipped++;
+                    errorMessages.Add($"Student {studentId} is outside your organization scope — skipped.");
                     continue;
                 }
 
@@ -97,19 +125,37 @@ public class AdminEnrollmentService(
         return new BulkEnrollmentResult(enrolled, skipped, errors, errorMessages);
     }
 
-    /// <summary>Cancel an enrollment.</summary>
-    public async Task CancelEnrollmentAsync(Guid enrollmentId)
+    /// <summary>
+    /// Cancel an enrollment. The enrolled student's organization must be within
+    /// the caller's scope (ADR 0010).
+    /// </summary>
+    public async Task CancelEnrollmentAsync(Guid enrollmentId, OrgScope scope)
     {
+        var studentId = await enrollmentAdmin.GetEnrollmentStudentIdAsync(enrollmentId);
+        if (studentId is null)
+            throw new KeyNotFoundException("Enrollment not found.");
+
+        if (!await StudentOrgInScopeAsync(studentId.Value, scope))
+            throw new ForbiddenAccessException("This learner is outside your organization scope.");
+
         var removed = await enrollmentAdmin.UnenrollAsync(enrollmentId);
         if (!removed)
             throw new KeyNotFoundException("Enrollment not found.");
     }
 
-    /// <summary>List all enrollments (SuperUser) with learner and organization info.</summary>
-    public async Task<IList<EnrollmentDto>> ListAllEnrollmentsAsync(string? studentName = null, string? courseTitle = null)
+    /// <summary>
+    /// List all enrollments with learner and organization info. SuperUser sees
+    /// everything; an OrgAdmin sees only enrollments of learners in their subtree
+    /// (ADR 0010).
+    /// </summary>
+    public async Task<IList<EnrollmentDto>> ListAllEnrollmentsAsync(string? studentName, string? courseTitle, OrgScope scope)
     {
         // Step 1: enrollments + course titles from the Enrollment module (contract)
         var rows = await enrollmentAdmin.ListAsync(studentName, courseTitle);
+
+        // ADR 0010: rows whose learner org is outside the caller's subtree are
+        // dropped in the loop below (org membership is resolved per learner).
+        var subtree = await OrgSubtree.GetSubtreeOrgIdsAsync(scope, orgLookup);
 
         // Step 2: learner names/emails in one batch (contract)
         var students = await userLookup.GetUsersAsync(rows.Select(r => r.StudentId));
@@ -124,8 +170,12 @@ public class AdminEnrollmentService(
             if (!studentMap.TryGetValue(r.StudentId, out var student))
                 continue;
 
-            var scope = await userLookup.GetUserScopeAsync(r.StudentId);
-            var orgId = scope?.OrganizationId ?? Guid.Empty;
+            var learnerScope = await userLookup.GetUserScopeAsync(r.StudentId);
+            var orgId = learnerScope?.OrganizationId ?? Guid.Empty;
+
+            // ADR 0010: out-of-subtree learner rows are not listed.
+            if (subtree is not null && !subtree.Contains(orgId))
+                continue;
 
             if (!orgCache.TryGetValue(orgId, out var orgName))
             {
@@ -156,9 +206,12 @@ public class AdminEnrollmentService(
     /// no IUserLookup call (spec 032).
     /// </summary>
     public async Task<EnrollmentPageResult> ListAllEnrollmentsPagedAsync(
-        string? studentName, string? courseTitle, int pageNumber, int pageSize)
+        string? studentName, string? courseTitle, int pageNumber, int pageSize, OrgScope scope)
     {
-        var page = await enrollmentAdmin.ListPagedAsync(studentName, courseTitle, pageNumber, pageSize);
+        // ADR 0010: the paged stored procedure filters to the scope's root org
+        // (SuperUser passes null for system-wide).
+        var rootOrgId = scope.IsSuperUser ? null : scope.OrganizationId;
+        var page = await enrollmentAdmin.ListPagedAsync(studentName, courseTitle, pageNumber, pageSize, rootOrgId);
 
         // Org names for the page's distinct OrganizationIds (page-local cache; missing org -> "Unknown").
         var orgCache = new Dictionary<Guid, string>();

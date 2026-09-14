@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using LibreLms.Contracts.Catalog;
 using LibreLms.Contracts.Enrollment;
+using LibreLms.Contracts.Management;
 using LibreLms.Modules.Management.Infrastructure;
 
 namespace LibreLms.Modules.Management.Application;
@@ -50,7 +51,8 @@ public class DashboardService(
     ManagementDbContext managementCtx,
     IUserLookup userLookup,
     IEnrollmentAdmin enrollmentAdmin,
-    ICourseLookup courseLookup)
+    ICourseLookup courseLookup,
+    IOrganizationLookup orgLookup)
 {
     /// <summary>Get system-wide metrics (SuperUser only).</summary>
     public async Task<SystemMetricsDto> GetSystemMetricsAsync()
@@ -70,9 +72,10 @@ public class DashboardService(
     /// <summary>Get metrics scoped to an organization and its descendants.</summary>
     public async Task<OrgMetricsDto> GetOrgMetricsAsync(Guid orgId)
     {
-        // Get all descendant org IDs
-        var descendantIds = await GetDescendantOrgIdsAsync(orgId);
-        descendantIds.Add(orgId); // Include the org itself
+        // Get all descendant org IDs (shared subtree rule, ADR 0010): the org
+        // plus all live descendants — same set as the previous private BFS.
+        var descendantIds = await OrgSubtree.GetSubtreeOrgIdsAsync(OrgScope.ForOrgAdmin(orgId), orgLookup)
+            ?? new HashSet<Guid>();
 
         var orgName = await managementCtx.Organizations
             .Where(o => o.Id == orgId && !o.IsDeleted)
@@ -153,28 +156,5 @@ public class DashboardService(
             .OrderByDescending(a => a.OccurredAt)
             .Take(limit)
             .ToList();
-    }
-
-    private async Task<HashSet<Guid>> GetDescendantOrgIdsAsync(Guid orgId)
-    {
-        var ids = new HashSet<Guid>();
-        var queue = new Queue<Guid>(new[] { orgId });
-
-        while (queue.Count > 0)
-        {
-            var currentId = queue.Dequeue();
-            var children = await managementCtx.Organizations
-                .Where(o => o.ParentId == currentId && !o.IsDeleted)
-                .Select(o => o.Id)
-                .ToListAsync();
-
-            foreach (var childId in children)
-            {
-                ids.Add(childId);
-                queue.Enqueue(childId);
-            }
-        }
-
-        return ids;
     }
 }

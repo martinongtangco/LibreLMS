@@ -20,6 +20,14 @@ public class OrganizationLookup(ManagementDbContext context) : IOrganizationLook
         return org;
     }
 
+    public async Task<IList<Guid>> GetChildOrgIdsAsync(Guid parentId)
+    {
+        return await context.Organizations
+            .Where(o => o.ParentId == parentId && !o.IsDeleted)
+            .Select(o => o.Id)
+            .ToListAsync();
+    }
+
     public async Task<IList<Guid>> GetAncestorOrgIdsAsync(Guid orgId)
     {
         var ancestors = new List<Guid>();

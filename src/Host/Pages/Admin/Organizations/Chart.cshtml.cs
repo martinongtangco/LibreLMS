@@ -42,7 +42,7 @@ public class ChartModel : PageModel
 
     public async Task<IActionResult> OnGetCreateChildDialogAsync(Guid parentId)
     {
-        var parent = await _orgService.GetByIdAsync(parentId);
+        var parent = await _orgService.GetByIdAsync(parentId, AuthHelpers.GetScope(User));
         if (parent is null)
             return NotFound();
 
@@ -56,9 +56,13 @@ public class ChartModel : PageModel
 
         try
         {
-            await _orgService.CreateAsync(model.Name, model.Description, parentId);
+            await _orgService.CreateAsync(model.Name, model.Description, parentId, AuthHelpers.GetScope(User));
             Nodes = await LoadChartAsync();
             return Partial("_OrgChartSvg", Nodes);
+        }
+        catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
+        {
+            return Partial("_ErrorPartial", ex.Message);
         }
         catch (InvalidOperationException ex)
         {
@@ -72,7 +76,7 @@ public class ChartModel : PageModel
 
     public async Task<IActionResult> OnGetEditDialogAsync(Guid id)
     {
-        var (org, userCount, courseCount) = await _orgService.GetByIdWithStatusAsync(id);
+        var (org, userCount, courseCount) = await _orgService.GetByIdWithStatusAsync(id, AuthHelpers.GetScope(User));
         return Partial("_EditDialog", new EditOrgViewModel
         {
             Id = org.Id,
@@ -91,20 +95,24 @@ public class ChartModel : PageModel
 
         try
         {
-            await _orgService.UpdateAsync(id, model.Name, model.Description);
+            await _orgService.UpdateAsync(id, model.Name, model.Description, AuthHelpers.GetScope(User));
 
             // Handle enable/disable toggle
-            var current = await _orgService.GetByIdAsync(id);
+            var current = await _orgService.GetByIdAsync(id, AuthHelpers.GetScope(User));
             if (current is not null)
             {
                 if (model.IsDisabled && !current.IsDisabled)
-                    await _orgService.DisableAsync(id);
+                    await _orgService.DisableAsync(id, AuthHelpers.GetScope(User));
                 else if (!model.IsDisabled && current.IsDisabled)
-                    await _orgService.EnableAsync(id);
+                    await _orgService.EnableAsync(id, AuthHelpers.GetScope(User));
             }
 
             Nodes = await LoadChartAsync();
             return Partial("_OrgChartSvg", Nodes);
+        }
+        catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
+        {
+            return Partial("_ErrorPartial", ex.Message);
         }
         catch (InvalidOperationException ex)
         {
@@ -116,9 +124,13 @@ public class ChartModel : PageModel
     {
         try
         {
-            await _orgService.DisableAsync(id);
+            await _orgService.DisableAsync(id, AuthHelpers.GetScope(User));
             Nodes = await LoadChartAsync();
             return Partial("_OrgChartSvg", Nodes);
+        }
+        catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
+        {
+            return Partial("_ErrorPartial", ex.Message);
         }
         catch (InvalidOperationException ex)
         {
@@ -134,9 +146,13 @@ public class ChartModel : PageModel
     {
         try
         {
-            await _orgService.EnableAsync(id);
+            await _orgService.EnableAsync(id, AuthHelpers.GetScope(User));
             Nodes = await LoadChartAsync();
             return Partial("_OrgChartSvg", Nodes);
+        }
+        catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
+        {
+            return Partial("_ErrorPartial", ex.Message);
         }
         catch (KeyNotFoundException)
         {
@@ -150,7 +166,7 @@ public class ChartModel : PageModel
 
     public async Task<IActionResult> OnGetAddUserDialogAsync(Guid orgId)
     {
-        var org = await _orgService.GetByIdAsync(orgId);
+        var org = await _orgService.GetByIdAsync(orgId, AuthHelpers.GetScope(User));
         if (org is null) return NotFound();
         return Partial("_AddUserDialog", new AddUserViewModel { OrgId = orgId, OrgName = org.Name });
     }
@@ -175,7 +191,7 @@ public class ChartModel : PageModel
 
     public async Task<IActionResult> OnGetAssignUserDialogAsync(Guid orgId)
     {
-        var org = await _orgService.GetByIdAsync(orgId);
+        var org = await _orgService.GetByIdAsync(orgId, AuthHelpers.GetScope(User));
         if (org is null) return NotFound();
         return Partial("_AssignUserDialog", new AssignUserViewModel { OrgId = orgId, OrgName = org.Name });
     }
@@ -200,7 +216,7 @@ public class ChartModel : PageModel
 
     public async Task<IActionResult> OnGetAssignCourseDialogAsync(Guid orgId)
     {
-        var org = await _orgService.GetByIdAsync(orgId);
+        var org = await _orgService.GetByIdAsync(orgId, AuthHelpers.GetScope(User));
         if (org is null) return NotFound();
         return Partial("_AssignCourseDialog", new AssignCourseViewModel { OrgId = orgId, OrgName = org.Name });
     }
@@ -225,17 +241,9 @@ public class ChartModel : PageModel
 
     private async Task<IList<OrgChartNodeDto>> LoadChartAsync()
     {
-        Guid? rootOrgId = null;
-        var role = User.FindFirstValue(ClaimTypes.Role);
-        if (role == RoleNames.OrgAdmin)
-        {
-            var orgIdStr = User.FindFirstValue(OrgClaimTypes.OrganizationId);
-            if (Guid.TryParse(orgIdStr, out var orgId))
-            {
-                rootOrgId = orgId;
-            }
-        }
-        return await _orgService.GetChartTreeAsync(rootOrgId);
+        // ADR 0010: the service pins an OrgAdmin's chart to their own subtree;
+        // SuperUser may optionally focus on a subtree root.
+        return await _orgService.GetChartTreeAsync(null, AuthHelpers.GetScope(User));
     }
 
     #endregion

@@ -42,9 +42,15 @@ public class IndexModel : PageModel
     {
         try
         {
-            await _service.CancelEnrollmentAsync(enrollmentId);
+            await _service.CancelEnrollmentAsync(enrollmentId, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(User));
             SuccessMessage = "Enrollment cancelled.";
             await LoadAsync(student, course, pageNumber, pageSize, stepBackWhenEmpty: true);
+            return Page();
+        }
+        catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
+        {
+            Error = ex.Message;
+            await LoadAsync(student, course, pageNumber, pageSize, stepBackWhenEmpty: false);
             return Page();
         }
         catch (KeyNotFoundException)
@@ -71,13 +77,16 @@ public class IndexModel : PageModel
             var courseFilter = string.IsNullOrWhiteSpace(course) ? null : course.Trim();
             var page = Math.Max(1, requestedPage);
 
-            var result = await _service.ListAllEnrollmentsPagedAsync(studentFilter, courseFilter, page, pageSize);
+            // ADR 0010: the listing is scope-filtered (SuperUser system-wide,
+            // OrgAdmin subtree) — the paged stored procedure does the filtering.
+            var scope = LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(User);
+            var result = await _service.ListAllEnrollmentsPagedAsync(studentFilter, courseFilter, page, pageSize, scope);
 
             // Clamp a tampered/out-of-range page before render; re-fetch when the clamp moved it.
             var effective = AdminPageState.ClampPage(page, result.TotalCount, pageSize);
             if (effective != page)
             {
-                result = await _service.ListAllEnrollmentsPagedAsync(studentFilter, courseFilter, effective, pageSize);
+                result = await _service.ListAllEnrollmentsPagedAsync(studentFilter, courseFilter, effective, pageSize, scope);
                 page = effective;
             }
 
@@ -86,7 +95,7 @@ public class IndexModel : PageModel
             if (stepBackWhenEmpty && result.Items.Count == 0 && page > 1)
             {
                 var previous = AdminPageState.ClampPage(page - 1, result.TotalCount, pageSize);
-                result = await _service.ListAllEnrollmentsPagedAsync(studentFilter, courseFilter, previous, pageSize);
+                result = await _service.ListAllEnrollmentsPagedAsync(studentFilter, courseFilter, previous, pageSize, scope);
                 page = previous;
             }
 

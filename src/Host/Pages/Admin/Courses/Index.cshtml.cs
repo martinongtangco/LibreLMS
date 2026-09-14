@@ -182,8 +182,13 @@ public class IndexModel : PageModel
     {
         try
         {
-            await _visibilityService.DeleteCourseAsync(courseId);
+            // ADR 0010: deleting a course requires scope over its owning org.
+            await _visibilityService.DeleteCourseAsync(courseId, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(User));
             SuccessMessage = "Course deleted successfully.";
+        }
+        catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
+        {
+            Error = ex.Message;
         }
         catch (KeyNotFoundException)
         {

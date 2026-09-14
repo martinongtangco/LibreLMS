@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using LibreLms.Contracts.Management;
+using LibreLms.Host.ManagementAuth;
 using LibreLms.Modules.Management.Application;
 using LibreLms.SharedKernel;
 
@@ -32,7 +34,17 @@ public class EditModel : PageModel
         if (!Guid.TryParse(id, out var userId))
             return NotFound();
 
-        var user = await _userService.GetByIdAsync(userId);
+        // ADR 0010: out-of-subtree users are refused with a visible error.
+        UserDto? user;
+        try
+        {
+            user = await _userService.GetByIdAsync(userId, AuthHelpers.GetScope(User));
+        }
+        catch (ForbiddenAccessException ex)
+        {
+            Error = ex.Message;
+            return Page();
+        }
         if (user is null)
             return NotFound();
 
@@ -45,7 +57,7 @@ public class EditModel : PageModel
             Role = user.Role
         };
 
-        var allOrgs = await _orgService.ListAllAsync();
+        var allOrgs = await _orgService.ListAllAsync(AuthHelpers.GetScope(User));
         Orgs = new SelectList(
             allOrgs.Select(o => new SelectListItem(o.Name, o.Id.ToString())),
             "Value", "Text", Input.OrganizationId);
@@ -78,9 +90,15 @@ public class EditModel : PageModel
             var orgId = string.IsNullOrEmpty(Input.OrganizationId) ? (Guid?)null : Guid.Parse(Input.OrganizationId);
             var role = string.IsNullOrEmpty(Input.Role) ? null : Input.Role;
 
-            await _userService.UpdateAsync(userId, Input.Name, role, orgId);
+            await _userService.UpdateAsync(userId, Input.Name, role, orgId, AuthHelpers.GetScope(User));
             SuccessMessage = "Learner updated successfully.";
             return RedirectToPage("Index");
+        }
+        catch (ForbiddenAccessException ex)
+        {
+            Error = ex.Message;
+            await OnGetAsync(Input.Id);
+            return Page();
         }
         catch (KeyNotFoundException)
         {

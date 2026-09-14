@@ -29,22 +29,36 @@ public class UserService(
     IUserLookup userLookup,
     IOrganizationLookup orgLookup)
 {
-    /// <summary>Create a new user (learner or org admin). Admin-created accounts are verified.</summary>
-    public async Task<StudentProvisionedDto> CreateAsync(string name, string email, string password, string role, Guid organizationId)
+    /// <summary>
+    /// Create a new user (learner or org admin). Admin-created accounts are verified.
+    /// Throws <see cref="ForbiddenAccessException"/> when the target organization
+    /// is outside the caller's scope (ADR 0010).
+    /// </summary>
+    public async Task<StudentProvisionedDto> CreateAsync(string name, string email, string password, string role, Guid organizationId, OrgScope scope)
     {
         // Validate role
         if (role is not RoleNames.Learner and not RoleNames.OrgAdmin and not RoleNames.SuperUser)
             throw new ArgumentException($"Invalid role: {role}. Must be SuperUser, OrgAdmin, or Learner.");
 
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, organizationId))
+            throw new ForbiddenAccessException("You cannot create users in an organization outside your scope.");
+
         return await provisioning.CreateAsync(name, email, password, role, organizationId, isVerified: true);
     }
 
-    /// <summary>Get a user by ID with organization info.</summary>
-    public async Task<UserDto?> GetByIdAsync(Guid id)
+    /// <summary>
+    /// Get a user by ID with organization info.
+    /// Throws <see cref="ForbiddenAccessException"/> when the user's organization
+    /// is outside the caller's scope (ADR 0010).
+    /// </summary>
+    public async Task<UserDto?> GetByIdAsync(Guid id, OrgScope scope)
     {
         var student = await provisioning.GetByIdAsync(id);
         if (student is null)
             return null;
+
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, student.OrganizationId))
+            throw new ForbiddenAccessException("This user is outside your organization scope.");
 
         var org = await orgLookup.GetOrganizationAsync(student.OrganizationId);
 
@@ -59,19 +73,36 @@ public class UserService(
         );
     }
 
-    /// <summary>List users scoped to the given organization.</summary>
-    public async Task<IList<UserDto>> ListByOrgScopeAsync(Guid orgId, string? roleFilter = null)
+    /// <summary>
+    /// List users scoped to the given organization. The organization itself must
+    /// be within the caller's scope (ADR 0010).
+    /// </summary>
+    public async Task<IList<UserDto>> ListByOrgScopeAsync(Guid orgId, string? roleFilter, OrgScope scope)
     {
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, orgId))
+            throw new ForbiddenAccessException("This organization is outside your scope.");
+
         var students = await provisioning.ListByOrgAsync(orgId, roleFilter);
         return await ToUserDtosAsync(students);
     }
 
-    /// <summary>Update a user's details.</summary>
-    public async Task<StudentProvisionedDto> UpdateAsync(Guid id, string? name, string? role, Guid? organizationId)
+    /// <summary>
+    /// Update a user's details. The user's organization (and the new organization
+    /// when changed) must be within the caller's scope (ADR 0010).
+    /// </summary>
+    public async Task<StudentProvisionedDto> UpdateAsync(Guid id, string? name, string? role, Guid? organizationId, OrgScope scope)
     {
         var existing = await provisioning.GetByIdAsync(id);
         if (existing is null)
             throw new KeyNotFoundException("User not found.");
+
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, existing.OrganizationId))
+            throw new ForbiddenAccessException("This user is outside your organization scope.");
+
+        if (organizationId.HasValue &&
+            organizationId.Value != existing.OrganizationId &&
+            !await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, organizationId.Value))
+            throw new ForbiddenAccessException("You cannot move users into an organization outside your scope.");
 
         if (!string.IsNullOrEmpty(role))
         {
@@ -90,12 +121,18 @@ public class UserService(
         return await provisioning.UpdateAsync(id, name, role, organizationId);
     }
 
-    /// <summary>Delete a user (cancels enrollments).</summary>
-    public async Task DeleteAsync(Guid id)
+    /// <summary>
+    /// Delete a user (cancels enrollments). The user's organization must be
+    /// within the caller's scope (ADR 0010).
+    /// </summary>
+    public async Task DeleteAsync(Guid id, OrgScope scope)
     {
         var existing = await provisioning.GetByIdAsync(id);
         if (existing is null)
             throw new KeyNotFoundException("User not found.");
+
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, existing.OrganizationId))
+            throw new ForbiddenAccessException("This user is outside your organization scope.");
 
         // Prevent deleting the last SuperUser
         if (existing.Role == RoleNames.SuperUser)
@@ -108,18 +145,29 @@ public class UserService(
         await provisioning.DeleteAsync(id);
     }
 
-    /// <summary>Get all users (SuperUser only).</summary>
-    public async Task<IList<UserDto>> ListAllAsync(string? roleFilter = null)
+    /// <summary>
+    /// List users. SuperUser sees everyone; an OrgAdmin sees only users whose
+    /// organization is in their subtree (ADR 0010).
+    /// </summary>
+    public async Task<IList<UserDto>> ListAllAsync(string? roleFilter, OrgScope scope)
     {
         var students = await provisioning.ListAsync(roleFilter);
+        var subtree = await OrgSubtree.GetSubtreeOrgIdsAsync(scope, orgLookup);
+        if (subtree is not null)
+            students = students.Where(s => subtree.Contains(s.OrganizationId)).ToList();
         return await ToUserDtosAsync(students);
     }
 
-    /// <summary>Paged variant of ListAllAsync: delegates to IUserProvisioning.ListPagedAsync,
-    /// then enriches org names for the page's distinct OrganizationIds. Old method retained.</summary>
-    public async Task<UserPageResult> ListAllPagedAsync(string? search, string? roleFilter, int pageNumber, int pageSize)
+    /// <summary>
+    /// Paged variant of ListAllAsync: delegates to IUserProvisioning.ListPagedAsync
+    /// (the paged stored procedure filters to the scope's root org — SuperUser
+    /// passes null for system-wide), then enriches org names for the page's
+    /// distinct OrganizationIds.
+    /// </summary>
+    public async Task<UserPageResult> ListAllPagedAsync(string? search, string? roleFilter, int pageNumber, int pageSize, OrgScope scope)
     {
-        var page = await provisioning.ListPagedAsync(search, roleFilter, pageNumber, pageSize);
+        var rootOrgId = scope.IsSuperUser ? null : scope.OrganizationId;
+        var page = await provisioning.ListPagedAsync(search, roleFilter, pageNumber, pageSize, rootOrgId);
         var dtos = await ToUserDtosAsync(page.Items);
         return new UserPageResult(dtos, page.TotalCount);
     }

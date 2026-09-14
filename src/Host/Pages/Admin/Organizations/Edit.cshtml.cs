@@ -28,7 +28,16 @@ public class EditModel : PageModel
         if (!Guid.TryParse(id, out var orgId))
             return NotFound();
 
-        var org = await _service.GetByIdAsync(orgId);
+        LibreLms.Modules.Management.Domain.Organization? org;
+        try
+        {
+            org = await _service.GetByIdAsync(orgId, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(User));
+        }
+        catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
+        {
+            Error = ex.Message;
+            return Page();
+        }
         if (org is null)
             return NotFound();
 
@@ -49,7 +58,7 @@ public class EditModel : PageModel
                 return Page();
             }
 
-            var org = await _service.UpdateAsync(orgId, Input.Name, Input.Description);
+            var org = await _service.UpdateAsync(orgId, Input.Name, Input.Description, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(User));
             SuccessMessage = $"Organization '{org.Name}' updated successfully.";
             return RedirectToPage("Index");
         }

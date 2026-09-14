@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using LibreLms.Contracts.Management;
+using LibreLms.Host.ManagementAuth;
 using LibreLms.Modules.Management.Application;
 using LibreLms.SharedKernel;
 
@@ -28,7 +30,8 @@ public class CreateModel : PageModel
 
     public async Task OnGetAsync()
     {
-        var allOrgs = await _orgService.ListAllAsync();
+        // ADR 0010: the org dropdown shows only the caller's subtree.
+        var allOrgs = await _orgService.ListAllAsync(AuthHelpers.GetScope(User));
         Orgs = new SelectList(
             allOrgs.Select(o => new SelectListItem(o.Name, o.Id.ToString())),
             "Value", "Text");
@@ -74,9 +77,15 @@ public class CreateModel : PageModel
             }
 
             var role = string.IsNullOrEmpty(Input.Role) ? RoleNames.Learner : Input.Role;
-            var student = await _userService.CreateAsync(Input.Name, Input.Email, Input.Password, role, orgId);
+            var student = await _userService.CreateAsync(Input.Name, Input.Email, Input.Password, role, orgId, AuthHelpers.GetScope(User));
 
             return RedirectToPage("Index");
+        }
+        catch (ForbiddenAccessException ex)
+        {
+            Error = ex.Message;
+            await OnGetAsync();
+            return Page();
         }
         catch (InvalidOperationException ex)
         {

@@ -362,8 +362,9 @@ public class AdminListLearnersTests : IAsyncLifetime
     {
         var (_, _) = await CallSpAsync(null, null, 10, 1);
 
-        // Result set 1 must contain exactly the 8 documented columns. PasswordHash and
-        // SecurityStamp are deliberately never part of the listing.
-        Assert.Equal(8, _lastResultFieldCount);
+        // Result set 1 must contain exactly the 9 documented columns (spec 042 added
+        // ThemePreference as the 9th). PasswordHash and SecurityStamp are deliberately
+        // never part of the listing.
+        Assert.Equal(9, _lastResultFieldCount);
     }
 }

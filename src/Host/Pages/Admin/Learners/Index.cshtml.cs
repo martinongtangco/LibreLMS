@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using LibreLms.Contracts.Management;
+using LibreLms.Host.ManagementAuth;
 using LibreLms.Modules.Management.Application;
 using LibreLms.Modules.Management.Infrastructure;
 
@@ -42,7 +44,10 @@ public class IndexModel : PageModel
             SelectedOrg = org;
             SelectedRole = role;
 
-            var allOrgs = await _orgService.ListAllAsync();
+            // ADR 0010: org dropdown and paged listing are scope-filtered (SuperUser
+            // sees everything; OrgAdmin sees their subtree).
+            var scope = AuthHelpers.GetScope(User);
+            var allOrgs = await _orgService.ListAllAsync(scope);
             var items = new List<SelectListItem> { new("All Organizations", "") };
             items.AddRange(allOrgs.Select(o => new SelectListItem(o.Name, o.Id.ToString())));
             OrgFilter = new SelectList(items, "Value", "Text", SelectedOrg);
@@ -62,11 +67,11 @@ public class IndexModel : PageModel
             var roleFilter = string.IsNullOrEmpty(role) ? null : role;
             var requestedPage = Math.Max(1, PageNumber);
 
-            var page = await _userService.ListAllPagedAsync(searchValue, roleFilter, requestedPage, effectiveSize);
+            var page = await _userService.ListAllPagedAsync(searchValue, roleFilter, requestedPage, effectiveSize, scope);
             var effectivePage = AdminPageState.ClampPage(requestedPage, page.TotalCount, effectiveSize);
 
             if (effectivePage != requestedPage)
-                page = await _userService.ListAllPagedAsync(searchValue, roleFilter, effectivePage, effectiveSize);
+                page = await _userService.ListAllPagedAsync(searchValue, roleFilter, effectivePage, effectiveSize, scope);
 
             Users = page.Items.ToList();
             PageSize = effectiveSize;

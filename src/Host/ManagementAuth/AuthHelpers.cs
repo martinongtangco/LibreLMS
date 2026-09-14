@@ -29,6 +29,27 @@ public static class AuthHelpers
         return user.IsInRole(RoleNames.SuperUser);
     }
 
+    /// <summary>
+    /// Build the caller's <see cref="OrgScope"/> from auth claims (ADR 0010).
+    /// SuperUser → system-wide; OrgAdmin → their org's subtree (the
+    /// OrganizationId claim is written at login); anything else (or a
+    /// missing/invalid org claim) → <see cref="OrgScope.None"/> (fail-closed).
+    /// </summary>
+    public static OrgScope GetScope(ClaimsPrincipal user)
+    {
+        if (user.IsInRole(RoleNames.SuperUser))
+            return OrgScope.SuperUser;
+
+        if (user.IsInRole(RoleNames.OrgAdmin))
+        {
+            var orgIdStr = user.FindFirstValue(OrgClaimTypes.OrganizationId);
+            if (Guid.TryParse(orgIdStr, out var orgId))
+                return OrgScope.ForOrgAdmin(orgId);
+        }
+
+        return OrgScope.None;
+    }
+
     /// <summary>Check if the current user is an OrgAdmin.</summary>
     public static bool IsOrgAdmin(ClaimsPrincipal user)
     {

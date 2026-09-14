@@ -80,7 +80,7 @@ public class IndexModel : PageModel
             // Load all visible courses with enrollment counts
             if (isSuperUser)
             {
-                var visibleCourses = await _visibilityService.GetAllCoursesAsync();
+                var visibleCourses = await _visibilityService.GetAllCoursesAsync(AuthHelpers.GetScope(User));
                 var courseIds = visibleCourses.Select(c => c.CourseId).ToList();
                 var enrollmentCounts = await _enrollmentService.GetEnrollmentCountsByCourseAsync(courseIds);
 
@@ -92,7 +92,7 @@ public class IndexModel : PageModel
             }
             else if (orgId.HasValue)
             {
-                var visibleCourses = await _visibilityService.GetVisibleCoursesAsync(orgId.Value);
+                var visibleCourses = await _visibilityService.GetVisibleCoursesAsync(orgId.Value, AuthHelpers.GetScope(User));
                 var courseIds = visibleCourses.Select(c => c.CourseId).ToList();
                 var enrollmentCounts = await _enrollmentService.GetEnrollmentCountsByCourseAsync(courseIds);
 

@@ -45,9 +45,13 @@ public class CourseVisibilityService(
     /// Get all visible courses for an organization.
     /// Includes local courses and inherited courses from ancestors,
     /// minus any courses that have been explicitly hidden.
+    /// The organization must be within the caller's scope (ADR 0010).
     /// </summary>
-    public async Task<IList<CourseVisibilityDto>> GetVisibleCoursesAsync(Guid orgId)
+    public async Task<IList<CourseVisibilityDto>> GetVisibleCoursesAsync(Guid orgId, OrgScope scope)
     {
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, orgId))
+            throw new ForbiddenAccessException("This organization is outside your scope.");
+
         // Get all ancestor org IDs including the target org
         var ancestorIds = await orgLookup.GetAncestorOrgIdsAsync(orgId);
 
@@ -101,8 +105,11 @@ public class CourseVisibilityService(
     /// Set a visibility override for an inherited course in a specific organization.
     /// </summary>
     public async Task<CourseVisibilityOverride> SetVisibilityOverrideAsync(
-        Guid orgId, Guid courseId, bool isHidden, Guid? createdBy)
+        Guid orgId, Guid courseId, bool isHidden, Guid? createdBy, OrgScope scope)
     {
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, orgId))
+            throw new ForbiddenAccessException("This organization is outside your scope.");
+
         // Verify the course exists (via contract)
         var course = await courseLookup.GetCourseAsync(courseId);
         if (course is null)
@@ -140,9 +147,13 @@ public class CourseVisibilityService(
 
     /// <summary>
     /// Get all visibility overrides for an organization.
+    /// The organization must be within the caller's scope (ADR 0010).
     /// </summary>
-    public async Task<IList<VisibilityOverrideDto>> GetOverridesAsync(Guid orgId)
+    public async Task<IList<VisibilityOverrideDto>> GetOverridesAsync(Guid orgId, OrgScope scope)
     {
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, orgId))
+            throw new ForbiddenAccessException("This organization is outside your scope.");
+
         var overrides = await managementCtx.CourseVisibilityOverrides
             .Where(o => o.OrganizationId == orgId)
             .ToListAsync();
@@ -171,10 +182,17 @@ public class CourseVisibilityService(
 
     /// <summary>
     /// Get all courses in the system with organization info (for admin listing).
+    /// SuperUser sees every course; an OrgAdmin sees only courses owned by orgs
+    /// in their subtree (ADR 0010).
     /// </summary>
-    public async Task<IList<CourseVisibilityDto>> GetAllCoursesAsync()
+    public async Task<IList<CourseVisibilityDto>> GetAllCoursesAsync(OrgScope scope)
     {
-        var allCourses = await courseLookup.ListAllAsync();
+        var allCourses = (await courseLookup.ListAllAsync()).ToList();
+
+        var subtree = await OrgSubtree.GetSubtreeOrgIdsAsync(scope, orgLookup);
+        if (subtree is not null)
+            allCourses = allCourses.Where(c => subtree.Contains(c.OrganizationId)).ToList();
+
         var orgNameCache = new Dictionary<Guid, string>();
         var result = new List<CourseVisibilityDto>();
 
@@ -198,12 +216,16 @@ public class CourseVisibilityService(
     /// Delete a course by ID, including associated SCORM package and its content.
     /// The catalog delete itself goes through the ICourseAdmin contract.
     /// </summary>
-    public async Task DeleteCourseAsync(Guid courseId)
+    public async Task DeleteCourseAsync(Guid courseId, OrgScope scope)
     {
         // Verify the course exists (same up-front check as before)
         var course = await courseLookup.GetCourseAsync(courseId);
         if (course is null)
             throw new KeyNotFoundException("Course not found.");
+
+        // The course's owning org must be within the caller's scope (ADR 0010)
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, course.OrganizationId))
+            throw new ForbiddenAccessException("This course's organization is outside your scope.");
 
         // Remove any visibility overrides for this course
         var overrides = await managementCtx.CourseVisibilityOverrides
