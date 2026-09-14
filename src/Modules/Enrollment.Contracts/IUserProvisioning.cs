@@ -20,9 +20,12 @@ public interface IUserProvisioning
 
     /// <summary>Paged admin listing, name-ascending. Search is case-insensitive contains on
     /// name OR email; roleFilter is an exact role string. Returns only the requested page plus
-    /// the filtered total.</summary>
+    /// the filtered total.
+    /// <paramref name="rootOrgId"/>: when non-null, restricts the listing to students whose
+    /// organization is <paramref name="rootOrgId"/> or a descendant (ADR 0010 org scope);
+    /// null = system-wide.</summary>
     Task<StudentPageResult> ListPagedAsync(
-        string? search, string? roleFilter, int pageNumber, int pageSize);
+        string? search, string? roleFilter, int pageNumber, int pageSize, Guid? rootOrgId = null);
 
     /// <summary>Update an account. Null arguments mean "no change" for that field.
     /// <paramref name="avatarPath"/> is the display photo's URL path (null/empty = no change, spec 030).</summary>

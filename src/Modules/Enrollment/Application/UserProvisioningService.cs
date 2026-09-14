@@ -98,7 +98,7 @@ public sealed class UserProvisioningService : IUserProvisioning
     /// case-insensitive contains search on name OR email, exact role match, name-ascending.
     /// The procedure's result set deliberately excludes credential columns
     /// (PasswordHash/SecurityStamp are never selected or returned).</summary>
-    public async Task<StudentPageResult> ListPagedAsync(string? search, string? roleFilter, int pageNumber, int pageSize)
+    public async Task<StudentPageResult> ListPagedAsync(string? search, string? roleFilter, int pageNumber, int pageSize, Guid? rootOrgId = null)
     {
         // Trim whitespace from search term
         search = search?.Trim();
@@ -123,6 +123,9 @@ public sealed class UserProvisioningService : IUserProvisioning
             command.Parameters.Add("@Role", SqlDbType.NVarChar, 50).Value = roleFilter ?? (object)DBNull.Value;
             command.Parameters.Add("@PageSize", SqlDbType.Int).Value = pageSize;
             command.Parameters.Add("@PageNumber", SqlDbType.Int).Value = pageNumber;
+            // Org scope (ADR 0010): null = system-wide (SuperUser); otherwise the
+            // procedure restricts rows to students in that org's subtree.
+            command.Parameters.Add("@RootOrgId", SqlDbType.UniqueIdentifier).Value = rootOrgId ?? (object)DBNull.Value;
 
             var items = new List<StudentProvisionedDto>();
             var totalCount = 0;

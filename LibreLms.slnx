@@ -16,6 +16,7 @@
     <Project Path="tests/Catalog.Tests/Catalog.Tests.csproj" />
     <Project Path="tests/Enrollment.Tests/Enrollment.Tests.csproj" />
     <Project Path="tests/Host.Tests/Host.Tests.csproj" />
+    <Project Path="tests/Management.Tests/Management.Tests.csproj" />
     <Project Path="tests/Scorm.Tests/Scorm.Tests.csproj" />
   </Folder>
 </Solution>

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using LibreLms.Contracts.Catalog;
 using LibreLms.Contracts.Enrollment;
+using LibreLms.Contracts.Management;
 using LibreLms.Modules.Management.Domain;
 using LibreLms.Modules.Management.Endpoints;
 using LibreLms.Modules.Management.Infrastructure;
@@ -17,11 +18,18 @@ public class OrganizationService(
     ManagementDbContext context,
     IUserLookup userLookup,
     ICourseLookup courseLookup,
-    TreeLayoutService layoutService)
+    TreeLayoutService layoutService,
+    IOrganizationLookup orgLookup)
 {
-    /// <summary>Create a new organization.</summary>
-    public async Task<Organization> CreateAsync(string name, string? description, Guid? parentId)
+    /// <summary>
+    /// Create a new organization. The parent must be within the caller's scope
+    /// (ADR 0010); OrgAdmin cannot create roots.
+    /// </summary>
+    public async Task<Organization> CreateAsync(string name, string? description, Guid? parentId, OrgScope scope)
     {
+        if (parentId is null || !await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, parentId.Value))
+            throw new ForbiddenAccessException("You can only create organizations inside your own subtree.");
+
         // Check for duplicate name within parent
         var existing = await context.Organizations
             .AnyAsync(o => o.Name == name && o.ParentId == parentId && !o.IsDeleted);
@@ -45,26 +53,43 @@ public class OrganizationService(
         return org;
     }
 
-    /// <summary>Get an organization by ID.</summary>
-    public async Task<Organization?> GetByIdAsync(Guid id)
+    /// <summary>
+    /// Get an organization by ID. Throws <see cref="ForbiddenAccessException"/>
+    /// when the org is outside the caller's scope (ADR 0010).
+    /// </summary>
+    public async Task<Organization?> GetByIdAsync(Guid id, OrgScope scope)
     {
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, id))
+            throw new ForbiddenAccessException("This organization is outside your scope.");
+
         return await context.Organizations
             .Include(o => o.Children)
             .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
     }
 
-    /// <summary>Get all organizations under a specific parent (direct children only).</summary>
-    public async Task<IList<Organization>> ListByParentAsync(Guid? parentId)
+    /// <summary>
+    /// Get all organizations under a specific parent (direct children only).
+    /// The parent must be within the caller's scope (ADR 0010).
+    /// </summary>
+    public async Task<IList<Organization>> ListByParentAsync(Guid? parentId, OrgScope scope)
     {
+        if (parentId.HasValue && !await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, parentId.Value))
+            throw new ForbiddenAccessException("This organization is outside your scope.");
+
         return await context.Organizations
             .Where(o => o.ParentId == parentId && !o.IsDeleted)
             .OrderBy(o => o.Name)
             .ToListAsync();
     }
 
-    /// <summary>Get the entire subtree (all descendants) for an organization.</summary>
-    public async Task<IList<Organization>> GetSubtreeAsync(Guid orgId)
+    /// <summary>
+    /// Get the entire subtree (all descendants) for an organization. The org must
+    /// be within the caller's scope (ADR 0010).
+    /// </summary>
+    public async Task<IList<Organization>> GetSubtreeAsync(Guid orgId, OrgScope scope)
     {
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, orgId))
+            throw new ForbiddenAccessException("This organization is outside your scope.");
         var all = new List<Organization>();
         var queue = new Queue<Organization>();
 
@@ -92,9 +117,15 @@ public class OrganizationService(
         return all;
     }
 
-    /// <summary>Update organization name and description.</summary>
-    public async Task<Organization> UpdateAsync(Guid id, string name, string? description)
+    /// <summary>
+    /// Update organization name and description. The org must be within the
+    /// caller's scope (ADR 0010).
+    /// </summary>
+    public async Task<Organization> UpdateAsync(Guid id, string name, string? description, OrgScope scope)
     {
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, id))
+            throw new ForbiddenAccessException("This organization is outside your scope.");
+
         var org = await context.Organizations.FindAsync(id);
         if (org is null || org.IsDeleted)
             throw new KeyNotFoundException("Organization not found.");
@@ -112,9 +143,15 @@ public class OrganizationService(
         return org;
     }
 
-    /// <summary>Soft-delete an organization.</summary>
-    public async Task DeleteAsync(Guid id)
+    /// <summary>
+    /// Soft-delete an organization. The org must be within the caller's scope
+    /// (ADR 0010).
+    /// </summary>
+    public async Task DeleteAsync(Guid id, OrgScope scope)
     {
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, id))
+            throw new ForbiddenAccessException("This organization is outside your scope.");
+
         var org = await context.Organizations
             .Include(o => o.Children)
             .FirstOrDefaultAsync(o => o.Id == id);
@@ -130,9 +167,15 @@ public class OrganizationService(
         await context.SaveChangesAsync();
     }
 
-    /// <summary>Check if an organization can be safely deleted (no dependents).</summary>
-    public async Task<(bool CanDelete, string? Reason)> CanDeleteAsync(Guid id)
+    /// <summary>
+    /// Check if an organization can be safely deleted (no dependents). The org
+    /// must be within the caller's scope (ADR 0010).
+    /// </summary>
+    public async Task<(bool CanDelete, string? Reason)> CanDeleteAsync(Guid id, OrgScope scope)
     {
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, id))
+            throw new ForbiddenAccessException("This organization is outside your scope.");
+
         var org = await context.Organizations
             .Include(o => o.Children)
             .FirstOrDefaultAsync(o => o.Id == id);
@@ -150,21 +193,32 @@ public class OrganizationService(
         return (true, null);
     }
 
-    /// <summary>Get all active (non-deleted) organizations.</summary>
-    public async Task<IList<Organization>> ListAllAsync()
+    /// <summary>
+    /// List organizations. SuperUser sees all; an OrgAdmin sees only their
+    /// subtree (ADR 0010).
+    /// </summary>
+    public async Task<IList<Organization>> ListAllAsync(OrgScope scope)
     {
-        return await context.Organizations
-            .Where(o => !o.IsDeleted)
-            .OrderBy(o => o.CreatedAt)
-            .ToListAsync();
+        var query = context.Organizations.Where(o => !o.IsDeleted).AsQueryable();
+
+        var subtree = await OrgSubtree.GetSubtreeOrgIdsAsync(scope, orgLookup);
+        if (subtree is not null)
+            query = query.Where(o => subtree.Contains(o.Id));
+
+        return await query.OrderBy(o => o.CreatedAt).ToListAsync();
     }
 
     /// <summary>
     /// Get the complete organization chart data with layout positions and summary counts.
     /// If rootOrgId is provided, only returns that subtree (for OrgAdmin scoping).
     /// </summary>
-    public async Task<IList<OrgChartNodeDto>> GetChartTreeAsync(Guid? rootOrgId = null)
+    public async Task<IList<OrgChartNodeDto>> GetChartTreeAsync(Guid? rootOrgId = null, OrgScope? scope = null)
     {
+        // ADR 0010: an OrgAdmin's chart is pinned to their own subtree — the
+        // passed rootOrgId can never widen it.
+        if (scope is { IsSuperUser: false } && scope.OrganizationId is Guid adminOrg)
+            rootOrgId = adminOrg;
+
         // Fetch organizations (all or scoped subtree)
         var orgs = rootOrgId.HasValue
             ? await FetchSubtreeAsync(rootOrgId.Value)
@@ -228,8 +282,11 @@ public class OrganizationService(
     /// Disable an organization and all its descendants.
     /// Root organizations cannot be disabled.
     /// </summary>
-    public async Task DisableAsync(Guid id)
+    public async Task DisableAsync(Guid id, OrgScope scope)
     {
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, id))
+            throw new ForbiddenAccessException("This organization is outside your scope.");
+
         var org = await context.Organizations.FindAsync(id);
         if (org is null || org.IsDeleted)
             throw new KeyNotFoundException("Organization not found.");
@@ -255,8 +312,11 @@ public class OrganizationService(
     /// <summary>
     /// Enable an organization and all its descendants.
     /// </summary>
-    public async Task EnableAsync(Guid id)
+    public async Task EnableAsync(Guid id, OrgScope scope)
     {
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, id))
+            throw new ForbiddenAccessException("This organization is outside your scope.");
+
         var org = await context.Organizations.FindAsync(id);
         if (org is null || org.IsDeleted)
             throw new KeyNotFoundException("Organization not found.");
@@ -279,8 +339,11 @@ public class OrganizationService(
     /// Get an organization with its current user and course counts.
     /// Used by the edit dialog to show summary data.
     /// </summary>
-    public async Task<(Organization Org, int UserCount, int CourseCount)> GetByIdWithStatusAsync(Guid id)
+    public async Task<(Organization Org, int UserCount, int CourseCount)> GetByIdWithStatusAsync(Guid id, OrgScope scope)
     {
+        if (!await OrgSubtree.IsOrgInScopeAsync(scope, orgLookup, id))
+            throw new ForbiddenAccessException("This organization is outside your scope.");
+
         var org = await context.Organizations
             .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
 

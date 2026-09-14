@@ -28,7 +28,8 @@ public class CreateModel : PageModel
 
     public async Task OnGetAsync()
     {
-        var allOrgs = await _service.ListAllAsync();
+        // ADR 0010: the parent dropdown shows only the caller's subtree.
+        var allOrgs = await _service.ListAllAsync(LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(User));
         var items = new List<SelectListItem> { new("(No parent — root)", "") };
         items.AddRange(allOrgs.Select(o => new SelectListItem(o.Name, o.Id.ToString())));
         ParentOrgs = new SelectList(items, "Value", "Text");
@@ -48,9 +49,14 @@ public class CreateModel : PageModel
             if (!string.IsNullOrWhiteSpace(Input.ParentId))
                 parentId = Guid.TryParse(Input.ParentId, out var parsedId) ? parsedId : null;
 
-            var org = await _service.CreateAsync(Input.Name, Input.Description, parentId);
+            var org = await _service.CreateAsync(Input.Name, Input.Description, parentId, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(User));
             SuccessMessage = $"Organization '{org.Name}' created successfully.";
             return RedirectToPage("Index");
+        }
+        catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
+        {
+            Error = ex.Message;
+            return Page();
         }
         catch (InvalidOperationException ex)
         {

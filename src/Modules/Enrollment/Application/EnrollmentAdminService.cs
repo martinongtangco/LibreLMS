@@ -208,8 +208,17 @@ public sealed class EnrollmentAdminService : IEnrollmentAdmin
     /// Rows whose course no longer exists are omitted (same semantics as ListAsync).
     /// Returns the requested page plus the filtered total count.
     /// </summary>
+    public async Task<Guid?> GetEnrollmentStudentIdAsync(Guid enrollmentId)
+    {
+        // Cast to nullable so a missing enrollment yields null (not Guid.Empty).
+        return await _context.Enrollments
+            .Where(e => e.Id == enrollmentId)
+            .Select(e => (Guid?)e.StudentId)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<AdminEnrollmentPageResult> ListPagedAsync(
-        string? studentName, string? courseTitle, int pageNumber, int pageSize)
+        string? studentName, string? courseTitle, int pageNumber, int pageSize, Guid? rootOrgId = null)
     {
         studentName = studentName?.Trim();
         if (string.IsNullOrWhiteSpace(studentName))
@@ -234,6 +243,9 @@ public sealed class EnrollmentAdminService : IEnrollmentAdmin
             command.Parameters.Add("@CourseTitle", SqlDbType.NVarChar, 200).Value = courseTitle ?? (object)DBNull.Value;
             command.Parameters.Add("@PageSize", SqlDbType.Int).Value = pageSize;
             command.Parameters.Add("@PageNumber", SqlDbType.Int).Value = pageNumber;
+            // Org scope (ADR 0010): null = system-wide; otherwise the procedure
+            // restricts rows to students in that org's subtree.
+            command.Parameters.Add("@RootOrgId", SqlDbType.UniqueIdentifier).Value = rootOrgId ?? (object)DBNull.Value;
 
             var items = new List<AdminEnrollmentRow>();
             var totalCount = 0;

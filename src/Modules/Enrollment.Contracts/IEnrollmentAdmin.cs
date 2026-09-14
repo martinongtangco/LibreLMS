@@ -16,6 +16,10 @@ public interface IEnrollmentAdmin
     /// <summary>Remove an enrollment. Returns false when the enrollment does not exist.</summary>
     Task<bool> UnenrollAsync(Guid enrollmentId);
 
+    /// <summary>The student id of an enrollment, or null when it does not exist.
+    /// Used by callers that must check org scope before unenrolling (ADR 0010).</summary>
+    Task<Guid?> GetEnrollmentStudentIdAsync(Guid enrollmentId);
+
     /// <summary>A student's enrollments with course titles (courses that no longer exist are omitted).</summary>
     Task<IList<AdminEnrollmentInfo>> GetStudentEnrollmentsAsync(Guid studentId);
 
@@ -36,9 +40,11 @@ public interface IEnrollmentAdmin
 
     /// <summary>Paged admin listing, newest-first. Filters are case-insensitive contains on
     /// student name and course title. Enrollments whose course no longer exists are omitted
-    /// (same semantics as ListAsync). Returns only the requested page plus the filtered total.</summary>
+    /// (same semantics as ListAsync). Returns only the requested page plus the filtered total.
+    /// <paramref name="rootOrgId"/>: when non-null, restricts rows to enrollments whose
+    /// student's organization is in that org's subtree (ADR 0010); null = system-wide.</summary>
     Task<AdminEnrollmentPageResult> ListPagedAsync(
-        string? studentName, string? courseTitle, int pageNumber, int pageSize);
+        string? studentName, string? courseTitle, int pageNumber, int pageSize, Guid? rootOrgId = null);
 }
 
 /// <summary>Result of an enrollment operation. AlreadyEnrolled results carry EnrollmentId=Guid.Empty.</summary>

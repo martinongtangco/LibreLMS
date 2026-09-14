@@ -43,7 +43,8 @@ public class BulkEnrollModel : PageModel
             allCourses.Select(c => new SelectListItem(c.Title, c.Id.ToString())),
             "Value", "Text", SelectedCourseId);
 
-        var allUsers = await _userService.ListAllAsync(RoleNames.Learner);
+        // ADR 0010: the student dropdown is scope-filtered.
+        var allUsers = await _userService.ListAllAsync(RoleNames.Learner, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(User));
         Students = new SelectList(
             allUsers.Select(u => new SelectListItem($"{u.Name} ({u.Email})", u.Id.ToString())),
             "Value", "Text");
@@ -81,7 +82,7 @@ public class BulkEnrollModel : PageModel
                 return Page();
             }
 
-            var result = await _enrollmentService.BulkEnrollAsync(validStudentIds, courseGuid);
+            var result = await _enrollmentService.BulkEnrollAsync(validStudentIds, courseGuid, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(User));
             SuccessMessage = $"Bulk enrollment complete: {result.Enrolled} enrolled, {result.Skipped} skipped, {result.Errors} errors.";
             EnrolledCount = result.Enrolled;
             SkippedCount = result.Skipped;

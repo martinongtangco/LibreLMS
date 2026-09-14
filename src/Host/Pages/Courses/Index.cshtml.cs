@@ -118,7 +118,9 @@ public class CourseIndexModel : PageModel
             // Authenticated user with org — get visible course IDs first.
             // Courses the org admin marked hidden (IsHidden) are excluded from the
             // browse filter — spec 009 scenario 5 / bug-047.
-            var visible = await _visibilityService.GetVisibleCoursesAsync(orgId.Value);
+            // ADR 0010: the read is scoped to the learner's own org subtree
+            // (orgId comes from the auth claim, so the check always passes).
+            var visible = await _visibilityService.GetVisibleCoursesAsync(orgId.Value, LibreLms.Contracts.Management.OrgScope.ForOrgAdmin(orgId.Value));
             var visibleCourseIds = visible.Where(v => !v.IsHidden).Select(v => v.CourseId).ToHashSet();
 
             // Call stored procedure; filter by visible IDs in C# (avoids TVP complexity)
@@ -166,7 +168,8 @@ public class CourseIndexModel : PageModel
 
         if (orgId.HasValue)
         {
-            var visible = await _visibilityService.GetVisibleCoursesAsync(orgId.Value);
+            // ADR 0010: same own-org read scope as GetPagedCourses.
+            var visible = await _visibilityService.GetVisibleCoursesAsync(orgId.Value, LibreLms.Contracts.Management.OrgScope.ForOrgAdmin(orgId.Value));
             return visible
                 .Where(v => !v.IsHidden)
                 .Select(v => v.Category)

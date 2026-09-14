@@ -13,4 +13,10 @@ public interface IOrganizationLookup
     /// Get all ancestor organization IDs including the org itself.
     /// </summary>
     Task<IList<Guid>> GetAncestorOrgIdsAsync(Guid orgId);
+
+    /// <summary>
+    /// Get the IDs of the direct children of an organization (live orgs only).
+    /// Used to enumerate a subtree (ADR 0010).
+    /// </summary>
+    Task<IList<Guid>> GetChildOrgIdsAsync(Guid parentId);
 }

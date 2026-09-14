@@ -25,7 +25,8 @@ public class IndexModel : PageModel
     {
         try
         {
-            var allOrgs = await _service.ListAllAsync();
+            // ADR 0010: the tree shows only the caller's subtree.
+            var allOrgs = await _service.ListAllAsync(LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(User));
             OrgTree = BuildTree(allOrgs, null, false);
         }
         catch (Exception ex)

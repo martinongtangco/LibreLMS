@@ -36,7 +36,10 @@ public class DashboardServiceBulkCountsTests : IDisposable
         _managementCtx = new ManagementDbContext(options);
         _courseLookup = new BulkCountingCourseLookup();
         _enrollmentAdmin = new BulkCountingEnrollmentAdmin();
-        _service = new DashboardService(_managementCtx, new StubUserLookup(), _enrollmentAdmin, _courseLookup);
+        // The real OrganizationLookup over the same InMemory context: the shared
+        // OrgSubtree BFS (ADR 0010) reads the seeded org tree from one source.
+        _service = new DashboardService(_managementCtx, new StubUserLookup(), _enrollmentAdmin, _courseLookup,
+            new LibreLms.Modules.Management.Application.OrganizationLookup(_managementCtx));
 
         _managementCtx.Organizations.AddRange(
             new Organization { Id = _rootOrg, Name = "Root", ParentId = null },
@@ -158,6 +161,7 @@ public class BulkCountingEnrollmentAdmin : IEnrollmentAdmin
     public Task<IList<AdminEnrollResult>> EnrollManyAsync(Guid courseId, IEnumerable<Guid> studentIds)
         => Task.FromResult<IList<AdminEnrollResult>>(Array.Empty<AdminEnrollResult>());
     public Task<bool> UnenrollAsync(Guid enrollmentId) => Task.FromResult(true);
+    public Task<Guid?> GetEnrollmentStudentIdAsync(Guid enrollmentId) => Task.FromResult<Guid?>(null);
     public Task<IList<AdminEnrollmentInfo>> GetStudentEnrollmentsAsync(Guid studentId)
         => Task.FromResult<IList<AdminEnrollmentInfo>>(Array.Empty<AdminEnrollmentInfo>());
     public Task<IList<RecentEnrollmentInfo>> GetRecentEnrollmentsAsync(int take)
@@ -165,7 +169,7 @@ public class BulkCountingEnrollmentAdmin : IEnrollmentAdmin
     public Task<IList<AdminEnrollmentInfo>> ListAsync(string? studentName = null, string? courseTitle = null)
         => Task.FromResult<IList<AdminEnrollmentInfo>>(Array.Empty<AdminEnrollmentInfo>());
     public Task<AdminEnrollmentPageResult> ListPagedAsync(
-        string? studentName, string? courseTitle, int pageNumber, int pageSize)
+        string? studentName, string? courseTitle, int pageNumber, int pageSize, Guid? rootOrgId = null)
         => Task.FromResult(new AdminEnrollmentPageResult(
             new List<AdminEnrollmentRow>(), 0));
 }
