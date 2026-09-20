@@ -229,14 +229,14 @@ post-merge regression. No new behavior.
       and green — `01-auth` (login-without-ReturnUrl → `/Courses` still holds, FR/SC-004),
       `03-enrollment` (signed-in HTMX flow unchanged, FR-009), `signup`, `verify-email`,
       `20-scorm-session-authz`. Paste evidence (counts vs baseline 178+1).
-- [ ] T019 Independent verification (Constitution XVI): fresh no-context subagent, clean
+- [X] T019 Independent verification (Constitution XVI): fresh no-context subagent, clean
       detached worktree on `bug/055-fix-logged-out-enroll` — build, units, app readiness,
       filler-clean, full Playwright; its instructions MUST include the filler-clean step.
       Verdict GREEN before merge. Paste verdict.
-- [ ] T020 Gate 3 (post-merge, on master): `git merge --no-ff` after T019 GREEN; rebuild,
+- [X] T020 Gate 3 (post-merge, on master): `git merge --no-ff` after T019 GREEN; rebuild,
       restart, re-run Gate 2 suite on master; mark all tasks `[X]`, set spec Status to
       Complete (spec.md header), commit F. Paste evidence.
-- [ ] T021 [P] Polish: quickstart.md final sweep — walk Scenarios 1–5 once against the
+- [X] T021 [P] Polish: quickstart.md final sweep — walk Scenarios 1–5 once against the
       merged build (manual, ~10 min), confirm the "Data hygiene" note is accurate for the
       current dev DB state (the pre-fix evidence rows from T003 may exist — document or
       clean per the note); update `HANDOFF-RUN-LOG.md` per house convention.
@@ -418,6 +418,35 @@ only resolves in the container network. Host-side, a stale active session left b
 `14-profile-courses:140` (launches a session it never finishes — pre-existing) then
 surfaces as `getaddrinfo ENOTFOUND valkey`. In the canonical in-container environment
 the flush works and the full suite is green (evidence above).
+
+### T019 — Independent verification (Constitution XVI) — VERDICT GREEN
+
+Fresh no-context subagent, clean detached worktree (`.verify-055` @ 06ae70b), all
+steps from its own runbook, first-run green with no flakes:
+
+| Step | Result |
+|---|---|
+| Build (in-container, worktree) | 0 errors |
+| Units (worktree slnx, env vars) | 197/197 (55/29/14/42/39/18) |
+| Filler-clean | 11,668 → 10 courses (+60 orphan enrollments) |
+| App probes | `Now listening on: http://localhost:5000`; `/` → 302; `/MyCourses` guest → 302 (fix live) |
+| Full Playwright (worktree, `--workers=1`) | **186 passed + 1 documented skip, 0 failed, 0 did-not-run** (4.5m) |
+
+Deviations: `npm ci` in the worktree's Playwright.Tests (fresh checkout has no
+node_modules — dependency install only, lockfile untouched); pkill self-match on the
+`sh -c` wrapper (harmless, verified via `ps`). Worktree removed after GREEN.
+
+### T020 — Gate 3 (post-merge, master @ 92fc26b)
+
+`git merge --no-ff bug/055-fix-logged-out-enroll` → 92fc26b. On master, in-container:
+- rebuild → 0 errors; app restart → `Now listening on: http://localhost:5000`, probe `/` → 302.
+- full unit suite → **197/197** (55 Management, 18 Scorm, 39 Catalog, 29 Host, 42
+  Enrollment, 14 ArchitectureTests).
+- filler-clean → 11,668 → 10 courses (+12 orphan enrollments); Valkey FLUSHALL +OK.
+- full Playwright (JSON reporter, definitive accounting) →
+  **stats: expected 186, skipped 1 (documented verify-email expired-link),
+  unexpected 0, flaky 0** — 187 total accounted; baseline 178+1 → +8 new tests.
+- All tasks marked `[X]`; spec Status → Complete; commit F.
 
 ### T013–T016 — US3 GREEN
 

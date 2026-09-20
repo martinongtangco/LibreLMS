@@ -136,3 +136,36 @@ courses and poisons later runs (teardown now re-resolves by title prefix). E2E t
 Verification (XVI, fresh no-context subagent, clean detached worktree @63d486a): GREEN — build 0 errors;
 units 14+39+42+9+55+18 (no flake); app commit-matched (302); filler-clean 10 courses; Playwright
 178 passed + 1 skip, 0 failed (both 19-course-visibility tests green).
+
+### Item 7 — logged-out visitors can enroll (silent demo-account attribution) + broken return-to-course — spec 055 (bug/055-fix-logged-out-enroll)
+- [X] A  spec        commit 3434a50
+- [X] B  plan        commit a399e94 (ADR 0013 written at T002, before code; landed with D)
+- [X] C  tasks       commit c38ca68 (T001–T021)
+- [X] D  implement   commits 5721120 (US1 MVP: ChallengeResult guard, GetStudentId→Guid.Empty, lms.ReturnUrl cookie, guest plain form), 48a9f5a (US2 journey E2E — test-only, Signup/Verify confirmed untouched), 6f43ba9 (US3: MyCourses [Authorize], Settings dead-fallback removal, catalog empty-guid early-out), 06ae70b (gates 1–2 evidence; 08-rbac:34 updated to the new MyCourses contract — it asserted the pre-055 behavior FR-008 removes)
+- [X] E  merge       commit 92fc26b (--no-ff, after independent verification GREEN)
+- [X] F  gate 3      (this commit: spec Status → Complete, run log)
+RESULT: COMPLETED   consecutive_blocked = 0
+Notes: root causes — (1) handler-level [Authorize] on Razor Pages handler methods is NOT
+enforced in .NET 10 (10.0.3; endpoint-metadata authorization skips per-handler attributes —
+minimal repro + real-app + framework source; class-level and minimal-API [Authorize] ARE
+enforced); (2) ScormHelpers.GetStudentId silently substituted the seeded demo learner
+(550e8400-…-0001, alice) when no claim — so every guest enroll attributed to alice and
+guests saw her "Enrolled" badges; (3) no ReturnUrl handling anywhere. Fixes: explicit
+ChallengeResult("Cookie") guard (ADR-0013 house pattern), Guid.Empty "no learner" sentinel,
+lms.ReturnUrl cookie (24h/HttpOnly/Lax/local-URL-only at set AND consume) set on Login.OnGet,
+consumed once at successful sign-in — survives signup+verify because neither touches it.
+E2E red pre-fix (guest POST 200 + demo row created), green post-fix (4/4 US1). Test gotchas
+hit: hx-swap="outerHTML" replaces #enroll-region itself (assert the rendered "✓ Enrolled"
+state, not the id); the test is idempotent w.r.t. the persistent dev DB (branch on
+already-enrolled, same pattern as 03-enrollment). Unit tests REQUIRE the
+ConnectionStrings__* env vars (fixtures fail "environment variable is required" without
+them). Host-side Playwright flakes the 3 SCORM-session specs: their flushScormSessions()
+dials the compose hostname valkey:6379 (resolves only in the container network) — pre-existing
+environmental mismatch; canonical in-container run is green (documented in tasks.md T018).
+Data hygiene (dev DB only): pre-fix evidence row (alice→…115) deleted at T003; filler-clean
+11,668→10 courses before each E2E gate; Valkey FLUSHALL before E2E (ephemeral SCORM bag only).
+Verification (XVI, fresh no-context subagent, clean detached worktree @06ae70b): GREEN — build
+0 errors; units 197/197 (55+29+14+42+39+18); filler-clean 11,668→10; probes Now listening +
+/ 302 + guest /MyCourses 302; Playwright 186 passed + 1 documented skip, 0 failed (first run).
+Gate 3 on master @92fc26b: build 0 errors; units 197/197; filler-clean 11,668→10; Valkey
+FLUSHALL; Playwright (JSON, definitive) expected 186 / skipped 1 / unexpected 0 / flaky 0.

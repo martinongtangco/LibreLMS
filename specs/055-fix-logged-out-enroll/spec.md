@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-20
 
-**Status**: Draft
+**Status**: Complete (2026-09-20 — merged to master @ 92fc26b; gates T017–T020 green: units 197/197, E2E 186+1 skip in-container, independent verification GREEN)
 
 **Input**: User description: "i found a bug. if logged off, i can still enroll Courses. Im not sure which
 account it goes — shouldnt allow enrollment. Maybe lets back track a bit, when signed off, the
