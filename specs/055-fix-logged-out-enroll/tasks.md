@@ -144,7 +144,7 @@ course page with "Enroll now" → manual enroll succeeds.
 
 ### Tests for User Story 2
 
-- [ ] T011 [US2] `tests/Playwright.Tests/tests/21-logged-out-enroll.spec.ts` — US2 block
+- [X] T011 [US2] `tests/Playwright.Tests/tests/21-logged-out-enroll.spec.ts` — US2 block
       (append to the T003 file; reuse the `signUp`/`getVerifyLink` patterns from
       `tests/Playwright.Tests/tests/verify-email.spec.ts`, incl. `GET /api/dev/outbox`
       for the verification link; per-run unique email/name): guest on course
@@ -160,7 +160,7 @@ course page with "Enroll now" → manual enroll succeeds.
 
 ### Implementation for User Story 2
 
-- [ ] T012 [US2] Verify no changes are needed on `src/Host/Pages/Account/Signup.cshtml.cs`
+- [X] T012 [US2] Verify no changes are needed on `src/Host/Pages/Account/Signup.cshtml.cs`
       and `src/Host/Pages/Account/Verify.cshtml.cs`: confirm neither reads nor clears
       `lms.ReturnUrl` (they don't — the cookie persists by design, data-model.md
       state-transition notes); record the confirmation in Verification Notes. If either
@@ -184,15 +184,15 @@ and My Courses requires sign-in with a return to My Courses (FR-008, SC-005).
 
 ### Implementation for User Story 3
 
-- [ ] T013 [US3] `src/Host/Pages/MyCourses/Index.cshtml.cs`: class-level `[Authorize]`
+- [X] T013 [US3] `src/Host/Pages/MyCourses/Index.cshtml.cs`: class-level `[Authorize]`
       on `MyCoursesModel` (class-level IS enforced — verified research.md R1 control
       group) → guests get the cookie challenge with `ReturnUrl=/MyCourses`; the signed-in
       visitor's own list renders after sign-in (journey J4).
-- [ ] T014 [P] [US3] `src/Host/Pages/Account/Settings.cshtml.cs`: remove the private
+- [X] T014 [P] [US3] `src/Host/Pages/Account/Settings.cshtml.cs`: remove the private
       `GetStudentId()` demo-fallback duplicate (lines ~107–114) — return the claim or
       `Guid.Empty` (the page is class-level `[Authorize]`d, so the claim is always
       present; the fallback was dead-but-dangerous code — ADR 0013).
-- [ ] T015 [US3] `src/Host/Pages/Courses/Index.cshtml.cs`: in `GetPagedCourses`, skip the
+- [X] T015 [US3] `src/Host/Pages/Courses/Index.cshtml.cs`: in `GetPagedCourses`, skip the
       enrollment lookup when `studentId == Guid.Empty` (early-out: `enrolledIds` stays
       empty) — guests render with zero "Enrolled" badges without a pointless query
       (research.md R2 blast radius). Confirm `Detail.cshtml.cs` `OnGetAsync` already
@@ -201,7 +201,7 @@ and My Courses requires sign-in with a return to My Courses (FR-008, SC-005).
 
 ### Tests for User Story 3
 
-- [ ] T016 [P] [US3] `tests/Playwright.Tests/tests/21-logged-out-enroll.spec.ts` — US3
+- [X] T016 [P] [US3] `tests/Playwright.Tests/tests/21-logged-out-enroll.spec.ts` — US3
       block (append): (a) fresh context `page.goto('/MyCourses')` → `waitForURL`
       `/Account/Login` with `ReturnUrl=%2FMyCourses` → sign in as `learnerBob` →
       `toHaveURL('/MyCourses')` with his own enrollments (no alice rows); (b) fresh
@@ -341,4 +341,51 @@ the id no longer exists in the DOM. Fixed to assert the rendered `✓ Enrolled` 
 (`page.getByText('✓ Enrolled')`) — same class of assertion as the page's own enrolled
 state. (The pre-existing `03-enrollment.spec.ts` avoids the issue by branching on
 "already enrolled from a previous run".)
+
+### T011 — US2 E2E GREEN (post-fix build)
+
+```
+  ✓  5 [chromium] › new user: Enroll → signup → verify → sign in → back on the original course; manual enroll (1.2s)
+  ✓  6 [chromium] › J5: foreign ReturnUrl is rejected — no cookie, sign-in lands on home (639ms)
+```
+Journey J2 verified end-to-end with a per-run fresh account (`signupjourney{run}@example.com`,
+dev outbox for the verification link — same pattern as `verify-email.spec.ts`): the
+`lms.ReturnUrl` cookie set at the challenge bounce survives Signup → Verify ("Go to
+sign in" goes to `/Account/Login` with NO ReturnUrl query) and is consumed by the
+sign-in, landing on `/Courses/Detail/…117` (NOT home) with "Enroll now" still visible;
+the manual click enrolls the new account. J5: `https://evil.example/` sets no cookie
+(`context.cookies()` checked) and sign-in lands on home, never the foreign URL.
+
+### T012 — Signup/Verify no-change confirmation
+
+- `git diff master -- Signup.cshtml.cs Verify.cshtml.cs` → **empty** (unmodified).
+- `grep -ri "returnurl"` over both `.cs` and `.cshtml` → **zero matches** (neither
+  reads nor clears `lms.ReturnUrl`). The cookie persists across the journey by design
+  (data-model.md state-transition notes, contracts/return-url.md J2). No design
+  deviation — US2 was test-only, as the plan expected.
+
+### T013–T016 — US3 GREEN
+
+Implementation (dispatched as 3 parallel subagents per Constitution XI; parent
+integrated the build): T013 `[Authorize]` on `MyCoursesModel` (+using, ADR 0013
+comment); T014 private `GetStudentId()` in `Settings.cshtml.cs` now returns
+`Guid.Empty` (demo GUID removed — page is class-level `[Authorize]`d); T015 catalog
+`GetPagedCourses` skips the bulk enrollment lookup for `Guid.Empty`.
+T015 required confirmation (Detail.cshtml.cs degrades correctly, NO change needed):
+`IsEnrolled` resolves false for `Guid.Empty` (no matching row), the attempt/SCORM
+block is already gated on `enrolled && studentId != Guid.Empty`, and `TryEnrollAsync`
+early-returns a "please log in" message for `Guid.Empty`.
+
+Post-rebuild E2E — full file, 8/8 green:
+```
+  ✓ 1-4 [chromium] › US1 (raw HTTP 302 / guest full redirect / round trip + manual click / no demo badge)
+  ✓  5 [chromium] › US2 new-user journey lands on the original course (1.2s)
+  ✓  6 [chromium] › US2 J5 foreign ReturnUrl rejected (648ms)
+  ✓  7 [chromium] › US3 guest /MyCourses → /Account/Login?ReturnUrl=%2FMyCourses → sign in → own list (670ms)
+  ✓  8 [chromium] › US3 guest catalog: zero "✓ Enrolled" badges; course …112 shows "Enroll now" (563ms)
+  8 passed (8.9s)
+```
+Manual probe: `curl -i http://localhost:5000/MyCourses` as guest → `302 Found` (class-level
+`[Authorize]` enforced — consistent with research.md R1 control group).
+Unit suite re-run after the US3 changes: **29/29 passed** (Host.Tests).
 

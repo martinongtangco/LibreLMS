@@ -242,3 +242,40 @@ test.describe('Spec 055 US2 — signup + verification journey returns to the cou
     expect(page.url()).toMatch(/\/Courses?$/);
   });
 });
+
+/**
+ * US3 (P3): guest read paths are public-only — My Courses requires sign-in
+ * (with a return to My Courses), the catalog and course detail show no
+ * other user's enrollment state (FR-008, SC-005, journey J4).
+ */
+test.describe('Spec 055 US3 — signed-out visitors see only public course info', () => {
+  test('guest /MyCourses redirects to sign-in and returns to /MyCourses', async ({
+    page,
+  }) => {
+    await page.goto('/MyCourses');
+    // Class-level [Authorize] → cookie challenge with the page as return address.
+    await page.waitForURL(/\/Account\/Login\?ReturnUrl=%2FMyCourses/, { timeout: 10_000 });
+
+    // Sign in as bob → back on /MyCourses with HIS OWN enrollments.
+    await signIn(page, testUsers.learnerBob);
+    await expect(page).toHaveURL(/\/MyCourses/, { timeout: 10_000 });
+    // bob is enrolled in "Advanced .NET Patterns" (course 112, stable seed).
+    await expect(page.getByText('Advanced .NET Patterns')).toBeVisible();
+  });
+
+  test('guest catalog and demo-enrolled course detail show no enrolled state', async ({
+    page,
+  }) => {
+    // Catalog: zero "✓ Enrolled" badges for a guest (no demo-identity lookup).
+    await page.goto('/Courses');
+    await expect(page.getByText('✓ Enrolled')).toHaveCount(0);
+
+    // Course 112: alice (the demo learner) IS enrolled — a guest must still
+    // see the public not-enrolled state (overlaps US1's detail check, kept
+    // here so US3's read-path contract is pinned in one place).
+    await page.goto(`/Courses/Detail/${COURSE_DEMO_ENROLLED}`);
+    await expect(page.getByRole('button', { name: 'Enroll now' })).toBeVisible();
+    await expect(page.getByText('✓ Enrolled')).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Launch SCORM Course' })).toHaveCount(0);
+  });
+});

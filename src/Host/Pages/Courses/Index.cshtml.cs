@@ -124,7 +124,8 @@ public class CourseIndexModel : PageModel
         // One bulk enrollment check for the whole page (spec 048 E1) — replaces the
         // per-row IsEnrolledAsync loop; membership is a HashSet lookup below.
         var pageCourseIds = browseResult.Items.Select(c => c.Id).ToList();
-        if (pageCourseIds.Count > 0)
+        // Guests (Guid.Empty — ADR 0013) get an empty enrolled set without a query.
+        if (studentId != Guid.Empty && pageCourseIds.Count > 0)
         {
             enrolledIds = (await _enrollmentLookup.GetEnrolledCourseIdsAsync(studentId, pageCourseIds)).ToHashSet();
         }
