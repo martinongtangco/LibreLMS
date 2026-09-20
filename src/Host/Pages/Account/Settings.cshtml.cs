@@ -110,6 +110,9 @@ public class SettingsModel : PageModel
             ?? HttpContext.User.FindFirst("sub")?.Value;
         if (!string.IsNullOrEmpty(claim) && Guid.TryParse(claim, out var guid))
             return guid;
-        return Guid.Parse("550e8400-e29b-41d4-a716-446655440001");
+        // Never substitute an identity (ADR 0013): no parseable claim means
+        // "no learner" (Guid.Empty); callers handle the absent-learner state.
+        // The page is [Authorize]d, so a claim is always present in practice.
+        return Guid.Empty;
     }
 }

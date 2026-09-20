@@ -31,14 +31,13 @@ test.describe('RBAC — Unauthenticated', () => {
     expect(page.url()).toContain('/Account/Login');
   });
 
-  test('unauthenticated user sees empty MyCourses (no redirect)', async ({ page }) => {
-    // MyCourses/Index is accessible without auth (shows empty state)
+  test('unauthenticated user redirected to login for /MyCourses/Index', async ({ page }) => {
+    // Spec 055 US3 (FR-008, journey J4): My Courses is learner data — guests
+    // are challenged to sign-in with the page as return address (pre-055 this
+    // page rendered an empty state anonymously; the demo-identity fallback
+    // made that state unreliable, so the page now requires sign-in).
     await page.goto('/MyCourses/Index');
-    // Page loads without redirect to login
-    expect(page.url()).not.toContain('/Account/Login');
-    // Should show empty state or enrollment list
-    const enrollmentList = page.locator('#enrollment-list');
-    await expect(enrollmentList).toBeVisible();
+    await expect(page).toHaveURL(/\/Account\/Login\?ReturnUrl=%2FMyCourses/);
   });
 });
 

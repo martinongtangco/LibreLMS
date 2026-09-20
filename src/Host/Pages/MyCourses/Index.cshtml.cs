@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using LibreLms.Modules.Enrollment.Application;
@@ -5,6 +6,8 @@ using LibreLms.Modules.Scorm.Application;
 
 namespace LibreLms.Host.Pages.MyCourses;
 
+// Guests must not see a learner's enrollment list (spec 055 US3). Class-level [Authorize] is enforced on Razor Pages in .NET 10 (ADR 0013, research.md R1).
+[Authorize]
 public class MyCoursesModel : PageModel
 {
     private readonly EnrollmentService _enrollmentService;

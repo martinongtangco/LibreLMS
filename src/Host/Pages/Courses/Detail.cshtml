@@ -45,11 +45,26 @@ else
             }
             else
             {
-                <form hx-post="/Courses/Detail/@Model.Course.Id?handler=Enroll"
-                      hx-swap="outerHTML"
-                      hx-target="#enroll-region">
-                    <button type="submit" class="btn btn-primary">Enroll now</button>
-                </form>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <form hx-post="/Courses/Detail/@Model.Course.Id?handler=Enroll"
+                          hx-swap="outerHTML"
+                          hx-target="#enroll-region">
+                        <button type="submit" class="btn btn-primary">Enroll now</button>
+                    </form>
+                }
+                else
+                {
+                    // Spec 055: guests get a plain (non-HTMX) form. The POST meets the
+                    // handler's challenge and the 302 to the sign-in page becomes a full
+                    // page navigation — never an in-place swap of the sign-in form.
+                    <form method="post"
+                          asp-page="/Courses/Detail"
+                          asp-route-id="@Model.Course.Id"
+                          asp-page-handler="Enroll">
+                        <button type="submit" class="btn btn-primary">Enroll now</button>
+                    </form>
+                }
             }
         </div>
     </div>
