@@ -219,10 +219,10 @@ and My Courses requires sign-in with a return to My Courses (FR-008, SC-005).
 **Purpose**: the three verification gates with evidence, independent verification, and
 post-merge regression. No new behavior.
 
-- [ ] T017 Gate 1 — compiles and runs: `dotnet build LibreLms.slnx` 0 errors;
+- [X] T017 Gate 1 — compiles and runs: `dotnet build LibreLms.slnx` 0 errors;
       in-container app restart (`Now listening on: http://localhost:5000` + 302 probe).
       Paste evidence.
-- [ ] T018 Gate 2 — tests validate the change: `dotnet test tests/ArchitectureTests`
+- [X] T018 Gate 2 — tests validate the change: `dotnet test tests/ArchitectureTests`
       (Principle III regression guard) + full unit suite (incl. new
       `ReturnUrlCookieTests`); filler-clean after the last unit run; full Playwright
       SERIAL: new `21-logged-out-enroll.spec.ts` all green + regression specs UNMODIFIED
@@ -363,6 +363,61 @@ the manual click enrolls the new account. J5: `https://evil.example/` sets no co
   reads nor clears `lms.ReturnUrl`). The cookie persists across the journey by design
   (data-model.md state-transition notes, contracts/return-url.md J2). No design
   deviation — US2 was test-only, as the plan expected.
+
+### T017 — Gate 1 (compiles and runs)
+
+- `dotnet build LibreLms.slnx` → **0 errors** (9 warnings, all pre-existing NU1510).
+- In-container restart: `Now listening on: http://localhost:5000` (devcontainer, Linux
+  build, canonical env vars `Server=mssql,1433;Database=LearningLms` +
+  `valkey:6379`); probe `GET /` → 302.
+- Earlier host-side probe of the same build: `GET /MyCourses` (guest) → 302, guest
+  enroll POST → 302 with `ReturnUrl` (US1/US3 live).
+
+### T018 — Gate 2 (tests validate the change)
+
+**Units** (`dotnet test LibreLms.slnx`, env: `ConnectionStrings__Sql/Valkey` +
+`ASPNETCORE_ENVIRONMENT=Development` — note: the test projects REQUIRE the env vars,
+without them the DB-backed fixtures fail with "ConnectionStrings__Sql environment
+variable is required"):
+
+| Project | Result |
+|---|---|
+| Management.Tests | 55/55 |
+| Host.Tests (incl. 8 new ReturnUrlCookieTests) | 29/29 |
+| ArchitectureTests (Principle III guard) | 14/14 |
+| Enrollment.Tests | 42/42 |
+| Catalog.Tests | 39/39 |
+| Scorm.Tests | 18/18 |
+| **Total** | **197/197** |
+
+**Filler-clean** (after last unit run, dev DB, house procedure): 11,668 filler
+Courses + 240 orphan filler Enrollments deleted → 10 seeded courses remain.
+
+**Playwright** — full suite, `--workers=1` (serial), canonical in-container run
+(`PLAYWRIGHT_BROWSERS_PATH=/ms-playwright`):
+```
+1 skipped   (verify-email expired-link — documented, needs DB time manipulation)
+186 passed (3.6m)
+```
+Baseline (spec 054) was 178 passed + 1 skip → **+8 = exactly this spec's new tests**;
+0 failed, 0 did-not-run. All protected regression specs green unmodified: 01-auth
+(login-without-ReturnUrl → home), 03-enrollment (signed-in HTMX flow), signup,
+verify-email, 20-scorm-session-authz; plus 21-logged-out-enroll 8/8.
+
+**One documented regression-spec edit** (not on the protected list): `08-rbac.spec.ts:34`
+was "unauthenticated user sees empty MyCourses (no redirect)" — it asserted the exact
+pre-055 behavior that FR-008/journey J4 deliberately removes (guest MyCourses is now a
+learner-data page behind `[Authorize]`). Updated to assert the new contract: guest →
+`/Account/Login?ReturnUrl=%2FMyCourses…`. The full round trip (sign in → own list)
+is pinned by `21-logged-out-enroll.spec.ts:252`.
+
+**Environment note (pre-existing, not a 055 regression)**: running the suite from the
+Windows host (app on host) flakes the three SCORM-session specs — their
+`flushScormSessions()` recovery helper dials the compose hostname `valkey:6379`, which
+only resolves in the container network. Host-side, a stale active session left by
+`14-profile-courses:140` (launches a session it never finishes — pre-existing) then
+surfaces as `getaddrinfo ENOTFOUND valkey`. In the canonical in-container environment
+the flush works and the full suite is green (evidence above).
 
 ### T013–T016 — US3 GREEN
 
