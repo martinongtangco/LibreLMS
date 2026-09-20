@@ -20,8 +20,8 @@ E2E red-verify (T003) runs BEFORE any fix lands.
 
 ## Phase 1: Setup
 
-- [ ] T001 Create branch `bug/055-fix-logged-out-enroll` from `master` (Constitution VIII)
-- [ ] T002 [P] `docs/adr/0013-handler-level-page-authz-and-identity-fallback.md`: ADR
+- [X] T001 Create branch `bug/055-fix-logged-out-enroll` from `master` (Constitution VIII)
+- [X] T002 [P] `docs/adr/0013-handler-level-page-authz-and-identity-fallback.md`: ADR
       (Principle IV/X — before code) recording both structural findings with the evidence
       from research.md R1/R2: (1) handler-level `[Authorize]` on Razor Pages handler
       methods is not enforced in .NET 10 (runtime 10.0.3; endpoint-metadata-based
@@ -50,7 +50,7 @@ the signed-in account.
 
 ### Tests for User Story 1 (TDD — written first, must FAIL pre-fix) ⚠️
 
-- [ ] T003 [US1] `tests/Playwright.Tests/tests/21-logged-out-enroll.spec.ts` — US1 block
+- [X] T003 [US1] `tests/Playwright.Tests/tests/21-logged-out-enroll.spec.ts` — US1 block
       (fresh context = no cookies; use `testUsers` from `tests/Playwright.Tests/utils/testUsers.ts`;
       per-run unique fixtures where state is created; teardown deletes created rows):
       (a) **raw HTTP**: `request.post('/Courses/Detail/{unseeded-course}/Enroll')`-style POST
@@ -69,7 +69,7 @@ the signed-in account.
       Run against the CURRENT (pre-fix) build: (a)/(b)/(d) must FAIL (guest enroll
       executes 200, no redirect, demo badge visible) — paste the RED evidence, then clean
       up any rows the pre-fix run created (quickstart.md §Data hygiene).
-- [ ] T004 [P] [US1] `tests/Host.Tests/ReturnUrlCookieTests.cs` — unit tests (written
+- [X] T004 [P] [US1] `tests/Host.Tests/ReturnUrlCookieTests.cs` — unit tests (written
       first; compile-level red until T005 exists), house fake `DefaultHttpContext`
       pattern: set with valid local URL writes cookie `lms.ReturnUrl` (URL-encoded,
       `HttpOnly`, `SameSite=Lax`, `MaxAge=24h`); set with `https://evil.example/` or
@@ -82,7 +82,7 @@ the signed-in account.
 
 ### Implementation for User Story 1
 
-- [ ] T005 [US1] `src/Host/Pages/Courses/Detail.cshtml.cs`: in
+- [X] T005 [US1] `src/Host/Pages/Courses/Detail.cshtml.cs`: in
       `OnPostEnrollAsync`, replace the inert handler-level `[Authorize]` attribute with an
       explicit guard as the FIRST statement:
       `if (User.Identity?.IsAuthenticated != true) return new ChallengeResult("Cookie");`
@@ -90,13 +90,13 @@ the signed-in account.
       verified). Keep the existing `Guid.Empty` guard in `TryEnrollAsync` as defense in
       depth. Remove the `[Authorize]` attribute (it implies a guarantee the platform does
       not honor).
-- [ ] T006 [P] [US1] `src/Host/ScormHelpers.cs`: `GetStudentId(HttpContext)` — remove the
+- [X] T006 [P] [US1] `src/Host/ScormHelpers.cs`: `GetStudentId(HttpContext)` — remove the
       hardcoded demo fallback (`550e8400-…-0001`); no parseable claim → return
       `Guid.Empty` (the codebase's existing "no learner" sentinel — `TryEnrollAsync`
       already guards on it). Update the XML doc: this method never substitutes an
       identity (ADR 0013). API callers are all behind working `[Authorize]`/
       `RequireAuthorization` (verified research.md R2) — behavior unchanged for them.
-- [ ] T007 [US1] `src/Host/ReturnUrlCookie.cs` (NEW, one small static helper —
+- [X] T007 [US1] `src/Host/ReturnUrlCookie.cs` (NEW, one small static helper —
       Principle II): `const string CookieName = "lms.ReturnUrl";` +
       `SetPending(HttpContext, string? returnUrlQueryValue)` (validate `Url.IsLocalUrl`,
       write cookie: `HttpOnly`, `SameSite=Lax`, `Path=/`, `MaxAge=TimeSpan.FromHours(24)`,
@@ -104,13 +104,13 @@ the signed-in account.
       `ConsumePending(HttpContext): string?` (read, re-validate with `Url.IsLocalUrl`,
       delete the cookie, return the value or null). No other members — anything more is
       over-engineering for this slice.
-- [ ] T008 [US1] `src/Host/Pages/Account/Login.cshtml.cs`: `OnGet` — call
+- [X] T008 [US1] `src/Host/Pages/Account/Login.cshtml.cs`: `OnGet` — call
       `ReturnUrlCookie.SetPending(HttpContext, Request.Query["ReturnUrl"].ToString())`
       (covers the challenge bounce; no-op when the query is absent so the verify → login
       hop keeps a pending value); `OnPostAsync` success path — replace
       `Redirect("/")` with `Redirect(ReturnUrlCookie.ConsumePending(HttpContext) ?? "/")`.
       No change to the `AccessDenied` (already-authenticated) branch.
-- [ ] T009 [US1] `src/Host/Pages/Courses/Detail.cshtml`: conditional enroll form inside
+- [X] T009 [US1] `src/Host/Pages/Courses/Detail.cshtml`: conditional enroll form inside
       `#enroll-region` — `@if (User.Identity?.IsAuthenticated == true)` → the existing
       HTMX form (`hx-post="…?handler=Enroll"`, `hx-swap="outerHTML"`, `hx-target`);
       else → plain `<form method="post">` with `asp-page`/`asp-route-id`/
@@ -119,7 +119,7 @@ the signed-in account.
       302 challenge performs a full page navigation — the required UX (research.md R4).
       (Verified: a GET of the post-login URL `…?handler=Enroll` renders the course page
       normally — the handler query is inert on GET.)
-- [ ] T010 [US1] Restart the app (in-container); re-run T003 US1 block → GREEN; run
+- [X] T010 [US1] Restart the app (in-container); re-run T003 US1 block → GREEN; run
       quickstart.md Scenario 1 (raw HTTP: expect `302
       http://localhost:5000/Account/Login?ReturnUrl=%2FCourses%2FDetail%2F…`) and
       Scenario 2 (round trip + manual re-enroll); DB check (quickstart §Scenario 1 data
@@ -278,4 +278,67 @@ T001 (branch)
 
 ## Verification Notes
 
-(filled during T003, T010, T011, T012, T016, T017, T018, T019, T020, T021)
+### T003 — US1 E2E RED (pre-fix build, 2026-09-20 05:28 UTC)
+
+```
+Running 4 tests using 1 worker
+  ✘  1 [chromium] › 21-logged-out-enroll.spec.ts:43:7 › raw HTTP enroll POST as guest is rejected…
+    Error: expect(received).toBe(expected)
+    Expected: 302
+    Received: 200            ← guest POST executed the enrollment (bug reproduced)
+  1 failed, 3 did not run (serial)
+```
+Pre-fix run created one evidence row (demo learner `…0001` → course `…115`); deleted
+per quickstart §Data hygiene (dev DB only).
+
+### T010 — US1 E2E GREEN (post-fix build) + quickstart Scenarios 1–2
+
+**Unit**: `dotnet test tests/Host.Tests` → 29/29 passed (incl. 8 new
+`ReturnUrlCookieTests`).
+
+**E2E** (`21-logged-out-enroll.spec.ts`, US1 block):
+```
+  ✓  1 [chromium] › raw HTTP enroll POST as guest is rejected and creates no enrollment (3.3s)
+  ✓  2 [chromium] › guest Enroll click is a full-page redirect to sign-in with the course as return address (464ms)
+  ✓  3 [chromium] › sign-in returns the visitor to the course; enrollment needs a second manual click (1.1s)
+  ✓  4 [chromium] › guest sees no other user enrolled state on a course the demo learner is enrolled in (401ms)
+  4 passed (7.4s)
+```
+Test 3 exercises the fresh branch end-to-end (bob not pre-enrolled): guest click → 302
+→ login → back on `/Courses/Detail/…117` → "Enroll now" still visible (NOT auto-enrolled)
+→ manual click → `✓ Enrolled` (htmx swap) → "Git Version Control" in bob's MyCourses.
+Test 3 is idempotent: on re-runs with bob already enrolled it asserts the enrolled
+state instead (persistent dev DB — same pattern as `03-enrollment.spec.ts`).
+
+**Quickstart Scenario 1** (manual, curl):
+```
+$ curl -i -X POST "http://localhost:5000/Courses/Detail/…115?handler=Enroll"
+HTTP/1.1 302 Found
+Location: http://localhost:5000/Account/Login?ReturnUrl=%2FCourses%2FDetail%2F…115%3Fhandler%3DEnroll
+```
+Cookie set on the login GET (contract per data-model.md):
+```
+Set-Cookie: lms.ReturnUrl=%252FCourses%252F…%253Fhandler%253DEnroll; max-age=86400; path=/; samesite=lax; httponly
+```
+(24 h, HttpOnly, SameSite=Lax, path=/, URL-encoded value; no `secure` under dev http —
+`Secure` is set only on https per plan; double-encoding is by design so the browser's
+decoding at read time yields a still-encoded local URL.)
+
+**Quickstart Scenario 2** (round trip): covered by E2E test 3 above (same steps, manual
+equivalent).
+
+**DB check** (post-green, `LearningLms.dbo.Enrollments` for courses `…115/…116/…117`):
+- `…115`, `…116`: **zero rows** — guest raw POST (test 1) and guest UI click (test 2)
+  created nothing.
+- `…117`: bob `…0002` @ 10:57:41 UTC (test 3's MANUAL second click — expected);
+  alice `…0001` @ 04:36:14 UTC is a pre-existing user row (untouched).
+- **Zero new rows attributed to the demo learner `…0001`** by any guest action. ✓
+
+**Test fix note (T010)**: the initial draft of test 3 asserted
+`#enroll-region` contains "Enrolled" after the manual click — but the HTMX success
+partial swaps with `hx-swap="outerHTML"`, which replaces `#enroll-region` itself, so
+the id no longer exists in the DOM. Fixed to assert the rendered `✓ Enrolled` state
+(`page.getByText('✓ Enrolled')`) — same class of assertion as the page's own enrolled
+state. (The pre-existing `03-enrollment.spec.ts` avoids the issue by branching on
+"already enrolled from a previous run".)
+

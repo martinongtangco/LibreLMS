@@ -59,6 +59,11 @@ public class LoginModel : PageModel
 
     public void OnGet()
     {
+        // Spec 055: persist the pending return address from the challenge's
+        // ReturnUrl query value (validated local-only; a no-op when absent, so
+        // the verify → "Go to sign in" hop keeps an existing pending value).
+        ReturnUrlCookie.SetPending(HttpContext, Request.Query["ReturnUrl"].ToString());
+
         // Already signed in and still on the login page → they were bounced here by
         // an access-denied challenge. Show the denial state (no redirect: that would
         // loop back to the denied page).
@@ -110,7 +115,11 @@ public class LoginModel : PageModel
             new ClaimsPrincipal(identity),
             new AuthenticationProperties { IsPersistent = true });
 
-        return Redirect("/");
+        // Spec 055: return the visitor to the page that sent them here (e.g. the
+        // course they were enrolling in) when a pending return address exists and
+        // is valid; otherwise the existing home-page default. Enrollment is never
+        // performed automatically — the user presses the button again, manually.
+        return Redirect(ReturnUrlCookie.ConsumePending(HttpContext) ?? "/");
     }
 
     /// <summary>

@@ -84,7 +84,11 @@ public static class ScormHelpers
 })();
 ";
 
-    /// <summary>Extract student ID from HTTP context (claims or demo fallback).</summary>
+    /// <summary>
+    /// Extract the student ID from the HTTP context's identity claims. Returns
+    /// <see cref="Guid.Empty"/> when no parseable claim exists — this method never
+    /// substitutes an identity (ADR-0013).
+    /// </summary>
     public static Guid GetStudentId(HttpContext httpContext)
     {
         var claim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
@@ -93,8 +97,10 @@ public static class ScormHelpers
         if (!string.IsNullOrEmpty(claim) && Guid.TryParse(claim, out var parsedGuid))
             return parsedGuid;
 
-        // Demo fallback: use first seeded student
-        return Guid.Parse("550e8400-e29b-41d4-a716-446655440001");
+        // ADR-0013: never substitute an identity. "No learner" is Guid.Empty
+        // (the codebase's existing sentinel); callers decide what that means
+        // (enroll → challenge; read paths → not-enrolled state).
+        return Guid.Empty;
     }
 
     /// <summary>

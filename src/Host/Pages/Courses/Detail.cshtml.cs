@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using LibreLms.Contracts.Enrollment;
@@ -79,9 +78,13 @@ public class CourseDetailModel : PageModel
     }
 
     /// <summary>HTMX handler: enroll in a course and return result partial (US2).</summary>
-    [Authorize]
-    public async Task<PartialViewResult> OnPostEnrollAsync()
+    public async Task<IActionResult> OnPostEnrollAsync()
     {
+        // ADR-0013: handler-level [Authorize] is inert in .NET 10 (verified — see
+        // specs/055-fix-logged-out-enroll/research.md R1). Challenge explicitly.
+        if (User.Identity?.IsAuthenticated != true)
+            return new ChallengeResult("Cookie");
+
         // Use the route-bound Id (from @page "{id:guid}") as the course ID
         var result = await TryEnrollAsync(Id);
         return Partial("_EnrollmentResult", result);
