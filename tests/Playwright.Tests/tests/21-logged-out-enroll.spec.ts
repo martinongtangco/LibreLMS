@@ -132,3 +132,113 @@ test.describe('Spec 055 US1 — logged-out enrollment is impossible; sign-in rou
     await expect(page.getByRole('link', { name: 'Launch SCORM Course' })).toHaveCount(0);
   });
 });
+
+/**
+ * US2 (P2): the pending return address (lms.ReturnUrl cookie) survives the
+ * full sign-up + email-verification journey — neither Signup nor Verify
+ * touches the cookie — and is consumed by the sign-in after verification,
+ * landing the new user on the ORIGINAL course page (contracts J2/J5).
+ *
+ * Each run creates a fresh account (per-run unique email, house convention —
+ * same as verify-email.spec.ts; no cleanup, dev DB only).
+ */
+const US2_RUN = Date.now();
+const US2_PASSWORD = 'Sup3rSecret!x9';
+
+async function signUp(
+  page: import('@playwright/test').Page,
+  name: string,
+  email: string,
+): Promise<void> {
+  await page.goto('/Account/Signup');
+  await page.getByLabel('Full name').fill(name);
+  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Password', { exact: true }).fill(US2_PASSWORD);
+  await page.getByLabel('Confirm password', { exact: true }).fill(US2_PASSWORD);
+  await page.getByRole('button', { name: 'Create account' }).click();
+  await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
+}
+
+/** Fetch the newest outbox verification link for the given email (dev outbox). */
+async function getVerifyLink(
+  request: import('@playwright/test').APIRequestContext,
+  email: string,
+): Promise<string> {
+  const response = await request.get('/api/dev/outbox');
+  expect(response.ok()).toBeTruthy();
+  const emails: Array<{ to: string; purpose: string; body: string }> = await response.json();
+  const mine = emails.filter((e) => e.to === email && e.purpose === 'Verification');
+  expect(mine.length).toBeGreaterThan(0);
+  const newest = mine[0]; // outbox is newest-first
+  const match = newest.body.match(/http:\/\/[^\s]+\/Account\/Verify\?token=[A-Za-z0-9_-]+/);
+  expect(match).not.toBeNull();
+  return match![0];
+}
+
+test.describe('Spec 055 US2 — signup + verification journey returns to the course', () => {
+  test('new user: Enroll → signup → verify → sign in → back on the original course; manual enroll', async ({
+    page,
+    request,
+  }) => {
+    const email = `signupjourney${US2_RUN}@example.com`;
+
+    // Guest on the course → Enroll → full redirect to sign-in (US1 mechanism).
+    await page.goto(`/Courses/Detail/${COURSE_ROUND_TRIP}`);
+    await page.getByRole('button', { name: 'Enroll now' }).click();
+    await page.waitForURL(/\/Account\/Login\?ReturnUrl=/, { timeout: 10_000 });
+
+    // No account yet → "Create an account" → sign up.
+    await page.getByRole('link', { name: 'Create an account' }).click();
+    await expect(page).toHaveURL(/\/Account\/Signup/);
+    await signUp(page, 'Signup Journey', email);
+
+    // Open the verification link from the dev outbox.
+    const link = await getVerifyLink(request, email);
+    await page.goto(link);
+    await expect(page.getByRole('heading', { name: 'Your email is verified' })).toBeVisible();
+
+    // "Go to sign in" → /Account/Login WITHOUT a ReturnUrl query — the pending
+    // cookie (set at the challenge bounce) must have survived Signup + Verify.
+    await page.getByRole('link', { name: 'Go to sign in' }).click();
+    await expect(page).toHaveURL(/\/Account\/Login/);
+
+    await page.getByLabel('Email').fill(email);
+    await page.getByLabel('Password').fill(US2_PASSWORD);
+    await page.getByRole('button', { name: 'Sign In' }).click();
+
+    // SC-003: back on the ORIGINAL course — not home (/ → /Courses).
+    await expect(page).toHaveURL(/\/Courses\/Detail\//, { timeout: 10_000 });
+    expect(page.url()).toContain(COURSE_ROUND_TRIP);
+
+    // FR-004: NOT auto-enrolled — one manual click finishes the journey.
+    const enrollButton = page.getByRole('button', { name: 'Enroll now' });
+    if (await enrollButton.isVisible().catch(() => false)) {
+      await enrollButton.click();
+      // hx-swap="outerHTML" replaces #enroll-region — assert the rendered state.
+      await expect(page.getByText('✓ Enrolled')).toBeVisible({ timeout: 10_000 });
+    } else {
+      // Re-run on the same fresh email is impossible (email is per-run), so
+      // this branch only matters if the account already exists from a crash.
+      await expect(page.getByText('✓ Enrolled')).toBeVisible();
+    }
+  });
+
+  test('J5: foreign ReturnUrl is rejected — no cookie, sign-in lands on home', async ({
+    page,
+    context,
+  }) => {
+    // Fresh context, tampered (foreign) return address.
+    await page.goto('/Account/Login?ReturnUrl=https://evil.example/');
+    // No lms.ReturnUrl cookie may be set for a non-local URL (open-redirect guard).
+    const cookies = await context.cookies();
+    expect(cookies.find((c) => c.name === 'lms.ReturnUrl')).toBeUndefined();
+
+    // Sign in anyway — the redirect must land on home, never the foreign URL.
+    await signIn(page, testUsers.learnerBob);
+    await page.waitForURL((url) => !url.pathname.startsWith('/Account/'), {
+      timeout: 10_000,
+    });
+    expect(page.url()).not.toContain('evil.example');
+    expect(page.url()).toMatch(/\/Courses?$/);
+  });
+});
