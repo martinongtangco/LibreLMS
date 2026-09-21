@@ -123,6 +123,10 @@ jobs:
       - name: Unit tests — Scorm
         run: dotnet test tests/Scorm.Tests/Scorm.Tests.csproj --no-build
 
+      - name: Install Playwright test dependencies
+        working-directory: tests/Playwright.Tests
+        run: npm ci
+
       - name: Playwright browsers
         working-directory: tests/Playwright.Tests
         run: npx playwright install chromium --with-deps
