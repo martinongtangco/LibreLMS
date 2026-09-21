@@ -90,7 +90,7 @@ jobs:
 
       - name: Filler-clean (removes Catalog perf-seed residue so E2E sees the seeded state)
         run: |
-          sqlcmd -S localhost,1433 -U sa -P "CiFixture!Passw0rd" -C -W -Q "
+          /opt/mssql-tools18/bin/sqlcmd -S localhost,1433 -U sa -P "CiFixture!Passw0rd" -C -W -Q "
             SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;
             DELETE e FROM Enrollments e JOIN Courses c ON e.CourseId=c.Id WHERE c.Id NOT LIKE '11111111-%';
             DELETE ca FROM CourseAttempts ca JOIN Courses c ON ca.CourseId=c.Id WHERE c.Id NOT LIKE '11111111-%';
