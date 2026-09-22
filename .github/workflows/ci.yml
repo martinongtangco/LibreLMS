@@ -116,14 +116,20 @@ jobs:
       # Spec 053 run log (specs/HANDOFF-RUN-LOG.md): "unit suites write to the
       # shared LearningLms DB — the E2E filler-clean must run after the last
       # unit run." Must stay after the unit-test steps above, not before.
+      # -d LearningLms: without it sqlcmd runs against master, where these tables
+      # do not exist. -b: make any SQL error fail the step — without it sqlcmd
+      # exits 0 and a no-op clean silently hands ~11.7k filler courses to the E2E
+      # run, where the authenticated browse query then exceeds the 30s SQL
+      # command timeout and every signed-in page 500s.
       - name: Filler-clean (removes Catalog perf-seed residue so E2E sees the seeded state)
         run: |
-          /opt/mssql-tools18/bin/sqlcmd -S localhost,1433 -U sa -P "CiFixture!Passw0rd" -C -W -Q "
+          /opt/mssql-tools18/bin/sqlcmd -S localhost,1433 -U sa -P "CiFixture!Passw0rd" -C -W -b -d LearningLms -Q "
             SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;
             DELETE e FROM Enrollments e JOIN Courses c ON e.CourseId=c.Id WHERE c.Id NOT LIKE '11111111-%';
             DELETE ca FROM CourseAttempts ca JOIN Courses c ON ca.CourseId=c.Id WHERE c.Id NOT LIKE '11111111-%';
             DELETE sp FROM ScormPackages sp WHERE sp.CourseId NOT IN (SELECT Id FROM Courses WHERE Id LIKE '11111111-%');
             DELETE c FROM Courses c WHERE c.Id NOT LIKE '11111111-%';
+            SELECT COUNT(*) AS RemainingCourses FROM Courses;
           "
 
       - name: Install Playwright test dependencies
