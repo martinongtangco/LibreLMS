@@ -98,16 +98,6 @@ jobs:
             sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18
           fi
 
-      - name: Filler-clean (removes Catalog perf-seed residue so E2E sees the seeded state)
-        run: |
-          /opt/mssql-tools18/bin/sqlcmd -S localhost,1433 -U sa -P "CiFixture!Passw0rd" -C -W -Q "
-            SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;
-            DELETE e FROM Enrollments e JOIN Courses c ON e.CourseId=c.Id WHERE c.Id NOT LIKE '11111111-%';
-            DELETE ca FROM CourseAttempts ca JOIN Courses c ON ca.CourseId=c.Id WHERE c.Id NOT LIKE '11111111-%';
-            DELETE sp FROM ScormPackages sp WHERE sp.CourseId NOT IN (SELECT Id FROM Courses WHERE Id LIKE '11111111-%');
-            DELETE c FROM Courses c WHERE c.Id NOT LIKE '11111111-%';
-          "
-
       - name: Unit tests — Catalog
         run: dotnet test tests/Catalog.Tests/Catalog.Tests.csproj --no-build
 
@@ -122,6 +112,19 @@ jobs:
 
       - name: Unit tests — Scorm
         run: dotnet test tests/Scorm.Tests/Scorm.Tests.csproj --no-build
+
+      # Spec 053 run log (specs/HANDOFF-RUN-LOG.md): "unit suites write to the
+      # shared LearningLms DB — the E2E filler-clean must run after the last
+      # unit run." Must stay after the unit-test steps above, not before.
+      - name: Filler-clean (removes Catalog perf-seed residue so E2E sees the seeded state)
+        run: |
+          /opt/mssql-tools18/bin/sqlcmd -S localhost,1433 -U sa -P "CiFixture!Passw0rd" -C -W -Q "
+            SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;
+            DELETE e FROM Enrollments e JOIN Courses c ON e.CourseId=c.Id WHERE c.Id NOT LIKE '11111111-%';
+            DELETE ca FROM CourseAttempts ca JOIN Courses c ON ca.CourseId=c.Id WHERE c.Id NOT LIKE '11111111-%';
+            DELETE sp FROM ScormPackages sp WHERE sp.CourseId NOT IN (SELECT Id FROM Courses WHERE Id LIKE '11111111-%');
+            DELETE c FROM Courses c WHERE c.Id NOT LIKE '11111111-%';
+          "
 
       - name: Install Playwright test dependencies
         working-directory: tests/Playwright.Tests
