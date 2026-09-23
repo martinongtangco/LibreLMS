@@ -1,0 +1,48 @@
+# Spec-kit extension hooks (see .pi/prompts/speckit.*.md "Pre-Execution Checks" /
+# "Completion Report" sections for how these are read and enforced).
+#
+# optional: false means the agent MUST invoke the hook and wait for it before
+# continuing — this is how the skills in .pi/skills/ get enforced usage instead
+# of relying on the model to decide, on its own, to load them.
+
+hooks:
+  before_implement:
+    - extension: verify-test-baseline
+      command: skill:verify-test-baseline
+      optional: false
+      enabled: true
+      description: >-
+        Record the verified per-project test baseline (pass/fail/skip counts,
+        cause of every known-red test) and the repo's real commit-message
+        convention before implementation starts.
+      prompt: /skill:verify-test-baseline
+
+  after_implement:
+    - extension: sequential-project-test-runner
+      command: skill:sequential-project-test-runner
+      optional: false
+      enabled: true
+      description: >-
+        Run the test gate sequentially per project against the shared MSSQL
+        database instead of a solution-wide `dotnet test`, which fails
+        non-deterministically under concurrent DB writes.
+      prompt: /skill:sequential-project-test-runner
+    - extension: regression-guard-scope-check
+      command: skill:regression-guard-scope-check
+      optional: false
+      enabled: true
+      description: >-
+        Verify any regression guard added by this spec covers the whole
+        defect class (git grep over the tracked tree), not just the reported
+        instance, before the spec is marked complete.
+      prompt: /skill:regression-guard-scope-check
+
+  before_converge:
+    - extension: verify-test-baseline
+      command: skill:verify-test-baseline
+      optional: false
+      enabled: true
+      description: >-
+        Re-verify the test baseline before assessing what work remains, so
+        convergence gaps are judged against a trustworthy gate result.
+      prompt: /skill:verify-test-baseline
