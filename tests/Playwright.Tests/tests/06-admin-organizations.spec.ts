@@ -116,15 +116,67 @@ async function authedApi(page: Page): Promise<APIRequestContext> {
   return playwrightRequest.newContext({ storageState: state });
 }
 
+interface OrgDto { id: string; name: string; parentId: string | null }
+
+/** Root Organization — the only org ManagementSeeder creates. */
+const ROOT_ORG_ID = '00000000-0000-0000-0000-000000000001';
+
+async function signInAsOrgAdmin(page: Page): Promise<void> {
+  await page.goto('/Account/Login');
+  await page.getByLabel('Email').fill(testUsers.orgAdmin.email);
+  await page.getByLabel('Password').fill(testUsers.orgAdmin.password);
+  await page.getByRole('button', { name: 'Sign In' }).click();
+  await page.waitForURL((url) => url.pathname === '/' || url.pathname.includes('/Courses'), {
+    timeout: 10_000,
+  });
+}
+
 test.describe('Admin Organizations — tree hierarchy (spec 036)', () => {
+  // The acceptance hierarchy these tests assert on (Root → Finance, Sales;
+  // Finance → Billing) is built by hand through the UI in this spec's
+  // quickstart.md, so it only ever existed in a long-lived developer database.
+  // On a fresh one — every CI run — ManagementSeeder creates Root Organization
+  // and nothing else, so every assertion below matched zero nodes.
+  //
+  // Create whatever is missing instead. This is a no-op against a database that
+  // already has the hierarchy (so the dev DB is untouched and no duplicate node
+  // ever breaks the "exactly once" assertions), and the rows are left in place
+  // afterwards: they are standing fixture data per quickstart.md, and a CI
+  // database is thrown away at the end of the job anyway.
+  test.beforeAll(async ({ browser }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    try {
+      await signInAsOrgAdmin(page);
+      const api = await authedApi(page);
+      try {
+        const listed = (await (await api.get('/api/organizations')).json()).organizations as OrgDto[];
+        const byName = new Map(listed.map((o) => [o.name, o.id]));
+
+        const ensure = async (name: string, parentId: string): Promise<string> => {
+          const existing = byName.get(name);
+          if (existing) return existing;
+
+          const res = await api.post('/api/organizations', {
+            data: { name, description: 'spec 036 acceptance hierarchy', parentId },
+          });
+          expect(res.ok(), `create "${name}": ${res.status()} ${await res.text()}`).toBeTruthy();
+          return ((await res.json()) as OrgDto).id;
+        };
+
+        const financeId = await ensure('Finance', ROOT_ORG_ID);
+        await ensure('Sales', ROOT_ORG_ID);
+        await ensure('Billing', financeId);
+      } finally {
+        await api.dispose();
+      }
+    } finally {
+      await context.close();
+    }
+  });
+
   test.beforeEach(async ({ page }) => {
-    await page.goto('/Account/Login');
-    await page.getByLabel('Email').fill(testUsers.orgAdmin.email);
-    await page.getByLabel('Password').fill(testUsers.orgAdmin.password);
-    await page.getByRole('button', { name: 'Sign In' }).click();
-    await page.waitForURL((url) => url.pathname === '/' || url.pathname.includes('/Courses'), {
-      timeout: 10_000,
-    });
+    await signInAsOrgAdmin(page);
     await page.goto('/Admin/Organizations/Index');
   });
 
