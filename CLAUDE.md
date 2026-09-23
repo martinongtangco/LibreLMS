@@ -29,6 +29,10 @@ Principles that most often change what you do here:
 - **XVI Independent Verification** — the session that wrote the code cannot be the only verifier
   before merge; either a fresh subagent re-runs build + Playwright from a clean worktree, or the
   human reviews the gate evidence and approves the merge.
+- **XVII Verify Against a Disposable Environment** — gate evidence must come from a fresh
+  per-run database: `.github/workflows/ci.yml` is the authoritative Principle XIII run, and any
+  local run (in-container or host-side) against the long-lived dev DB is supporting evidence, not
+  proof. Tests create their own data and read endpoints from configuration.
 - **XII Return to Master** — `git checkout master` when an implementation slice ends.
 - **V The Sandbox Is Not Optional** — mandates that agent work run inside `.devcontainer`. Current
   practice diverges; that conflict is unresolved, see §5. Don't treat the divergence as settled.
@@ -118,12 +122,13 @@ compose publishes Valkey on 6380 because 6379 on this machine belongs to another
 
 ### Host-side gotchas (none of these bite inside the devcontainer)
 
-- **Three Playwright specs can't do their Valkey recovery host-side.** `14-profile-courses`,
-  `15-scorm-launch-ui`, and `20-scorm-session-authz` each define a `flushScormSessions()` that dials
-  the compose hostname `valkey:6379`, which doesn't resolve from Windows. It runs only on the
-  stale-active-session recovery path, so these specs pass until a leftover session exists and then
-  fail with `ENOTFOUND valkey` — intermittent by construction. The in-container run is the canonical
-  one for the full suite.
+- **Three Playwright specs need `ConnectionStrings__Valkey` exported.** `14-profile-courses`,
+  `15-scorm-launch-ui`, and `20-scorm-session-authz` each define a `flushScormSessions()` that
+  reads that variable and falls back to the compose hostname `valkey:6379` (which doesn't resolve
+  from Windows) only when it is unset — since `1748f50`. With the export from the block above it is
+  a non-issue; without it, the specs pass until a stale active session exists, then fail with
+  `ENOTFOUND valkey` on the recovery path — intermittent by construction. The fallback exists so
+  the devcontainer run is unaffected.
 - **Launch the Host with `--project src/Host`, not `dotnet Host.dll` from the repo root.**
   `Program.cs` computes `wwwroot` from `ContentRootPath` and *creates it if missing*, so a wrong cwd
   silently produces an empty `wwwroot` and the app serves no CSS/JS/fonts instead of erroring.
@@ -134,7 +139,9 @@ compose publishes Valkey on 6380 because 6379 on this machine belongs to another
 
 `.github/workflows/ci.yml` is the canonical end-to-end sequence (restore → build → ArchitectureTests
 → start host → unit projects → filler-clean → Playwright) in one job with MSSQL/Valkey service
-containers.
+containers — and per the constitution's Development Workflow it is the **authoritative Principle
+XIII run** (fresh per-run database, Principle XVII); any local run, in-container or host-side, is
+supporting evidence.
 
 ## 3. Architecture
 
