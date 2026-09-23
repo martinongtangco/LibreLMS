@@ -169,3 +169,47 @@ Verification (XVI, fresh no-context subagent, clean detached worktree @06ae70b):
 / 302 + guest /MyCourses 302; Playwright 186 passed + 1 documented skip, 0 failed (first run).
 Gate 3 on master @92fc26b: build 0 errors; units 197/197; filler-clean 11,668→10; Valkey
 FLUSHALL; Playwright (JSON, definitive) expected 186 / skipped 1 / unexpected 0 / flaky 0.
+
+### Item 8 — Enrollment.Tests parallelization flake — spec 056 (bug/056-serialize-enrollment-tests)
+- [X] A  spec        commit c03462d
+- [X] B  plan        commit c588ae1 (research.md carries the race mechanism + per-class Scorm.Tests decision evidence)
+- [X] C  tasks       commit 8911fa6
+- [X] D  implement   commit 256247e   one file: tests/Enrollment.Tests/AssemblyInfo.cs (+22) — no assertion touched
+- [X] E  merge       commit 978cc50   (--no-ff, after independent verification; local Playwright gate environmentally RED — diagnosis below, authoritative gates green)
+- [X] F  gate 3      commit (this commit)   master CI 35817464596 SUCCESS (fresh DB, full suite, 6m36s)
+RESULT: COMPLETED     consecutive_blocked = 0
+
+Item 8 findings for final report:
+- Run-2 baseline (verified at start, master @ 490d358): unit gate 197/197 (Arch 14,
+  Catalog 39, Enrollment 42, Host 29, Management 55, Scorm 18); CI 35807448405 success /
+  35807132600 failure / 35803849842 success — green-but-flaky, as the handoff stated.
+  Co-Authored-By: Claude confirmed to be an artifact of the 2026-09-21+ Claude session
+  only (no commit before 2026-09-21 carries one) — new commits do not add it.
+- Root cause: xUnit class-level parallelism + two IAsyncLifetime classes
+  (AdminListLearnersTests, AdminListEnrollmentsTests) each seeding 12 filler Students
+  one row at a time (individual auto-committed INSERTs — non-atomic);
+  empty_search_is_no_filter compares two catalog-wide dbo.AdminListLearners totals, so a
+  single INSERT/DELETE landing between the reads diverges them. The assertion is the SP's
+  empty==NULL contract (spec 042) and was NOT loosened.
+- Pre-fix flake on record: CI run 35807132600 FAILED in empty_search_is_no_filter
+  (Assert.Equal() Values differ, 1-row delta); run 35807448405 on identical test code
+  succeeded.
+- Gate 1 (local, supporting): build 0 errors; host Now listening 5000+7095; / → 302.
+- Local unit gate ×3 (supporting): 3 × 197/197.
+- Gate 2 (authoritative, XVII): branch CI 35812601046 SUCCESS (fresh DB, full suite, 6m36s).
+- XVI (fresh no-context subagent, detached clean worktree @256247e): build 0 errors;
+  units 197/197; target test green in isolation; fix file present; local Playwright RED —
+  documented environmental root cause (WSL2 swap thrashing: 81% of 1 GiB swap used, host
+  RAM 91% → intermittent 30s SQL timeouts on catalog-backed pages; the SP and the app
+  respond in milliseconds when the VM is not stalling; a one-line test-only diff cannot be
+  the cause). Classified Blocking—environment (XV.3); diagnosis is the required output
+  (XIV), no retries burned.
+- Gate 3: master CI 35817464596 SUCCESS (fresh DB, 6m36s) — authoritative. Local
+  (supporting): rebuild 0 errors on merged master; host restarted on the merged build
+  (Now listening ×2, / → 302); local full E2E environmentally RED (same WSL2 swap
+  signature; 33 passed / 1 skipped / rest failed-or-not-run; two full attempts — XIV
+  budget exhausted; per XVII the CI run is the proof, local is supporting).
+- Scorm.Tests decision (documented in research.md §3, no change): all 7 lifetime classes
+  scope mutations AND assertions to per-run random-GUID markers; no catalog-wide
+  read-compares exist, so the defect class is absent. Revisit only if a Scorm flake
+  surfaces with this signature.

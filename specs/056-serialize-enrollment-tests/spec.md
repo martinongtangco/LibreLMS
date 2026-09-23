@@ -4,13 +4,16 @@
 
 **Created**: 2026-09-23
 
-**Status**: In progress
+**Status**: Complete (2026-09-23 — merged to master @ 978cc50; authoritative gates green:
+branch CI 35812601046 and master CI 35817464596, both fresh-DB full-suite success per
+Principle XVII; local gates supporting — see tasks.md T004–T009 and run log item 8)
 
-**Input**: Handoff task 1 (2026-09-23). CI run 35803… failed at
-`Enrollment.Tests.AdminListLearnersTests.empty_search_is_no_filter` with
-`Expected 25, Actual 24`; the following CI runs were green. Same defect class as the one
-fixed in Catalog.Tests by `f0ba9d6` (direct-to-master commit — recorded in
-`specs/HANDOFF-RUN-LOG.md`).
+**Input**: Handoff task 1 (2026-09-23). The CI flake is on record: run 35807132600 FAILED
+at `Enrollment.Tests.AdminListLearnersTests.empty_search_is_no_filter`
+(`Assert.Equal() Failure: Values differ` — one filler row between the two reads), and the
+next run on identical test code, 35807448405, succeeded — green-but-flaky. Same defect
+class as the one fixed in Catalog.Tests by `f0ba9d6` (direct-to-master commit — recorded
+in `specs/HANDOFF-RUN-LOG.md`).
 
 ## Root Cause (verified against the code at 490d358)
 
