@@ -213,3 +213,36 @@ Item 8 findings for final report:
   scope mutations AND assertions to per-run random-GUID markers; no catalog-wide
   read-compares exist, so the defect class is absent. Revisit only if a Scorm flake
   surfaces with this signature.
+
+## Direct-to-master commits — 2026-09-21 → 2026-09-23 (recorded 2026-09-23)
+
+Eight code commits were pushed straight to `master` with no `bug/`/`story/` branch and
+no spec — a violation of Principles VIII and X. Recorded here as fact, not excused.
+They were made by the Claude Code session that also produced the 2026-09-23 handoff;
+each commit message carries its own root cause and evidence, so this entry records the
+governance breach and what landed, without re-litigating the technical content.
+
+| Commit | Subject (abridged) | What it changed |
+|---|---|---|
+| dd8a1e6 | fix(ci): use full path to sqlcmd in Filler-clean step | ci.yml: full mssql-tools18 path (not on runner PATH) |
+| 97e1812 | fix(ci): install mssql-tools18 on runner before Filler-clean step | ci.yml: apt-install mssql-tools18 (absent on ubuntu-24.04 runners) |
+| a099b18 | fix(ci): npm ci in Playwright.Tests before running Playwright | ci.yml: local @playwright/test instead of npx-fetched package |
+| 1c63f24 | fix(ci): run Filler-clean after the unit-test steps, not before | ci.yml: step order — unit suites dirty the shared DB, so cleanup must follow them |
+| 6249955 | fix(ci): point filler-clean at LearningLms and fail on SQL errors | ci.yml: sqlcmd -d LearningLms -b (was cleaning nothing, exiting 0) |
+| f0ba9d6 | test(catalog): serialize Catalog.Tests classes on the shared database | Catalog.Tests/AssemblyInfo.cs — the fix this run's spec 056 extends to Enrollment.Tests |
+| 1748f50 | test(e2e): resolve Valkey from the connection string, not the compose host | 3 SCORM specs: flushScormSessions reads ConnectionStrings__Valkey, fallback valkey:6379 |
+| a03eee2 | test(036): build the org acceptance hierarchy instead of assuming it | 06-admin-organizations.spec.ts: beforeAll creates missing hierarchy via admin API (XVII.1) |
+
+Notes:
+- `ea2f426` (constitution amendment to v1.9.0) is NOT counted among the violations:
+  constitution amendments follow the established master-direct precedent (this file's
+  own Governance section is amended on master with a version bump).
+- `490d358` ("Updated constitution and CLAUDE.md" — CLAUDE.md + .pi agent skills +
+  .specify/extensions.yml, docs/tooling, no code) also landed on master outside a spec
+  cycle; noted for completeness, same category as the run-log/docs commits this file
+  has always received on master.
+- Deliberately NOT back-dated into a spec: the handoff's instruction, and the correct
+  one — a retroactive spec 056 would have given the paper benefit the rule exists to
+  prevent, and the commit messages already carry root cause and evidence.
+- Going forward (this run): spec 056 and spec 057 both ran the full branch + spec
+  cycle, including CI as the authoritative gate per Principle XVII.
