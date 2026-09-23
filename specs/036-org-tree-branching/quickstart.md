@@ -32,17 +32,21 @@ Verify (gate 1 of Constitution XIII — show evidence, don't assume):
 > `restart-host-app` skill for the explicit-kill pitfall: `pkill -f 'bin/Debug/net10.0/Host'`
 > first, confirm ports 5000/7095 are free).
 
-## 3. Seed the standard test hierarchy
+## 3. The standard test hierarchy (the tests build it themselves)
 
 The standard acceptance hierarchy (spec US1/US2): **Root Organization → Finance, Sales;
-Finance → Billing**. The DB is persistent (seeders only run on an empty DB), so create it via the
-UI on first validation:
+Finance → Billing**. Since `a03eee2`, `tests/06-admin-organizations.spec.ts` creates whatever is
+missing in `beforeAll` via the admin API — a no-op against a database that already has the
+hierarchy (so the dev DB is untouched and no duplicate node breaks the "exactly once"
+assertions). **No manual seeding is a prerequisite for the E2E gate**: Constitution XVII.1
+disallows a test depending on fixture data a human had to build by hand.
+
+*Optional — manual exercise of the create-org flow (the feature spec 036 shipped):*
 
 1. Log in as SuperUser at `http://localhost:5000/Account/Login`.
-2. Open **Admin → Organizations → Create Organization**: create **Finance** (parent: Root
-   Organization) and **Sales** (parent: Root Organization).
-3. Create **Billing** (parent: Finance).
-4. *Optional, for C-08*: disable a node via the Org Chart context menu (spec 013) to exercise the
+2. Open **Admin → Organizations → Create Organization**: create a scratch org (parent: Root
+   Organization), verify it appears in the tree, delete it afterwards.
+3. *Optional, for C-08*: disable a node via the Org Chart context menu (spec 013) to exercise the
    disabled-subtree treatment; re-enable afterwards.
 
 ## 4. Automated validation (gate 2 — E2E)
