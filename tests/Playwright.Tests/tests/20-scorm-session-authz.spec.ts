@@ -26,8 +26,13 @@ const SCORM_COURSE_ID = '11111111-1111-1111-1111-111111111111';
  * as 15-scorm-launch-ui).
  */
 async function flushScormSessions(): Promise<void> {
+  // Follow the app's own connection string: inside compose this resolves to
+  // valkey:6379, but on a bare CI runner the service is published on
+  // localhost:6379 and the "valkey" hostname does not resolve at all.
+  const [valkeyHost, valkeyPort] = (process.env.ConnectionStrings__Valkey ?? 'valkey:6379').split(':');
+
   await new Promise<void>((resolve, reject) => {
-    const socket = net.connect(6379, 'valkey', () => {
+    const socket = net.connect(Number(valkeyPort ?? 6379), valkeyHost, () => {
       socket.write('*1\r\n$8\r\nFLUSHALL\r\n');
     });
     const timer = setTimeout(() => {
