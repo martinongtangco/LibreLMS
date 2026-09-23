@@ -246,3 +246,32 @@ Notes:
   prevent, and the commit messages already carry root cause and evidence.
 - Going forward (this run): spec 056 and spec 057 both ran the full branch + spec
   cycle, including CI as the authoritative gate per Principle XVII.
+
+### Item 9 — Stale agent-facing docs after constitution v1.9.0 — spec 057 (bug/057-fix-stale-agent-docs)
+- [X] A  spec        commit a3c0ca7
+- [X] B  plan        commit d0fd556
+- [X] C  tasks       commit d0fd556 (plan+tasks together — docs slice, no research artifact needed)
+- [X] D  implement   commit 7c3a6ed   two files: CLAUDE.md + specs/036-org-tree-branching/quickstart.md (25 ins / 14 del; zero code)
+- [X] E  merge       commit e2b7e1d   (--no-ff, after independent verification GREEN)
+- [X] F  gate 3      commit (this commit)   master CI 35822706866 SUCCESS (fresh DB, full suite, 6m45s)
+RESULT: COMPLETED     consecutive_blocked = 0
+
+Item 9 findings for final report:
+- Closed BOTH deferred items of the v1.9.0 Sync Impact Report (ea2f426): (a) XVII added
+  to CLAUDE.md §0's principle list; (b) 036 quickstart no longer makes the E2E gate
+  depend on hand-built fixture data (tests self-build since a03eee2 — XVII.1).
+- Rewrote the stale Valkey gotcha to the post-1748f50 reality (env var with
+  compose-hostname fallback; warning conditional on the export) and dropped the
+  "in-container run is canonical" conclusion in favor of the constitution's
+  authoritative-run statement (ci.yml per Development Workflow; XVII).
+- Gates: build 0 errors (the session's earlier 18-error builds were MSB3027 file locks
+  from the running host holding bin/ DLLs — environmental, zero compile errors);
+  branch CI 35820076981 SUCCESS (6m28s); XVI independent verification GREEN — all seven
+  factual claims re-verified with line-level citations (flushScormSessions pattern at
+  14:34/15:45/20:32, introduced by 1748f50 per git log -S; recovery-path-only invocation
+  in all three specs; constitution Development Workflow + XVII clauses quoted;
+  06-admin-organizations beforeAll ensure-if-missing :146–:169 from a03eee2; diff = 2
+  .md files only); master CI 35822706866 SUCCESS (6m45s).
+- Nuance recorded by the verifier (not an error): the constitution names the
+  devcontainer run specifically as "supporting evidence"; CLAUDE.md generalizes to any
+  local run — consistent with XVII's "never the long-lived development database".

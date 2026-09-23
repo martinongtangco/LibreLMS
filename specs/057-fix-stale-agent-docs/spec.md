@@ -4,7 +4,10 @@
 
 **Created**: 2026-09-23
 
-**Status**: In progress
+**Status**: Complete (2026-09-23 — merged to master @ e2b7e1d; branch CI 35820076981
+SUCCESS, master CI pending at F-commit; XVI independent claim verification GREEN — all
+seven claims re-checked with line-level citations; see tasks.md T007–T012 and run log
+item 9)
 
 **Input**: Handoff task 2 (2026-09-23) plus the two Deferred items in the Sync Impact
 Report of the v1.9.0 amendment (commit `ea2f426`).
