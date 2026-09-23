@@ -1,32 +1,36 @@
 <!--
   Sync Impact Report
   ==================
-  Version change: 1.7.1 → 1.8.0 (MINOR: three principles added — XIV, XV, XVI —
-  no existing principle removed or redefined)
+  Version change: 1.8.0 → 1.9.0 (MINOR: one principle added — XVII — no existing
+  principle removed or redefined)
   Added sections:
-    - XIV. Bounded Retry — Every Loop Has a Ceiling
-    - XV. Triage Before Retry
-    - XVI. Independent Verification for Merge
-  Modified principles:
-    - XIII. Verification Before Claim — cross-reference sentence added to the body
-      (a Principle XIV diagnosis in lieu of a passing gate is not an exemption)
+    - XVII. Verify Against a Disposable Environment
+  Modified principles: none
+  Modified sections:
+    - Development Workflow — bullet added naming the CI workflow as the
+      authoritative Principle XIII run
   Removed sections: none
   Templates updated:
-    - .specify/templates/tasks-template.md — ✅ no changes needed (verified: new
-      principles constrain agent behavior at verification gates, not task
-      categorization or template structure)
-    - .specify/templates/plan-template.md — ✅ no changes needed (verified:
-      Constitution Check gate is generic, filled from the constitution file; no new
-      mandatory plan section)
-    - .specify/templates/spec-template.md — ✅ no changes needed (verified: no new
-      mandatory spec sections or constraints)
-    - README.md — ✅ no changes needed (verified: references the constitution as
-      source of truth; no per-principle listing or version reference)
-    - AGENTS.md — ✅ no changes needed (verified: references the constitution as
-      authoritative; no per-principle listing)
-    - .pi/prompts/speckit.*.md — ✅ no changes needed (verified: only Principle VIII
-      branch-naming references; no outdated principle references)
-  Deferred items: none
+    - .specify/templates/tasks-template.md — ✅ no changes needed (verified: no
+      principle references)
+    - .specify/templates/plan-template.md — ✅ no changes needed (verified: only a
+      Principle VIII branch-naming reference; Constitution Check gate is generic
+      and filled from this file)
+    - .specify/templates/spec-template.md — ✅ no changes needed (verified: same
+      Principle VIII branch-naming reference only)
+    - README.md — ✅ no changes needed (verified: only a Principle VII reference for
+      the spec-kit flow; no per-principle listing or version reference)
+    - AGENTS.md — ✅ no changes needed (verified: no principle-number references)
+    - .pi/prompts/speckit.*.md — ✅ no changes needed (verified: only the
+      Principle VIII branch-creation reference in speckit.implement.md)
+  Deferred items:
+    - CLAUDE.md lists the principles that most often change what an agent does
+      (XIII, XIV/XV, XVI, XII, V); XVII belongs in that list. Not edited here —
+      that file is staged, uncommitted work in progress.
+    - specs/036-org-tree-branching/quickstart.md instructs a human to build the
+      acceptance hierarchy by hand, which XVII.1 now disallows as a test
+      dependency. The spec's tests were fixed to build it themselves (a03eee2);
+      the quickstart prose still needs updating to match.
 -->
 
 # Learning LMS Constitution
@@ -270,6 +274,24 @@ Rationale: Principle XI already provides parallel subagents for throughput; this
 capability for verification instead of just speed. Self-reported proof from the same
 context that wrote the code is weaker evidence than independent confirmation.
 
+### XVII. Verify Against a Disposable Environment
+Evidence for a Principle XIII gate MUST come from a run against a database created from
+scratch for that run — never the long-lived development database.
+
+1. **Tests create their own data.** A test may only assert on rows it created, or rows a
+   seeder under `src/` creates. If a quickstart tells a human to build fixture data by
+   hand, that data does not exist anywhere else, and a test depending on it is unverified.
+2. **A step that cannot fail is not evidence.** Any command used as proof MUST exit
+   non-zero when it fails (e.g. `sqlcmd -b`). A green step that did nothing is worse than
+   a red one, because it ends the investigation instead of starting it.
+3. **Tests read endpoints from configuration**, never a hardcoded hostname — the same test
+   must run inside `docker compose` and on a bare CI runner.
+
+Rationale: Principle XVI demands a clean *checkout*; it says nothing about clean *state*.
+A suite can pass for months against a developer database that has drifted — hand-made
+organizations, leftover perf-seed rows — and then fail completely the first time it runs
+anywhere else. Each clause above is one failure that actually reached `master` this way.
+
 ## Technology & Scope Constraints
 
 - **.NET 10 (GA/LTS)**, pinned via `global.json` to a released SDK band — never a preview band,
@@ -297,6 +319,9 @@ context that wrote the code is weaker evidence than independent confirmation.
   automated check for Principle III.
 - Playwright E2E tests must pass before any fix or feature is claimed complete (Principle XIII).
   If no test covers the changed behavior, write one.
+- `.github/workflows/ci.yml` is the authoritative Principle XIII run: it builds a clean checkout
+  against a freshly created MSSQL/Valkey pair. A green devcontainer run is supporting evidence,
+  not proof (Principle XVII).
 - Any decision that took real discussion to reach (a technology choice, a boundary placement, the
   sandboxing model) gets a short ADR under `docs/adr/`, numbered sequentially.
 
@@ -309,4 +334,4 @@ simplify the instruction, not to add more words explaining it. Amendments requir
 file, bumping the version below, and — if the amendment reverses a prior ADR — recording that
 reversal as a new ADR rather than editing the old one.
 
-**Version**: 1.8.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-08-31
+**Version**: 1.9.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-09-23
