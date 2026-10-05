@@ -1,5 +1,6 @@
 using LibreLms.Contracts.Catalog;
 using LibreLms.Contracts.Enrollment;
+using LibreLms.Contracts.Scorm;
 using LibreLms.Modules.Management.Application;
 using LibreLms.Modules.Management.Domain;
 using LibreLms.Modules.Management.Infrastructure;
@@ -39,7 +40,8 @@ public class DashboardServiceBulkCountsTests : IDisposable
         // The real OrganizationLookup over the same InMemory context: the shared
         // OrgSubtree BFS (ADR 0010) reads the seeded org tree from one source.
         _service = new DashboardService(_managementCtx, new StubUserLookup(), _enrollmentAdmin, _courseLookup,
-            new LibreLms.Modules.Management.Application.OrganizationLookup(_managementCtx));
+            new LibreLms.Modules.Management.Application.OrganizationLookup(_managementCtx),
+            new StubUserProvisioning(), new StubScormAttemptStats());
 
         _managementCtx.Organizations.AddRange(
             new Organization { Id = _rootOrg, Name = "Root", ParentId = null },
@@ -185,4 +187,32 @@ public class StubUserLookup : IUserLookup
     public Task<IList<UserSummary>> GetUsersAsync(IEnumerable<Guid> studentIds)
         => Task.FromResult<IList<UserSummary>>(Array.Empty<UserSummary>());
     public Task<int> CountByRoleAsync(string role) => Task.FromResult(0);
+}
+
+/// <summary>IUserProvisioning stub — no students in this fixture (spec 058 ctor param).</summary>
+public class StubUserProvisioning : IUserProvisioning
+{
+    public Task<StudentProvisionedDto> CreateAsync(string name, string email, string password,
+        string role, Guid organizationId, bool isVerified)
+        => Task.FromResult(new StudentProvisionedDto(Guid.NewGuid(), name, email, role, organizationId, DateTimeOffset.UtcNow, isVerified));
+    public Task<StudentProvisionedDto?> GetByIdAsync(Guid studentId) => Task.FromResult<StudentProvisionedDto?>(null);
+    public Task<IList<StudentProvisionedDto>> ListByOrgAsync(Guid orgId, string? roleFilter = null)
+        => Task.FromResult<IList<StudentProvisionedDto>>(Array.Empty<StudentProvisionedDto>());
+    public Task<IList<StudentProvisionedDto>> ListAsync(string? roleFilter = null)
+        => Task.FromResult<IList<StudentProvisionedDto>>(Array.Empty<StudentProvisionedDto>());
+    public Task<StudentPageResult> ListPagedAsync(string? search, string? roleFilter, int pageNumber, int pageSize, Guid? rootOrgId = null)
+        => Task.FromResult(new StudentPageResult(Array.Empty<StudentProvisionedDto>(), 0));
+    public Task<StudentProvisionedDto> UpdateAsync(Guid studentId, string? name, string? role, Guid? organizationId, string? avatarPath = null)
+        => Task.FromResult(new StudentProvisionedDto(studentId, name ?? "", "", role ?? "", Guid.NewGuid(), DateTimeOffset.UtcNow, true));
+    public Task DeleteAsync(Guid studentId) => Task.CompletedTask;
+    public Task<bool> ExistsByEmailAsync(string email) => Task.FromResult(false);
+}
+
+/// <summary>IScormAttemptStats stub — no attempts in this fixture (spec 058 ctor param).</summary>
+public class StubScormAttemptStats : IScormAttemptStats
+{
+    public Task<AttemptStatsSummary> GetSystemStatsAsync()
+        => Task.FromResult(new AttemptStatsSummary(0, 0, 0, 0.0, 0));
+    public Task<AttemptStatsSummary> GetStatsForStudentsAsync(IEnumerable<Guid> studentIds)
+        => Task.FromResult(new AttemptStatsSummary(0, 0, 0, 0.0, 0));
 }
