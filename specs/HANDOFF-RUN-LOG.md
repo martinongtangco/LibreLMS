@@ -275,3 +275,60 @@ Item 9 findings for final report:
 - Nuance recorded by the verifier (not an error): the constitution names the
   devcontainer run specifically as "supporting evidence"; CLAUDE.md generalizes to any
   local run — consistent with XVII's "never the long-lived development database".
+
+### Item 10 — Code review remediation — spec 058 (story/058-code-review-remediation)
+- [X] A  spec        commit 3b421c3   (authored on master — HANDOFF-anticipated deviation; master fast-forwarded b068312 → 3b421c3, IX)
+- [X] B  plan        commit 02db451   (on master, IX)
+- [X] C  tasks       commit 58020c2   (on master, IX)
+- [X] D  implement   commit 0c095f2   M1/P1 (M2/M3/M4 pending)
+- [ ] E  merge       (XVI independent verification, then external merge — this session does not merge)
+- [ ] F  gate 3      (master CI after merge)
+RESULT: IN PROGRESS (M1/P1 complete)     consecutive_blocked = 0
+
+Item 10 — Verified Baseline (T003, before_implement hook; sequential runner from the
+story worktree, host-side mode):
+- Arch 14/14, Catalog 39/39, Enrollment 42/42, Host 29/29, Management 55/55,
+  Scorm 18/18 — TOTAL 197 passed / 0 failed / 0 skipped.
+- Commit convention (observed in git log, used for this run):
+  `feat|fix|test|docs|plan|tasks(<spec>): <subject> (spec NNN)`; merges
+  `Merge <branch>: <what> (spec NNN)`; constitution amendments + run-log/docs
+  land direct on master.
+
+Item 10 — M1/P1 evidence (gate per T009):
+- Red→green (US2 proof): DashboardServiceTests 3 red on the still-hardcoded body
+  (org rate expected 0.3 / actual 0.0; completed-course count expected 1 / actual 0;
+  attempt count expected 3 / actual 4 — old body derived it from enrollments),
+  then 8/8 green after wiring. Log: /tmp/058-m1-red.log.
+- Local (host-side, supporting): build 0 errors; app restart → `/` 302; sequential
+  unit runner 205/205 (197 baseline + 8 new; per-project Arch 14, Catalog 39,
+  Enrollment 42, Host 29, Management 63, Scorm 18) — verified on BOTH the shared
+  dev DB and a fresh per-run DB; Playwright new spec 21-dashboard-real-stats 4/4;
+  full Playwright suite on a pristine CI-equivalent state (fresh per-run MSSQL +
+  fresh Valkey, migrate+seed, filler-clean, workers=1 retries=2) = 190 passed /
+  1 skipped / 0 failed.
+- Gate 2 (authoritative, XVII): branch CI 37308473747 SUCCESS (fresh DB, 6m37s).
+
+Item 10 — environmental findings (host-side, recorded per XIV; none caused by this
+branch's code):
+1. BrowseCourses plan pathology (shared dev DB): with the visibility parameter
+   carrying ~11.7k GUIDs the Sept-14 (spec 054) SP plan re-evaluated OPENJSON per
+   outer row — 852M logical reads, >190s per call (dm_exec_query_stats evidence),
+   so every authenticated catalog page 500'd on the 30s command timeout. Root
+   cause = data growth (11.7k courses) × O(courses×json) plan shape. Local
+   workaround: dev-DB-only ALTER PROCEDURE (materialize the JSON into a table
+   variable once — behavior-identical, 0.44s at full set; verified small/full/NULL
+   cases). Repo code untouched; a proper fix (migration) needs its own spec —
+   flagged for the final report. Note CI is unaffected: its per-run DB never
+   accumulates the filler set before filler-clean (see 2).
+2. Unit suites dirty the DB with ~11.7k filler courses (CI's documented
+   filler-clean hazard, ci.yml comment). The shared dev DB had accumulated them
+   from a 15:17 unit run; CI's exact filler-clean SQL was applied to the dev DB
+   (11,668 rows removed, 10 seeded courses remain).
+3. Local full-suite flake class (pre-existing, cf. Item 1 finding): parallel
+   workers (config fullyParallel, local default 3) let 16-admin-pagination's
+   filler courses and 19-course-visibility's hide/unhide race; rotating 3-test
+   failure sets per local run (02/03/14/15/19/20 variants). Serial run on a
+   pristine DB (CI shape) is green; CI uses workers=1 + 2 retries.
+4. WSL2/Docker network blips (stale port-proxy state) required one
+   `wsl --shutdown` + Docker Desktop restart mid-run; post-restart the same
+   queries ran in milliseconds — environmental, no code involvement.
