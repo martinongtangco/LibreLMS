@@ -157,11 +157,10 @@ using (var scope = app.Services.CreateScope())
     var managementCtx = scope.ServiceProvider.GetRequiredService<ManagementDbContext>();
     var hostEnv = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
 
-    // Apply all migrations (creates database if it doesn't exist)
+    // Apply all migrations (creates database if it doesn't exist).
+    // spec 058 P4: the enrollment/scorm/management calls were duplicated —
+    // Migrate() is idempotent, so behavior is unchanged.
     catalogCtx.Database.Migrate();
-    enrollmentCtx.Database.Migrate();
-    scormCtx.Database.Migrate();
-    managementCtx.Database.Migrate();
     enrollmentCtx.Database.Migrate();
     scormCtx.Database.Migrate();
     managementCtx.Database.Migrate();
@@ -442,9 +441,9 @@ app.MapGet("/api/scorm/session/{sessionId:guid}/api.js", (Guid sessionId) =>
 // User Management Endpoints
 var users = app.MapGroup("/api/users")
     .WithTags("Users")
-    .RequireAuthorization();
+    .RequireAuthorization(new AuthorizeAttribute { Roles = "SuperUser,OrgAdmin" }); // spec 058 P4: group-level roles (adminEnrollments style)
 
-users.MapGet("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+users.MapGet("/", async (
     LibreLms.Modules.Management.Application.UserService service,
     [Microsoft.AspNetCore.Mvc.FromQuery] Guid? organizationId,
     [Microsoft.AspNetCore.Mvc.FromQuery] string? role,
@@ -456,7 +455,7 @@ users.MapGet("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUs
     return Results.Ok(new { users = usersList });
 });
 
-users.MapGet("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+users.MapGet("/{id:guid}", async (
     LibreLms.Modules.Management.Application.UserService service, Guid id, HttpContext httpContext) =>
 {
     try
@@ -473,7 +472,7 @@ users.MapGet("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles =
     }
 });
 
-users.MapPost("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+users.MapPost("/", async (
     LibreLms.Modules.Management.Application.UserService service,
     [Microsoft.AspNetCore.Mvc.FromBody] LibreLms.Host.ManagementDtos.CreateUserRequest request,
     HttpContext httpContext) =>
@@ -489,7 +488,7 @@ users.MapPost("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperU
     catch (ArgumentException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
 });
 
-users.MapPut("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+users.MapPut("/{id:guid}", async (
     LibreLms.Modules.Management.Application.UserService service, Guid id,
     [Microsoft.AspNetCore.Mvc.FromBody] LibreLms.Host.ManagementDtos.UpdateUserRequest request,
     HttpContext httpContext) =>
@@ -505,7 +504,7 @@ users.MapPut("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles =
     catch (InvalidOperationException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
 });
 
-users.MapDelete("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+users.MapDelete("/{id:guid}", async (
     LibreLms.Modules.Management.Application.UserService service, Guid id, HttpContext httpContext) =>
 {
     try
@@ -522,10 +521,10 @@ users.MapDelete("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Role
 // Organization Management Endpoints
 var orgs = app.MapGroup("/api/organizations")
     .WithTags("Organizations")
-    .RequireAuthorization();
+    .RequireAuthorization(new AuthorizeAttribute { Roles = "SuperUser,OrgAdmin" }); // spec 058 P4: group-level roles (adminEnrollments style)
 
 // GET /api/organizations — list orgs (scoped: SuperUser all, OrgAdmin subtree — ADR 0010)
-orgs.MapGet("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+orgs.MapGet("/", async (
     LibreLms.Modules.Management.Application.OrganizationService service,
     [Microsoft.AspNetCore.Mvc.FromQuery] Guid? parentId,
     HttpContext httpContext) =>
@@ -547,7 +546,7 @@ orgs.MapGet("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUse
 });
 
 // GET /api/organizations/picker — for dropdown selection (scoped, ADR 0010)
-orgs.MapGet("/picker", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+orgs.MapGet("/picker", async (
     LibreLms.Modules.Management.Application.OrganizationService service, HttpContext httpContext) =>
 {
     var list = await service.ListAllAsync(LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(httpContext.User));
@@ -556,7 +555,7 @@ orgs.MapGet("/picker", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Su
 });
 
 // GET /api/organizations/{id} — get single org (out-of-scope → 403, ADR 0010)
-orgs.MapGet("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+orgs.MapGet("/{id:guid}", async (
     LibreLms.Modules.Management.Application.OrganizationService service, Guid id, HttpContext httpContext) =>
 {
     try
@@ -577,7 +576,7 @@ orgs.MapGet("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = 
 });
 
 // POST /api/organizations — create org
-orgs.MapPost("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+orgs.MapPost("/", async (
     LibreLms.Modules.Management.Application.OrganizationService service,
     [Microsoft.AspNetCore.Mvc.FromBody] LibreLms.Modules.Management.Endpoints.CreateOrganizationRequest request,
     HttpContext httpContext) =>
@@ -595,7 +594,7 @@ orgs.MapPost("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUs
 });
 
 // PUT /api/organizations/{id} — update org
-orgs.MapPut("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+orgs.MapPut("/{id:guid}", async (
     LibreLms.Modules.Management.Application.OrganizationService service, Guid id,
     [Microsoft.AspNetCore.Mvc.FromBody] LibreLms.Modules.Management.Endpoints.UpdateOrganizationRequest request,
     HttpContext httpContext) =>
@@ -614,7 +613,7 @@ orgs.MapPut("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = 
 });
 
 // DELETE /api/organizations/{id} — soft delete org
-orgs.MapDelete("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+orgs.MapDelete("/{id:guid}", async (
     LibreLms.Modules.Management.Application.OrganizationService service, Guid id, HttpContext httpContext) =>
 {
     var scope = LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(httpContext.User);
@@ -634,9 +633,9 @@ orgs.MapDelete("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles
 // === Admin Course Management Endpoints ===
 var adminCourses = app.MapGroup("/api/admin/courses")
     .WithTags("Admin Courses")
-    .RequireAuthorization();
+    .RequireAuthorization(new AuthorizeAttribute { Roles = "SuperUser,OrgAdmin" }); // spec 058 P4: group-level roles (adminEnrollments style)
 
-adminCourses.MapGet("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+adminCourses.MapGet("/", async (
     LibreLms.Modules.Management.Application.CourseVisibilityService service,
     [Microsoft.AspNetCore.Mvc.FromQuery] Guid? organizationId,
     HttpContext httpContext) =>
@@ -656,7 +655,7 @@ adminCourses.MapGet("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "
     }
 });
 
-adminCourses.MapPut("/{id:guid}/visibility", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+adminCourses.MapPut("/{id:guid}/visibility", async (
     LibreLms.Modules.Management.Application.CourseVisibilityService service,
     Guid id,
     [Microsoft.AspNetCore.Mvc.FromQuery] Guid organizationId,
@@ -675,7 +674,7 @@ adminCourses.MapPut("/{id:guid}/visibility", [Microsoft.AspNetCore.Authorization
     catch (InvalidOperationException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
 });
 
-adminCourses.MapDelete("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
+adminCourses.MapDelete("/{id:guid}", async (
     LibreLms.Modules.Management.Application.CourseVisibilityService service, Guid id, HttpContext httpContext) =>
 {
     try { await service.DeleteCourseAsync(id, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(httpContext.User)); return Results.NoContent(); }
