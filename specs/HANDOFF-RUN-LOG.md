@@ -280,7 +280,10 @@ Item 9 findings for final report:
 - [X] A  spec        commit 3b421c3   (authored on master — HANDOFF-anticipated deviation; master fast-forwarded b068312 → 3b421c3, IX)
 - [X] B  plan        commit 02db451   (on master, IX)
 - [X] C  tasks       commit 58020c2   (on master, IX)
-- [X] D  implement   commit 0c095f2   M1/P1 (M2/M3/M4 pending)
+- [X] D  implement   commits 0c095f2 M1/P1; b2fac83+8e9d9a8 M2/P2 (M3/M4 pending)
+- [X] D2 gate M2    branch CI 37316076384 SUCCESS (fresh DB, 7m12s) — M2/P2 complete
+- [ ] D3 gate M3    (pending)
+- [ ] D4 gate M4    (pending)
 - [ ] E  merge       (XVI independent verification, then external merge — this session does not merge)
 - [ ] F  gate 3      (master CI after merge)
 RESULT: IN PROGRESS (M1/P1 complete)     consecutive_blocked = 0
@@ -332,3 +335,26 @@ branch's code):
 4. WSL2/Docker network blips (stale port-proxy state) required one
    `wsl --shutdown` + Docker Desktop restart mid-run; post-restart the same
    queries ran in milliseconds — environmental, no code involvement.
+
+Item 10 — M2/P2 evidence (gate per T014):
+- 24 new tests in tests/Management.Tests (55 -> 87; SC-002 bar was >= 4):
+  OrganizationLookup 9 (EF InMemory: found/missing/soft-deleted; child ids exclude
+  deleted; ancestors include self, stop at root and at a deleted parent),
+  UserInfoLookup 3 (Enrollment->Management UserScopeInfo mapping + null pass-through),
+  OrgSubtree 7 (ADR 0010: SuperUser null / None empty / OrgAdmin org+descendants;
+  IsOrgInScope self/descendant/sibling/ancestor/None matrix), TreeLayoutService 5
+  (R8 shape: depths 0/1/2, Y = depth*130, X distinct per row, parent centered,
+  soft-deleted child excluded, empty input).
+- Defect found by T013 (red on old body): TreeLayoutService.FirstWalk never walked
+  node.Children[0], so a first child's own children all got X=0 (org-chart SVG
+  overlap). Red evidence: 'row depth 2 has duplicate X positions: 0, 0'. USER-APPROVED
+  scope addition for M2: one-line fix (walk the first child) as its own commit b2fac83
+  before the tests commit 8e9d9a8; post-fix layout for the R8 shape: Root x=540,
+  C1 x=405 / C2 x=675, C1a x=270 / C1b x=540 (y = depth*130) — X distinct per row,
+  parents centered. No API/DTO change; no test asserts the previous geometry.
+- Local (host-side, supporting): build 0 errors; sequential runner 229/229 (Arch 14,
+  Catalog 39, Enrollment 42, Host 29, Management 87, Scorm 18); full Playwright on a
+  pristine per-run DB + fresh Valkey (workers=1 retries=2) exit 0 — 188 passed,
+  2 flaky (passed on retry: 03-enrollment, 14-profile-courses — known state-flake
+  class), 1 skipped.
+- Gate 2 (authoritative, XVII): branch CI 37316076384 SUCCESS (fresh DB, 7m12s).
