@@ -467,8 +467,9 @@ users.MapGet("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles =
     }
     catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
     {
-        // A real 403 JSON (never Results.Forbid() — cookie auth 302s it).
-        return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status403Forbidden);
+        // ADR 0014: single translation point (403 JSON — never Results.Forbid(),
+        // which cookie auth would 302).
+        return LibreLms.Host.ManagementErrors.Translate(ex);
     }
 });
 
@@ -482,18 +483,10 @@ users.MapPost("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperU
         var student = await service.CreateAsync(request.Name, request.Email, request.Password, request.Role, request.OrganizationId, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(httpContext.User));
         return Results.Created($"/api/users/{student.Id}", new LibreLms.Host.ManagementDtos.UserCreatedDto(student.Id, student.Name, student.Email, student.Role, student.OrganizationId));
     }
-    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
-    {
-        return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status403Forbidden);
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.BadRequest(new { error = ex.Message });
-    }
-    catch (ArgumentException ex)
-    {
-        return Results.BadRequest(new { error = ex.Message });
-    }
+    // ADR 0014: single translation point — identical type set as before the collapse.
+    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
+    catch (InvalidOperationException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
+    catch (ArgumentException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
 });
 
 users.MapPut("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
@@ -506,18 +499,10 @@ users.MapPut("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles =
         var student = await service.UpdateAsync(id, request.Name, request.Role, request.OrganizationId, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(httpContext.User));
         return Results.Ok(new LibreLms.Host.ManagementDtos.UserUpdatedDto(student.Id, student.Name, student.Email, student.Role, student.OrganizationId));
     }
-    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
-    {
-        return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status403Forbidden);
-    }
-    catch (KeyNotFoundException)
-    {
-        return Results.NotFound();
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.BadRequest(new { error = ex.Message });
-    }
+    // ADR 0014: single translation point — identical type set as before the collapse.
+    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
+    catch (KeyNotFoundException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
+    catch (InvalidOperationException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
 });
 
 users.MapDelete("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
@@ -528,18 +513,10 @@ users.MapDelete("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Role
         await service.DeleteAsync(id, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(httpContext.User));
         return Results.NoContent();
     }
-    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
-    {
-        return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status403Forbidden);
-    }
-    catch (KeyNotFoundException)
-    {
-        return Results.NotFound();
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.BadRequest(new { error = ex.Message });
-    }
+    // ADR 0014: single translation point — identical type set as before the collapse.
+    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
+    catch (KeyNotFoundException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
+    catch (InvalidOperationException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
 });
 
 // Organization Management Endpoints
@@ -564,7 +541,8 @@ orgs.MapGet("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUse
     }
     catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
     {
-        return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status403Forbidden);
+        // ADR 0014: single translation point.
+        return LibreLms.Host.ManagementErrors.Translate(ex);
     }
 });
 
@@ -593,7 +571,8 @@ orgs.MapGet("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = 
     }
     catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
     {
-        return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status403Forbidden);
+        // ADR 0014: single translation point.
+        return LibreLms.Host.ManagementErrors.Translate(ex);
     }
 });
 
@@ -610,14 +589,9 @@ orgs.MapPost("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUs
         var org = await service.CreateAsync(request.Name, request.Description, request.ParentId, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(httpContext.User));
         return Results.Created($"/api/organizations/{org.Id}", new LibreLms.Modules.Management.Endpoints.OrganizationDto(org.Id, org.Name, org.Description, org.ParentId, org.CreatedAt));
     }
-    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
-    {
-        return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status403Forbidden);
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.BadRequest(new { error = ex.Message });
-    }
+    // ADR 0014: single translation point — identical type set as before the collapse.
+    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
+    catch (InvalidOperationException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
 });
 
 // PUT /api/organizations/{id} — update org
@@ -633,18 +607,10 @@ orgs.MapPut("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = 
         var org = await service.UpdateAsync(id, request.Name, request.Description, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(httpContext.User));
         return Results.Ok(new LibreLms.Modules.Management.Endpoints.OrganizationDto(org.Id, org.Name, org.Description, org.ParentId, org.CreatedAt));
     }
-    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
-    {
-        return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status403Forbidden);
-    }
-    catch (KeyNotFoundException)
-    {
-        return Results.NotFound();
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.BadRequest(new { error = ex.Message });
-    }
+    // ADR 0014: single translation point — identical type set as before the collapse.
+    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
+    catch (KeyNotFoundException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
+    catch (InvalidOperationException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
 });
 
 // DELETE /api/organizations/{id} — soft delete org
@@ -660,14 +626,9 @@ orgs.MapDelete("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles
         await service.DeleteAsync(id, scope);
         return Results.NoContent();
     }
-    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
-    {
-        return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status403Forbidden);
-    }
-    catch (KeyNotFoundException)
-    {
-        return Results.NotFound();
-    }
+    // ADR 0014: single translation point — identical type set as before the collapse.
+    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
+    catch (KeyNotFoundException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
 });
 
 // === Admin Course Management Endpoints ===
@@ -690,7 +651,8 @@ adminCourses.MapGet("/", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "
     }
     catch (LibreLms.Contracts.Management.ForbiddenAccessException ex)
     {
-        return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status403Forbidden);
+        // ADR 0014: single translation point.
+        return LibreLms.Host.ManagementErrors.Translate(ex);
     }
 });
 
@@ -707,17 +669,19 @@ adminCourses.MapPut("/{id:guid}/visibility", [Microsoft.AspNetCore.Authorization
         var @override = await service.SetVisibilityOverrideAsync(organizationId, id, isHidden, createdBy, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(httpContext.User));
         return Results.Ok(new { id = @override.Id, courseId = @override.CourseId, organizationId = @override.OrganizationId, isHidden = @override.IsHidden });
     }
-    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex) { return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status403Forbidden); }
-    catch (KeyNotFoundException) { return Results.NotFound(); }
-    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+    // ADR 0014: single translation point — identical type set as before the collapse.
+    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
+    catch (KeyNotFoundException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
+    catch (InvalidOperationException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
 });
 
 adminCourses.MapDelete("/{id:guid}", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperUser,OrgAdmin")] async (
     LibreLms.Modules.Management.Application.CourseVisibilityService service, Guid id, HttpContext httpContext) =>
 {
     try { await service.DeleteCourseAsync(id, LibreLms.Host.ManagementAuth.AuthHelpers.GetScope(httpContext.User)); return Results.NoContent(); }
-    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex) { return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status403Forbidden); }
-    catch (KeyNotFoundException) { return Results.NotFound(); }
+    // ADR 0014: single translation point — identical type set as before the collapse.
+    catch (LibreLms.Contracts.Management.ForbiddenAccessException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
+    catch (KeyNotFoundException ex) { return LibreLms.Host.ManagementErrors.Translate(ex); }
 });
 
 // === Admin Dashboard Endpoints ===
@@ -762,6 +726,10 @@ dashboard.MapGet("/activity", [Microsoft.AspNetCore.Authorization.Authorize(Role
 });
 
 // === Admin Enrollment Endpoints ===
+// ADR 0014: this group deliberately KEEPS explicit catches — its failure
+// shapes diverge from the ManagementErrors mapper (404 WITH body on POST,
+// 409 Conflict on duplicate enrollment, KeyNotFoundException carrying a
+// message). Groups whose shape diverges keep explicit catches by rule.
 var adminEnrollments = app.MapGroup("/api/admin/enrollments")
     .WithTags("Admin Enrollments")
     .RequireAuthorization(new AuthorizeAttribute { Roles = "SuperUser,OrgAdmin" });
