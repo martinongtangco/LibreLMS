@@ -275,3 +275,160 @@ Item 9 findings for final report:
 - Nuance recorded by the verifier (not an error): the constitution names the
   devcontainer run specifically as "supporting evidence"; CLAUDE.md generalizes to any
   local run — consistent with XVII's "never the long-lived development database".
+
+### Item 10 — Code review remediation — spec 058 (story/058-code-review-remediation)
+- [X] A  spec        commit 3b421c3   (authored on master — HANDOFF-anticipated deviation; master fast-forwarded b068312 → 3b421c3, IX)
+- [X] B  plan        commit 02db451   (on master, IX)
+- [X] C  tasks       commit 58020c2   (on master, IX)
+- [X] D  implement   commits 0c095f2 M1/P1; b2fac83+8e9d9a8 M2/P2; e05bf9b+702a1b5 M3/P3; 13688d4+80385cb M4/P4
+- [X] D2 gate M2    branch CI 37316076384 SUCCESS (fresh DB, 7m12s) — M2/P2 complete
+- [X] D3 gate M3    branch CI 37323328423 SUCCESS (fresh DB) — M3/P3 complete
+- [X] D4 gate M4    branch CI 37330168206 SUCCESS (fresh DB) — M4/P4 complete
+- [X] E  merge       FLAGGED FOR XVI INDEPENDENT VERIFICATION (fresh no-context re-run of
+                       build + sequential units + Playwright from a clean detached worktree of
+                       branch tip 80385cb, or human review of the gate evidence below); external
+                       merge after verification — this session does NOT merge
+- [ ] F  gate 3      (master CI after merge)
+RESULT: COMPLETED — all four milestones (M1/P1, M2/P2, M3/P3, M4/P4) implemented and
+     green on every gate; branch story/058-code-review-remediation @ 80385cb flagged for
+     independent verification (XVI); consecutive_blocked = 0
+
+Item 10 — Verified Baseline (T003, before_implement hook; sequential runner from the
+story worktree, host-side mode):
+- Arch 14/14, Catalog 39/39, Enrollment 42/42, Host 29/29, Management 55/55,
+  Scorm 18/18 — TOTAL 197 passed / 0 failed / 0 skipped.
+- Commit convention (observed in git log, used for this run):
+  `feat|fix|test|docs|plan|tasks(<spec>): <subject> (spec NNN)`; merges
+  `Merge <branch>: <what> (spec NNN)`; constitution amendments + run-log/docs
+  land direct on master.
+
+Item 10 — M1/P1 evidence (gate per T009):
+- Red→green (US2 proof): DashboardServiceTests 3 red on the still-hardcoded body
+  (org rate expected 0.3 / actual 0.0; completed-course count expected 1 / actual 0;
+  attempt count expected 3 / actual 4 — old body derived it from enrollments),
+  then 8/8 green after wiring. Log: /tmp/058-m1-red.log.
+- Local (host-side, supporting): build 0 errors; app restart → `/` 302; sequential
+  unit runner 205/205 (197 baseline + 8 new; per-project Arch 14, Catalog 39,
+  Enrollment 42, Host 29, Management 63, Scorm 18) — verified on BOTH the shared
+  dev DB and a fresh per-run DB; Playwright new spec 21-dashboard-real-stats 4/4;
+  full Playwright suite on a pristine CI-equivalent state (fresh per-run MSSQL +
+  fresh Valkey, migrate+seed, filler-clean, workers=1 retries=2) = 190 passed /
+  1 skipped / 0 failed.
+- Gate 2 (authoritative, XVII): branch CI 37308473747 SUCCESS (fresh DB, 6m37s).
+
+Item 10 — environmental findings (host-side, recorded per XIV; none caused by this
+branch's code):
+1. BrowseCourses plan pathology (shared dev DB): with the visibility parameter
+   carrying ~11.7k GUIDs the Sept-14 (spec 054) SP plan re-evaluated OPENJSON per
+   outer row — 852M logical reads, >190s per call (dm_exec_query_stats evidence),
+   so every authenticated catalog page 500'd on the 30s command timeout. Root
+   cause = data growth (11.7k courses) × O(courses×json) plan shape. Local
+   workaround: dev-DB-only ALTER PROCEDURE (materialize the JSON into a table
+   variable once — behavior-identical, 0.44s at full set; verified small/full/NULL
+   cases). Repo code untouched; a proper fix (migration) needs its own spec —
+   flagged for the final report. Note CI is unaffected: its per-run DB never
+   accumulates the filler set before filler-clean (see 2).
+2. Unit suites dirty the DB with ~11.7k filler courses (CI's documented
+   filler-clean hazard, ci.yml comment). The shared dev DB had accumulated them
+   from a 15:17 unit run; CI's exact filler-clean SQL was applied to the dev DB
+   (11,668 rows removed, 10 seeded courses remain).
+3. Local full-suite flake class (pre-existing, cf. Item 1 finding): parallel
+   workers (config fullyParallel, local default 3) let 16-admin-pagination's
+   filler courses and 19-course-visibility's hide/unhide race; rotating 3-test
+   failure sets per local run (02/03/14/15/19/20 variants). Serial run on a
+   pristine DB (CI shape) is green; CI uses workers=1 + 2 retries.
+4. WSL2/Docker network blips (stale port-proxy state) required one
+   `wsl --shutdown` + Docker Desktop restart mid-run; post-restart the same
+   queries ran in milliseconds — environmental, no code involvement.
+
+Item 10 — M2/P2 evidence (gate per T014):
+- 24 new tests in tests/Management.Tests (55 -> 87; SC-002 bar was >= 4):
+  OrganizationLookup 9 (EF InMemory: found/missing/soft-deleted; child ids exclude
+  deleted; ancestors include self, stop at root and at a deleted parent),
+  UserInfoLookup 3 (Enrollment->Management UserScopeInfo mapping + null pass-through),
+  OrgSubtree 7 (ADR 0010: SuperUser null / None empty / OrgAdmin org+descendants;
+  IsOrgInScope self/descendant/sibling/ancestor/None matrix), TreeLayoutService 5
+  (R8 shape: depths 0/1/2, Y = depth*130, X distinct per row, parent centered,
+  soft-deleted child excluded, empty input).
+- Defect found by T013 (red on old body): TreeLayoutService.FirstWalk never walked
+  node.Children[0], so a first child's own children all got X=0 (org-chart SVG
+  overlap). Red evidence: 'row depth 2 has duplicate X positions: 0, 0'. USER-APPROVED
+  scope addition for M2: one-line fix (walk the first child) as its own commit b2fac83
+  before the tests commit 8e9d9a8; post-fix layout for the R8 shape: Root x=540,
+  C1 x=405 / C2 x=675, C1a x=270 / C1b x=540 (y = depth*130) — X distinct per row,
+  parents centered. No API/DTO change; no test asserts the previous geometry.
+- Local (host-side, supporting): build 0 errors; sequential runner 229/229 (Arch 14,
+  Catalog 39, Enrollment 42, Host 29, Management 87, Scorm 18); full Playwright on a
+  pristine per-run DB + fresh Valkey (workers=1 retries=2) exit 0 — 188 passed,
+  2 flaky (passed on retry: 03-enrollment, 14-profile-courses — known state-flake
+  class), 1 skipped.
+- Gate 2 (authoritative, XVII): branch CI 37316076384 SUCCESS (fresh DB, 7m12s).
+
+Item 10 — M3/P3 evidence (gate per T018):
+- ADR 0014 (docs/adr/0014-management-error-handling-convention.md): typed exceptions
+  remain the convention for Management Application services' expected business
+  failures; single Host translation point ManagementErrors.Translate (Host is the
+  outermost assembly, so the dependency points the right way); Result<T>/result
+  records stay on the Scorm session/registration surfaces where endpoints need
+  multi-field outcomes (Result.Error is one string — it cannot carry the
+  403-vs-404-vs-400 + body-vs-no-body distinctions; the 500 path is never widened).
+- src/Host/ManagementErrors.cs: the 4-row mapper (ForbiddenAccessException -> 403
+  JSON {error}; BCL KeyNotFoundException -> 404 no body; InvalidOperationException /
+  ArgumentException -> 400 JSON {error}; else rethrow). tests/Host.Tests/
+  ManagementErrorsTests.cs (5) pins all four rows + the rethrow contract.
+- Program.cs: the four cited users handlers plus the same uniform shape across orgs
+  (5 handlers) and adminCourses (3) — every catch body reduced to a one-line
+  Translate(ex) delegation; each handler keeps its IDENTICAL catch type set
+  (verified per handler against source). adminEnrollments untouched, with a comment
+  pointing at ADR 0014 where its shapes diverge (404 WITH body on POST, 409 Conflict).
+  Zero observable HTTP change (SC-003): same type sets, same mapping.
+- FINDING 5 (design correction, recorded per XIV): research R4's proposed
+  `catch (T1 or T2 or T3 ex)` collapse is NOT valid C# — catch clauses have no
+  or-pattern (verified with a minimal net10.0 repro: CS1026 at the first `or`).
+  The compilable shape is one catch per type, each a one-line delegation; the
+  mapping still lives in exactly one test-pinned place. ADR 0014 records this.
+- Local (host-side, supporting): build 0 errors; Host.Tests 34/34 (29 + 5 new);
+  sequential runner 234/234; full Playwright on a pristine per-run DB + fresh Valkey
+  (workers=1 retries=2) exit 0 — 188 passed, 2 flaky (same known class), 1 skipped;
+  08-rbac green (behavioral gate for the catch-block collapse).
+- Gate 2 (authoritative, XVII): branch CI 37323328423 SUCCESS (fresh DB).
+
+Item 10 — M4/P4 evidence (gate per T022):
+- Duplicate Migrate(): Program.cs startup called enrollmentCtx/scormCtx/managementCtx
+  .Database.Migrate() twice each — dropped the duplicates (Migrate() is idempotent;
+  proven by restarting the app on an already-migrated, populated database: ready in
+  2s, `/` 302).
+- Auth style: users/orgs/adminCourses groups standardized onto the adminEnrollments
+  style — group-level .RequireAuthorization(new AuthorizeAttribute { Roles =
+  "SuperUser,OrgAdmin" }) and the 14 identical per-handler [Authorize(Roles=...)]
+  attributes dropped; effective policy unchanged (same roles on every endpoint of
+  those groups); dashboard group untouched (handlers use differing roles).
+- ArchitectureTests (14 -> 19): Contracts_Must_Not_Depend_On_Own_Module_Internals
+  (table-driven over all four Contracts faces) + SharedKernel_Must_Not_Depend_On_Any_
+  Module_Or_Contracts. Both red proofs (US4 acceptance scenario 2) captured and
+  reverted: each violation requires a circular project reference, so the build fails
+  with MSB4006 naming both projects before the test can run — the boundary is
+  compile-enforced (Principle III); the NetArchTest assertions are the second layer
+  for namespace-level leaks.
+- Local (host-side, supporting): build 0 errors; sequential runner 239/239 (Arch 19,
+  Catalog 39, Enrollment 42, Host 34, Management 87, Scorm 18); full Playwright on a
+  pristine per-run DB + fresh Valkey (workers=1 retries=2) exit 0 — 188 passed,
+  2 flaky (same known class), 1 skipped; 08-rbac green (SC-004 access-regression
+  guard). Note: the runner must not run while the dev app holds the bin/ DLLs
+  (MSB3027 lock -> spurious 0-test project) — app stopped before the run.
+- Gate 2 (authoritative, XVII): branch CI 37330168206 SUCCESS (fresh DB).
+
+Item 10 — final report inputs (per handoff working agreement):
+- BrowseCourses SP plan pathology (finding 1) needs its own spec: proper fix =
+  materialize the visibility JSON into a table variable inside the SP (the dev-DB
+  ALTER PROCEDURE workaround is behavior-identical and available as the reference
+  implementation); it is a Catalog-module migration, out of scope for 058.
+- Local full-suite parallel flake class (finding 3) is pre-existing and CI-shape
+  (fresh DB, workers=1, retries=2) is green on every milestone — candidate for its
+  own spec if local-parallel runs stay in the workflow.
+- All local gates this run were HOST-SIDE (Windows host + Docker containers for
+  MSSQL/Valkey), not .devcontainer-side: the CLAUDE.md §5 conflict (constitution
+  says all test gates in devcontainer; CLAUDE.md says host-side) remains OPEN and
+  was NOT adjudicated here (per the handoff working agreement). The authoritative
+  per-milestone gate is the branch CI run (fresh per-run DB, Principle XVII),
+  observed via `gh` (authenticated, repo+workflow scopes).
