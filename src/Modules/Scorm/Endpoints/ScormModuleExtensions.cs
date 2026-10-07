@@ -14,6 +14,9 @@ public static class ScormModuleExtensions
         services.AddScoped<ScormAttemptService>();
         services.AddScoped<IScormSessionStore, ScormSessionStore>();
         services.AddScoped<ManifestParser>();
+        // Spec 058 US1: cross-module attempt aggregates for Management's dashboards
+        // (Principle III — other modules reach this only via IScormAttemptStats).
+        services.AddScoped<IScormAttemptStats, ScormAttemptStatsService>();
         return services;
     }
 

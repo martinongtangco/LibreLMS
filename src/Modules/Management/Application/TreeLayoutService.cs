@@ -109,7 +109,11 @@ public class TreeLayoutService
             return;
         }
 
+        // Walk the FIRST child too: it is the anchor for the sibling spacing below,
+        // and if it has children of its own they must be positioned as well
+        // (spec 058 US2 — the un-walked first child left its subtree at X=0).
         var prevChild = node.Children[0];
+        FirstWalk(prevChild, depth + 1);
         foreach (var child in node.Children.Skip(1))
         {
             FirstWalk(child, depth + 1);

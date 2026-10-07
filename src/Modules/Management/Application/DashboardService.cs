@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using LibreLms.Contracts.Catalog;
 using LibreLms.Contracts.Enrollment;
 using LibreLms.Contracts.Management;
+using LibreLms.Contracts.Scorm;
 using LibreLms.Modules.Management.Infrastructure;
 
 namespace LibreLms.Modules.Management.Application;
@@ -45,14 +46,17 @@ public record RecentActivityDto(
 /// Spec 027 (R9): cross-module facts come from contracts (IUserLookup, IEnrollmentAdmin,
 /// ICourseLookup) — only Management-owned data (organizations) comes from ManagementDbContext.
 /// Counts keep the pre-existing semantics exactly (all Student rows, org subtree = sum of
-/// per-org counts).
+/// per-org counts). Spec 058 US1: completion/score metrics come from real SCORM attempt
+/// aggregates (IScormAttemptStats) instead of hardcoded zeros.
 /// </summary>
 public class DashboardService(
     ManagementDbContext managementCtx,
     IUserLookup userLookup,
     IEnrollmentAdmin enrollmentAdmin,
     ICourseLookup courseLookup,
-    IOrganizationLookup orgLookup)
+    IOrganizationLookup orgLookup,
+    IUserProvisioning userProvisioning,
+    IScormAttemptStats scormAttemptStats)
 {
     /// <summary>Get system-wide metrics (SuperUser only).</summary>
     public async Task<SystemMetricsDto> GetSystemMetricsAsync()
@@ -62,9 +66,10 @@ public class DashboardService(
         var totalCourses = await courseLookup.CountAsync();
         var totalEnrollments = await enrollmentAdmin.CountEnrollmentsAsync();
 
-        // Completion rate is tracked in Scorm module via CourseAttempts
-        // For now, use a placeholder calculation
-        var avgCompletionRate = 0.0;
+        // Spec 058 US1: real completion rate from SCORM attempt data (Scorm module,
+        // via contracts — Principle III). 0.0 when the platform has no attempts.
+        var stats = await scormAttemptStats.GetSystemStatsAsync();
+        var avgCompletionRate = CompletionRate(stats);
 
         return new SystemMetricsDto(totalOrgs, totalLearners, totalCourses, totalEnrollments, avgCompletionRate);
     }
@@ -93,12 +98,24 @@ public class DashboardService(
         var courseCount = courseCounts.Values.Sum();
         var enrollmentCount = await enrollmentAdmin.CountEnrollmentsByOrgsAsync(descendantIds);
 
+        // Spec 058 US1: completion rate over the subtree's learners' attempts. Student
+        // ids come from the provisioning contract per org (dev scale: a handful of orgs —
+        // same per-org pattern as the counts above); the Scorm module scopes by student
+        // set (it knows nothing about organizations, Principle III).
+        var studentIds = new HashSet<Guid>();
+        foreach (var subtreeOrgId in descendantIds)
+        {
+            foreach (var student in await userProvisioning.ListByOrgAsync(subtreeOrgId))
+                studentIds.Add(student.Id);
+        }
+        var stats = await scormAttemptStats.GetStatsForStudentsAsync(studentIds);
+
         return new OrgMetricsDto(
             descendantIds.Count - 1, // Exclude the org itself from the count
             learnerCount,
             courseCount,
             enrollmentCount,
-            0.0, // Placeholder for completion rate
+            CompletionRate(stats),
             orgName ?? "Unknown");
     }
 
@@ -112,12 +129,23 @@ public class DashboardService(
         var enrollments = await enrollmentAdmin.GetStudentEnrollmentsAsync(studentId);
         var enrolledCount = enrollments.Count;
 
-        // Completed courses would require checking Scorm attempts
-        var completedCount = 0;
-        var avgScore = 0.0;
+        // Spec 058 US1: completed courses + average score from the learner's real SCORM
+        // attempts (completed = terminal lesson statuses, per the Scorm module's contract).
+        var stats = await scormAttemptStats.GetStatsForStudentsAsync(new[] { studentId });
+        var completedCount = stats.DistinctCompletedCourses;
+        var avgScore = stats.ScoredCompletedAttempts == 0
+            ? 0.0
+            : stats.CompletedScoreSum / stats.ScoredCompletedAttempts;
 
         return new PersonalMetricsDto(enrolledCount, completedCount, avgScore, learnerName);
     }
+
+    /// <summary>
+    /// Completed-attempts-over-total-attempts, 0.0 when there is no attempt data
+    /// (zero from real data — never a divide-by-zero, spec 058 edge case).
+    /// </summary>
+    private static double CompletionRate(AttemptStatsSummary stats)
+        => stats.TotalAttempts == 0 ? 0.0 : (double)stats.CompletedAttempts / stats.TotalAttempts;
 
     /// <summary>Get recent activity entries.</summary>
     public async Task<IList<RecentActivityDto>> GetRecentActivityAsync(int limit = 10)
