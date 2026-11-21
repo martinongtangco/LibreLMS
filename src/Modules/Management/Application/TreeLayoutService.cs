@@ -148,6 +148,9 @@ public class TreeLayoutService
     /// L2/L3: place a subtree whose frame starts at x0: children left-to-right,
     /// each at the previous subtree's right edge + 30; a leaf sits at the
     /// frame's start; a node with children is centered over first/last child.
+    /// L3 rounding is PER NODE: a node's X is rounded (nearest integer, .5 away
+    /// from zero) from its children's already-rounded X values, so every X is
+    /// an integer as soon as it is assigned (the spec's sequential layout).
     /// </summary>
     private static void PlaceSubtree(LayoutNode node, double x0)
     {
@@ -164,10 +167,12 @@ public class TreeLayoutService
             cursor += SubtreeWidth(child) + SiblingGap;
         }
 
-        node.X = (node.Children[0].X + node.Children[^1].X) / 2;
+        // L3: midpoint of first and last child's (already rounded) X, rounded
+        // per node — .5 away from zero.
+        node.X = Math.Round((node.Children[0].X + node.Children[^1].X) / 2, MidpointRounding.AwayFromZero);
     }
 
-    /// <summary>L6 order (pre-order per root) + L1 (Y = depth * 130) + L3 rounding.</summary>
+    /// <summary>L6 order (pre-order per root) + L1 (Y = depth * 130). X values are already L3-rounded integers; the L6 shift is integral.</summary>
     private static void CollectResults(LayoutNode node, double min, List<(Organization Org, int X, int Y, int Depth)> results)
     {
         int x = (int)Math.Round(node.X - min, MidpointRounding.AwayFromZero);
