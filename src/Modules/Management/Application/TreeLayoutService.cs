@@ -65,13 +65,16 @@ public class TreeLayoutService
         // L4: roots = ParentId null or parent not in the input list; deleted
         // orgs (including deleted roots) are not rendered.
         var roots = orgs
-            .Where(o => !o.IsDeleted && (!o.ParentId.HasValue || !byId.ContainsKey(o.ParentId.Value)))
+            .Where(o => !o.IsDeleted && IsRoot(o, byId))
             .ToList();
 
         // L4: Children are the authoritative tree; children must be non-deleted
         // members of the input list, in Children order. Visited set: a child
         // already expanded on an earlier path is cut, so cyclic input
-        // terminates and each cyclic org renders once.
+        // terminates and each cyclic org renders once. G1 (root-identity
+        // priority): a child that is itself a root (L4 root condition) is cut
+        // here — it renders at depth 0 in the roots loop, in input order,
+        // regardless of which parent lists it.
         var visited = new HashSet<Guid>();
         var treeRoots = new List<LayoutNode>();
         foreach (var r in roots)
@@ -102,6 +105,10 @@ public class TreeLayoutService
         return results;
     }
 
+    /// <summary>L4 root condition: ParentId null, or ParentId matches no input org.</summary>
+    private static bool IsRoot(Organization org, Dictionary<Guid, Organization> byId)
+        => !org.ParentId.HasValue || !byId.ContainsKey(org.ParentId.Value);
+
     private static double MinX(List<LayoutNode> roots)
     {
         var min = double.MaxValue;
@@ -127,7 +134,7 @@ public class TreeLayoutService
         };
 
         node.Children = org.Children
-            .Where(c => !c.IsDeleted && byId.ContainsKey(c.Id) && visited.Add(c.Id))
+            .Where(c => !c.IsDeleted && byId.ContainsKey(c.Id) && !IsRoot(c, byId) && visited.Add(c.Id))
             .Select(c => BuildLayoutNode(c, byId, depth + 1, visited))
             .ToList();
 
