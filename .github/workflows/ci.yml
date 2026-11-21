@@ -152,3 +152,82 @@ jobs:
         env:
           CI: "1"
         run: npx playwright test
+
+  # Verification gate stack (constitution XVIII/XIX) - spec 059 spike, 2026-11-21.
+  # Double-check on the PR diff; the primary enforcement is the local hook stages.
+  # Gates (only when the PR touches tests/):
+  #   1. Test integrity (XVIII.2): no test modification/deletion after the
+  #      oracle/<N>-<feature> tag (new files in the Attack/ lane allowed).
+  #   2. Mutation (XIX.2): Stryker --since on the PR base, diff scope, 80% floor
+  #      with timeout-as-kill (user decision 2026-11-21). PASS-WITH-DOCUMENTED-
+  #      EXCEPTION is the documented route: per-mutant vacuity evidence in the
+  #      spec's mutation-report.md (CI enforces the floor; the exception is the
+  #      maintainer-acknowledged path, never since.ignore-changes-in).
+  # A gate that cannot fail is not evidence (XVII.2): tests touched with no
+  # oracle/* tag fails loudly.
+  verification-gates:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # --since needs the base history
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Set up local dotnet tools
+        run: dotnet tool restore
+      - name: Gate applicability + oracle tag check (XVII.2 / XVIII.2)
+        id: scope
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="HEAD~1"
+          fi
+          echo "base_sha=${BASE}" >> "$GITHUB_OUTPUT"
+          if [ -n "$(git diff --name-only "${BASE}" HEAD -- tests/ 2>/dev/null)" ]; then
+            echo "applies=true" >> "$GITHUB_OUTPUT"
+            if [ -z "$(git tag -l 'oracle/*' | head -1)" ]; then
+              echo "::error::PR touches tests/ but no oracle/* tag exists - the oracle stage (XVIII) has not run for this feature (XVII.2: a step that cannot fail is not evidence)."
+              exit 1
+            fi
+          else
+            echo "applies=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Test integrity (XVIII.2)
+        if: steps.scope.outputs.applies == 'true'
+        run: bash scripts/check-test-integrity.sh
+      - name: Mutation gate on the PR diff (XIX.2)
+        if: steps.scope.outputs.applies == 'true' && github.event_name == 'pull_request'
+        working-directory: tests/Management.Tests
+        run: |
+          # v1 scope: Management.Tests (the proven pilot configuration, spec 059).
+          # Extension path: one step per test project with that module's
+          # --test-case-filter (full-suite-per-mutant is too slow for CI on
+          # large suites).
+          # --break-on-initial-test-failure: a red baseline proves nothing.
+          # since.ignore-changes-in is never set (XIX.2 shrunken-surface rule).
+          dotnet stryker --since:${{ steps.scope.outputs.base_sha }}             --test-case-filter "FullyQualifiedName~TreeLayout|FullyQualifiedName~OrgChartLayout"             --break-on-initial-test-failure --skip-version-check > stryker-gates.log 2>&1 || true
+          tail -n 20 stryker-gates.log
+          K=$(grep -oP 'Killed:\s+\K\d+' stryker-gates.log | head -1)
+          S=$(grep -oP 'Survived:\s+\K\d+' stryker-gates.log | head -1)
+          T=$(grep -oP 'Timeout:\s+\K\d+' stryker-gates.log | head -1)
+          if [ -z "$K" ] || [ -z "$S" ] || [ -z "$T" ]; then
+            echo "::error::could not parse the Stryker summary (baseline red or tool failure) - gate fails loud."
+            exit 1
+          fi
+          TOTAL=$((K + S + T))
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "No diff-scope mutants (PR changes no code covered by this filter) - gate vacuously satisfied."
+            exit 0
+          fi
+          # Floor: 80% with timeout-as-kill; raw numbers always reported.
+          SCORE=$(python3 -c "print(f'{($K + $T) / $TOTAL * 100:.1f}')")
+          echo "Mutation gate (diff scope): killed=${K} survived=${S} timeout=${T} score=${SCORE}% floor=80%"
+          if python3 -c "exit(0 if ($K + $T) / $TOTAL >= 0.80 else 1)"; then
+            echo "Mutation gate PASS."
+          else
+            echo "::error::diff-scope mutation score ${SCORE}% < 80% floor. Survivors need tests that kill them (XIX.2: survivors are closed by tests, never exclusions) or per-mutant vacuity evidence in the spec's mutation-report.md (PASS-WITH-DOCUMENTED-EXCEPTION route)."
+            exit 1
+          fi
