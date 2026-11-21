@@ -1,0 +1,5 @@
+# Review routing for the verification-first gates (spike 059 report, 2026-11-21).
+# Enforcement is the CI status checks (verification-gates + build-and-test branch
+# protection on master); CODEOWNERS routes the human review to the gate owner.
+/tests/  @martinongtangco
+/.specify/memory/constitution.md  @martinongtangco
