@@ -91,11 +91,12 @@ jobs:
       - name: Install sqlcmd (mssql-tools18)
         run: |
           if [ ! -x /opt/mssql-tools18/bin/sqlcmd ]; then
-            # Runner-image drift (2026-11): ubuntu-latest is no longer 24.04 and newer
-            # images pre-install packages-microsoft-prod. Match the image's codename and
-            # never let dpkg prompt (an interactive conffile prompt exits 1 in CI).
-            UBUNTU_CODENAME=$(grep -oP '(?<=^CODENAME=).*' /etc/os-release)
-            curl -sSL -O "https://packages.microsoft.com/config/${UBUNTU_CODENAME}/packages-microsoft-prod.deb"
+            # Runner-image drift (2026-11): ubuntu-latest is no longer 24.04. Derive the
+            # version from the image; the URL scheme is config/ubuntu/<ver>/ (not the
+            # raw codename - that 404s). -f makes curl fail on HTTP errors instead of
+            # saving the error page, and dpkg must never prompt in CI.
+            UBUNTU_VER=$(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2)
+            curl -fsSL -O "https://packages.microsoft.com/config/ubuntu/${UBUNTU_VER}/packages-microsoft-prod.deb"
             sudo DEBIAN_FRONTEND=noninteractive dpkg -i --force-confold packages-microsoft-prod.deb
             rm packages-microsoft-prod.deb
             sudo apt-get update
