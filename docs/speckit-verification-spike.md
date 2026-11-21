@@ -96,7 +96,7 @@ the stack is infeasible — every gate has a working mechanical form (below).
 upgrade to ≥1.4.3 (done; 15 min incl. constitution restore); (3) constitution
 XVIII/XIX + spec-template sections (done; already in the spike branch); (4) the three
 command prompts + hook registrations + `check-test-integrity.sh` (done); (5) `dotnet-tools.json`
-pinning `dotnet-stryker` (done); (6) branch protection + CODEOWNERS (below).
+pinning `dotnet-stryker` (done); (6) branch protection + CODEOWNERS — **applied 2026-11-21**: `master` requires `build-and-test` + `verification-gates` (admin bypass enabled, so the documented-exception route stays executable); CODEOWNERS routes `tests/` and the constitution to the gate owner (review routing only — enforcement is the status checks).
 
 **Per-feature steady state: ~0.5–1 h of gate time** for a pilot-sized diff (Stryker
 36 s + test runs ~1 min + agent wall-time for the oracle/attack passes, dominated by
@@ -119,7 +119,9 @@ model quality). Whole-module runs: 1–3 h.
    run and (for non-pure features) use a disposable database (Principle XVII). The
    repo's existing `sequential-project-test-runner` hook already solves the sequential
    side; the disposable-DB side is a 10-line addition to the mutate gate (create →
-   point `ConnectionStrings__Sql` → drop).
+   point `ConnectionStrings__Sql` → drop) — **present in the merged
+   `speckit.mutate.md` step 2 (throwaway DB, only-writer rule, drop afterwards).
+   Disposition decision (blocker 2) on the vacuous-mutant exception flow.
 4. **E2E flakiness** is orthogonal (unit tier carries the mutation gate). Characterized
    by a clean-DB re-run (2026-11-21, Agent B): DB dropped and recreated via
    migrations + seeders (verified pre-suite: 10 courses / 1 seed enrollment / 0
