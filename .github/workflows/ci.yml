@@ -91,16 +91,18 @@ jobs:
       - name: Install sqlcmd (mssql-tools18)
         run: |
           if [ ! -x /opt/mssql-tools18/bin/sqlcmd ]; then
-            # Runner-image drift (2026-11): ubuntu-latest is no longer 24.04. Derive the
-            # version from the image; the URL scheme is config/ubuntu/<ver>/ (not the
-            # raw codename - that 404s). -f makes curl fail on HTTP errors instead of
-            # saving the error page, and dpkg must never prompt in CI.
-            UBUNTU_VER=$(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2)
-            curl -fsSL -O "https://packages.microsoft.com/config/ubuntu/${UBUNTU_VER}/packages-microsoft-prod.deb"
-            sudo DEBIAN_FRONTEND=noninteractive dpkg -i --force-confold packages-microsoft-prod.deb
-            rm packages-microsoft-prod.deb
-            sudo apt-get update
-            sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18
+            # Runner-image drift (2026-11): newer ubuntu-latest images pre-install
+            # packages-microsoft-prod, which already registers Microsoft's apt repo.
+            # Try a plain install first; only older images need the config-package
+            # download (try the image's own version, then 24.04 as fallback).
+            if ! (sudo apt-get update -qq && sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18); then
+              UBUNTU_VER=$(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2)
+              curl -fsSL -O "https://packages.microsoft.com/config/ubuntu/${UBUNTU_VER}/packages-microsoft-prod.deb"                 || curl -fsSL -O "https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb"
+              sudo DEBIAN_FRONTEND=noninteractive dpkg -i --force-confold packages-microsoft-prod.deb
+              rm -f packages-microsoft-prod.deb
+              sudo apt-get update
+              sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18
+            fi
           fi
 
       - name: Unit tests — Catalog
