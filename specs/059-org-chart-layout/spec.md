@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-21
 
-**Status**: Draft
+**Status**: Draft — expected values user-confirmed 2026-11-21 (checkpoint 3a)
 
 **Input**: User description: "The org chart (spec 013) draws organization nodes on top of
 each other for any shape with two or more siblings under a node, because the layout
@@ -80,15 +80,15 @@ follow from these):
 | # | Input (fully concrete) | Expected output (exact value / status / message) | Confirmed |
 |---|------------------------|--------------------------------------------------|-----------|
 | 1 | One org `R` (no children) | `[(R, 0, 0, 0)]` | [CONFIRMED] |
-| 2 | Chain `R→A→B` (each org's only child is the next) | `[(R, 0, 0, 0), (A, 0, 130, 1), (B, 0, 260, 2)]` — L3 centers a single child over itself; L6 normalizes | [NEEDS-USER] |
-| 3 | **2×2 grid**: `R` has children `A, B`; `A` has children `A1, A2`; `B` has children `B1, B2` (all leaves) | `[(R, 405, 0, 0), (A, 135, 130, 1), (B, 675, 130, 1), (A1, 0, 260, 2), (A2, 270, 260, 2), (B1, 540, 260, 2), (B2, 810, 260, 2)]` — derived from L2 (A/B subtree width 510, B frame starts at 540) + L3 (R = midpoint(135, 675)); the pre-fix code produces duplicate coordinates here (A and B both 405; A1/B1 both 270; A2/B2 both 540) | [NEEDS-USER] |
-| 4 | Forest: input `[R1, R2, C]`, `C` is `R2`'s only child, `R1` has none | `[(R1, 0, 0, 0), (R2, 270, 0, 0), (C, 270, 130, 1)]` — L5 (R2 frame at 240+30) + L3 | [NEEDS-USER] |
+| 2 | Chain `R→A→B` (each org's only child is the next) | `[(R, 0, 0, 0), (A, 0, 130, 1), (B, 0, 260, 2)]` — L3 centers a single child over itself; L6 normalizes | [CONFIRMED] |
+| 3 | **2×2 grid**: `R` has children `A, B`; `A` has children `A1, A2`; `B` has children `B1, B2` (all leaves) | `[(R, 405, 0, 0), (A, 135, 130, 1), (B, 675, 130, 1), (A1, 0, 260, 2), (A2, 270, 260, 2), (B1, 540, 260, 2), (B2, 810, 260, 2)]` — derived from L2 (A/B subtree width 510, B frame starts at 540) + L3 (R = midpoint(135, 675)); the pre-fix code produces duplicate coordinates here (A and B both 405; A1/B1 both 270; A2/B2 both 540) | [CONFIRMED] |
+| 4 | Forest: input `[R1, R2, C]`, `C` is `R2`'s only child, `R1` has none | `[(R1, 0, 0, 0), (R2, 270, 0, 0), (C, 270, 130, 1)]` — L5 (R2 frame at 240+30) + L3 | [CONFIRMED] |
 | 5 | `[R, A, D]`: `R`'s children `[A, D]`, `D.IsDeleted = true` | `[(R, 0, 0, 0), (A, 0, 130, 1)]` — D excluded (058-pinned); A is R's only *rendered* child, L3 centers R over A → R.x = 0 (pre-fix code yields R=135, A=270) | [CONFIRMED] |
 | 6 | `[]` (empty input) | `[]` | [CONFIRMED] |
-| 7 | `[R, O]`: `O.ParentId = R.Id` but `O` is not in `R.Children` (dangling reference, orphan unreachable) | `[(R, 0, 0, 0)]` — O is neither a root (parent in list) nor reachable → not rendered (L4/L6) | [NEEDS-USER] |
-| 8 | `[R, D]`: `R` no children, `D.ParentId = null`, `D.IsDeleted = true` | `[(R, 0, 0, 0)]` — deleted root not rendered (new in 059) | [NEEDS-USER] |
+| 7 | `[R, O]`: `O.ParentId = R.Id` but `O` is not in `R.Children` (dangling reference, orphan unreachable) | `[(R, 0, 0, 0)]` — O is neither a root (parent in list) nor reachable → not rendered (L4/L6) | [CONFIRMED] |
+| 8 | `[R, D]`: `R` no children, `D.ParentId = null`, `D.IsDeleted = true` | `[(R, 0, 0, 0)]` — deleted root not rendered (new in 059) | [CONFIRMED] |
 | 9 | Fan-out: `R` with 1000 leaf children, input order C1…C1000 | Terminates; `C_i` at `X = (i−1)×270`, `Y = 130`; `R` at the midpoint of C1 and C1000 = `(0 + 999×270)/2 = 134857.5 → 134858` (L3, .5 away from zero); min-X shift = 0 | [CONFIRMED] (derived) |
-| 10 | Cycle: `[A, B]`, `A.Children = [B]`, `B.Children = [A]` | Terminates (≤ 5 s); exactly two entries, no coordinate collision; the cycle entry is cut so neither org's in-cycle child is expanded | [NEEDS-USER] |
+| 10 | Cycle: `[A, B]`, `A.Children = [B]`, `B.Children = [A]` | Terminates (≤ 5 s); exactly two entries, no coordinate collision; the cycle entry is cut so neither org's in-cycle child is expanded | [CONFIRMED] |
 
 ## Invariants *(mandatory)*
 
