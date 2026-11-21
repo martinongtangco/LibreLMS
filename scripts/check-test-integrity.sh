@@ -11,7 +11,7 @@
 # a gate (Principle XVII.2 — a step that cannot fail is not evidence).
 set -euo pipefail
 
-cd "$(dirname "$0")/../.."
+cd "$(dirname "$0")/.."
 
 TAG="${1:-$(git tag -l 'oracle/*' | while read -r t; do
   printf '%s\t%s\n' "$(git log -1 --format=%ct "$t")" "$t"
