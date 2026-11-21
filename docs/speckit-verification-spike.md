@@ -144,7 +144,22 @@ model quality). Whole-module runs: 1–3 h.
    treatment (no code change).** The template fix (one line in Key Entities)
    remains to be applied before the next spec that references entities.
 
-## Recommended CI changes (WRITTEN OUT — NOT APPLIED, per ground rules)
+## Recommended CI changes (APPLIED 2026-11-21, PR #16)
+
+Applied with the v1 scoping decisions: the `verification-gates` job runs only on
+PRs touching `tests/` (scope step), enforces the 80% floor with timeout-as-kill
+(hard floor; PASS-WITH-DOCUMENTED-EXCEPTION is the maintainer-override route —
+executable while no required-check bypass exists), `Management.Tests` scope with
+the documented per-project extension path, and a loud-fail parse guard on a red
+baseline (validated against Stryker 5.1.0, pinned rollForward:false). Second-agent
+review (Agent B) findings: multi-commit pushes check only HEAD~1..HEAD (PR gate
+is primary); FsCheck fresh-seed flake is a low-probability loud-fail risk;
+CompileError/runtime-Error mutants are excluded from the K/S/T denominator
+(Stryker-standard); the no-oracle-tag fail-loud path is reachable on PRs
+(fetch-depth: 0 fetches tags). Branch protection + CODEOWNERS below remain
+unapplied (repository settings, owner decision).
+
+Original recommendation follows.
 
 Add to `.github/workflows/ci.yml` (new job `verification-gates`, runs on PR, after
 the existing `build-and-test` job's unit-test steps — or as an extension of it):
