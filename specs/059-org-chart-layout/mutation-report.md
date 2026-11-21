@@ -86,3 +86,10 @@ bug in `TreeLayoutService.cs` only, gate's test set
 Scratch copy reverted (worktree removed); no planted bug persists on the branch.
 Because the gate's configuration is new for this repo, the 3/3 self-test is the trust
 prerequisite for the verdict line above — satisfied.
+
+## Gate policy decision (recorded 2026-11-21)
+
+User decision: **option (a)** — floor stays at 80; `PASS-WITH-DOCUMENTED-EXCEPTION`
+(per-mutant vacuity evidence, no exclusions, raw score always reported) is the
+gate's codified second pass state. This report's verdict line is the template for
+that state.
