@@ -151,6 +151,13 @@
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
+*(For any entity that can be referenced from more than one place — child lists,
+parent references, multi-role records: state which identity wins when the input
+is contradictory (e.g., an entity that is both a root and a listed child), and
+classify the contradictory input (valid with a defined winner, or an input-
+contract violation with a defined failure mode). Spec 059 G1/G2 showed this
+clause is needed for anything with references between entities.)*
+
 ## Success Criteria *(mandatory)*
 
 <!--
