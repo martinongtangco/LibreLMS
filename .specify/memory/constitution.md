@@ -1,6 +1,28 @@
 <!--
   Sync Impact Report
   ==================
+  Version change: 1.9.0 → 1.10.0 (MINOR: two principles added — XVIII and XIX —
+  no existing principle removed or redefined)
+  Added sections:
+    - XVIII. Verification Independence (Oracle Independence)
+    - XIX. Quality Gates (Mutation & Adversarial)
+  Modified principles: none
+  Modified sections:
+    - Development Workflow — bullet added: the verification gate stack
+      (visible suite + holdout suite + mutation run on the diff + red-team pass)
+      is part of the Principle XIII evidence; surviving mutants are closed by
+      tests, never by exclusion
+  Removed sections: none
+  Templates updated:
+    - .specify/templates/spec-template.md — Acceptance Examples / Invariants /
+      Abuse & Edge Cases sections added (mandatory)
+    - .specify/templates/plan-template.md — no changes needed (public-interface
+      section already exists; the oracle reads only that section)
+  Committed on: spike/speckit-verification (2026-11-21, verification-workflow
+  spike; not yet on master)
+
+  Sync Impact Report
+  ==================
   Version change: 1.8.0 → 1.9.0 (MINOR: one principle added — XVII — no existing
   principle removed or redefined)
   Added sections:
@@ -292,6 +314,63 @@ A suite can pass for months against a developer database that has drifted — ha
 organizations, leftover perf-seed rows — and then fail completely the first time it runs
 anywhere else. Each clause above is one failure that actually reached `master` this way.
 
+### XVIII. Verification Independence (Oracle Independence)
+Expected values for a feature's tests exist in the spec **before** the implementation
+exists, and the two sides never share context:
+
+1. **Oracle separation.** Tests are written by an oracle session whose context contains
+   only the spec (Acceptance Examples, Invariants, Abuse & Edge Cases) and the
+   *public interface* section of the plan (type signatures and DTO shapes — never
+   implementation bodies or the implementation diff). An oracle that has read the
+   implementation is a copy of the implementer, not a check on it.
+2. **Implementer test rights.** The implementing session does not create, edit, or
+   delete visible or holdout test files. If a test's *expected value* is wrong (a spec
+   defect, not an implementation defect), the fix goes spec → oracle; the implementer
+   never edits a test to make it pass.
+3. **Holdout disclosure.** Holdout results reach the implementer only as
+   pass/fail per test name after implementation — never as holdout file contents.
+4. **Pre-implementation passes are findings.** A new test that already passes before
+   any implementation change is either "the spec is already satisfied" (record the
+   evidence and keep the test) or "the test is wrong" (fix via the oracle). It is
+   never silently deleted or relaxed.
+
+Rationale: Principle XVI separates the *verifier* from the implementer at merge time;
+XVIII moves the separation earlier — to *test authorship time*. An expected value
+computed by the same session that wrote the code inherits the code's blind spots;
+a value written from the spec alone is the only one that can catch a shared
+misunderstanding between spec and implementation.
+
+### XIX. Quality Gates (Mutation & Adversarial)
+Three gates stand between "the visible suite is green" and "the claim is made":
+
+1. **The full gate.** A completion claim requires all four: visible suite green,
+   holdout suite green, a mutation run on the changed code (Stryker `--since`) meeting
+   the gate for that spec, and a red-team pass in which every real break found became
+   a permanent regression test. Green build + green visible suite alone is not a claim.
+2. **Survivors are closed by tests only.** A surviving mutant is closed by a *new test
+   that kills it*, written by the oracle from the spec. Excluding code from mutation,
+   lowering the threshold mid-run, or changing production code solely to raise the
+   score is a violation — a high score over a shrunen surface proves nothing about the
+   surface that was shrunk.
+3. **Spec gaps go to the user, not into tests.** If a surviving mutant reveals behavior
+   the spec does not pin down, that is a spec gap: it is reported to the user for a
+   spec decision. It is never papered over by a test that encodes whatever the
+   implementation happens to do.
+4. **Disposable state, single writer.** Mutation runs execute against a database created
+   for that run (Principle XVII) and are the only writer to it during the run — the
+   shared development database is never a mutation target's environment.
+5. **Planted-bug self-test.** A new or materially changed gate must catch a known set
+   of deliberately planted bugs (minimum: off-by-one, wrong operator, missing
+   validation) on a scratch copy before it is trusted — a gate that cannot be fooled
+   on purpose has not been shown to be real.
+
+Rationale: green tests prove the code does what *the tests* say; they do not prove the
+*tests* say what the spec says. Mutation testing inverts the check — it asks whether
+the suite would notice *wrong* code — and the red-team pass asks the same question
+for the failure modes the suite's author never thought of. Both are cheap relative to
+the failures they catch, and both produce artifacts (survivor lists, regression tests)
+that make the next spec start from a stronger floor.
+
 ## Technology & Scope Constraints
 
 - **.NET 10 (GA/LTS)**, pinned via `global.json` to a released SDK band — never a preview band,
@@ -324,6 +403,13 @@ anywhere else. Each clause above is one failure that actually reached `master` t
   not proof (Principle XVII).
 - Any decision that took real discussion to reach (a technology choice, a boundary placement, the
   sandboxing model) gets a short ADR under `docs/adr/`, numbered sequentially.
+- The verification gate stack (Principle XIX): oracle tests exist and are red or
+  evidence-recorded **before** implementation starts (hook: `before_implement →
+  speckit.oracle`); the mutation run on the diff and the red-team pass run **after**
+  implementation (hooks: `after_implement → speckit.attack, speckit.mutate`).
+  `scripts/check-test-integrity.sh` fails any branch that modifies or deletes
+  oracle/holdout test files after the `oracle/<N>-<feature>` tag (new files under a
+  spec's `tests/**/Attack/` directory are the red team's lane and are allowed).
 
 ## Governance
 
@@ -334,4 +420,4 @@ simplify the instruction, not to add more words explaining it. Amendments requir
 file, bumping the version below, and — if the amendment reverses a prior ADR — recording that
 reversal as a new ADR rather than editing the old one.
 
-**Version**: 1.9.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-09-23
+**Version**: 1.10.0 | **Ratified**: 2026-07-28 | **Last Amended**: 2026-11-21

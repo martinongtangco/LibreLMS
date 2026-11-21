@@ -1,9 +1,6 @@
 # Implementation Plan: [FEATURE]
 
-**Branch**: `<prefix>/<task-id>-<short-description>` | **Date**: [DATE] | **Spec**: [link]
-
-> **Branch naming** (Constitution Principle VIII): `bug/<id>-<desc>` for defects,
-> `story/<id>-<desc>` for features. Example: `story/001-course-catalog-browse`.
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
