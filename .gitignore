@@ -506,3 +506,6 @@ src/Host/wwwroot/avatars/*
 cookies.txt
 *.cookies
 *.cookie
+
+# mutation gate artifacts
+StrykerOutput/
