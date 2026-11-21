@@ -87,7 +87,7 @@ follow from these):
 | 6 | `[]` (empty input) | `[]` | [CONFIRMED] |
 | 7 | `[R, O]`: `O.ParentId = R.Id` but `O` is not in `R.Children` (dangling reference, orphan unreachable) | `[(R, 0, 0, 0)]` — O is neither a root (parent in list) nor reachable → not rendered (L4/L6) | [CONFIRMED] |
 | 8 | `[R, D]`: `R` no children, `D.ParentId = null`, `D.IsDeleted = true` | `[(R, 0, 0, 0)]` — deleted root not rendered (new in 059) | [CONFIRMED] |
-| 9 | Fan-out: `R` with 1000 leaf children, input order C1…C1000 | Terminates; `C_i` at `X = (i−1)×270`, `Y = 130`; `R` at the midpoint of C1 and C1000 = `(0 + 999×270)/2 = 134857.5 → 134858` (L3, .5 away from zero); min-X shift = 0 | [CONFIRMED] (derived) |
+| 9 | Fan-out: `R` with 1000 leaf children, input order C1…C1000 | Terminates; `C_i` at `X = (i−1)×270`, `Y = 130`; `R` at the midpoint of C1 and C1000 = `(0 + 999×270)/2 = 134865` (L3; no fractional case at this width); min-X shift = 0 | [CONFIRMED — corrected 2026-11-21: the original draft's "134857.5 → 134858" was an arithmetic error; 999×270/2 = 134865 exactly. Correction found by the oracle stage (Principle XVIII: spec defect fixed via spec).] |
 | 10 | Cycle: `[A, B]`, `A.Children = [B]`, `B.Children = [A]` | Terminates (≤ 5 s); exactly two entries, no coordinate collision; the cycle entry is cut so neither org's in-cycle child is expanded | [CONFIRMED] |
 
 ## Invariants *(mandatory)*
