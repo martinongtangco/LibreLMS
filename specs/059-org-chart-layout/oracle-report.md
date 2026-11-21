@@ -102,3 +102,14 @@ method as the visible suite): **4 passed / 2 failed (of 6)**, plus the cycle tes
 
 No implementation file was read. The oracle was built from, and verified against, spec.md, the plan's
 Public Interface section, and the `Organization.cs` / `Entity.cs` type shapes only.
+
+## Spec correction applied
+
+- Visible suite `Acceptance_row9_fanout1000`: root X constant updated **134858 → 134865** per the
+  spec 059 row 9 correction ((0 + 999×270)/2 = 134865 exactly; the draft's "134857.5 → 134858"
+  was an arithmetic error). The holdout (`Holdout_abuse_fanout1000_extremes`) already used the
+  corrected values (R.X = 134865, C1000.X = 999×270 = 269730); no other test file changed.
+- Final run (combined, `--filter "FullyQualifiedName~OrgChartLayout"`): **22/22 passed, 0 failed,
+  0 skipped** (15 visible + 7 holdout). The host no longer crashes — both cycle tests complete
+  within budget and the full suite is green (post-fix). Sections (b)/(c) above remain the record
+  of the pre-implementation RED state.
