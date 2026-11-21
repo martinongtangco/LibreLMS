@@ -138,8 +138,11 @@ model quality). Whole-module runs: 1–3 h.
    `ConnectionStrings__Valkey` for both app and test processes.
 5. **Spec gaps accumulate** — G1/G2 from the pilot show the spec template needs the
    "which identity wins / shared child" style of clause for anything involving
-   references between entities. Cheap fix: one line in the template's Key Entities
-   section.
+   references between entities. **G1/G2 themselves resolved 2026-11-21 (PR #13,
+   user decisions): G1 = root-identity wins (L4 clause + code change, 3-cycle
+   attack test re-pinned); G2 = input-contract violation with the duplicate-Id
+   treatment (no code change).** The template fix (one line in Key Entities)
+   remains to be applied before the next spec that references entities.
 
 ## Recommended CI changes (WRITTEN OUT — NOT APPLIED, per ground rules)
 
