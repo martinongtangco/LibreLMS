@@ -120,9 +120,22 @@ model quality). Whole-module runs: 1–3 h.
    repo's existing `sequential-project-test-runner` hook already solves the sequential
    side; the disposable-DB side is a 10-line addition to the mutate gate (create →
    point `ConnectionStrings__Sql` → drop).
-4. **E2E flakiness** is orthogonal (unit tier carries the mutation gate), but the 2
-   flaky + 2 SCORM failures in the discovery run need a clean-DB re-run to characterize
-   before anyone trusts the E2E gate numbers in a release claim.
+4. **E2E flakiness** is orthogonal (unit tier carries the mutation gate). Characterized
+   by a clean-DB re-run (2026-11-21, Agent B): DB dropped and recreated via
+   migrations + seeders (verified pre-suite: 10 courses / 1 seed enrollment / 0
+   attempts / 1 SCORM package), then the full suite with `CI=1`, 1 worker, 2 retries:
+   **188 passed / 0 failed / 2 flaky / 1 skipped / 0 did-not-run**. The 2 SCORM specs
+   that failed in the dirty discovery run (`15-scorm-launch-ui`, `20-scorm-session-authz`)
+   **pass on a clean DB first try** — the dirty-run failures were state-coupling (stale
+   unit-written SCORM sessions / Valkey state), not bugs. The 2 flaky specs
+   (`03-enrollment:21`, `14-profile-courses:92` — `toBeVisible` 10 s timeouts that pass
+   on retry) fail first-try in **both** clean and dirty runs: timing flakes, and the
+   same set in both states rules out DB-state as the cause. Caveats: two earlier
+   "clean-DB" runs were invalidated by a local Valkey environment confound (container-
+   internal hostnames unresolvable from the Windows host — the specs' FLUSHALL helper
+   defaults to `valkey:6379`); and the dirty-DB direction was not re-confirmed by the
+   re-run. Local-run portability note: E2E on a dev machine requires exporting
+   `ConnectionStrings__Valkey` for both app and test processes.
 5. **Spec gaps accumulate** — G1/G2 from the pilot show the spec template needs the
    "which identity wins / shared child" style of clause for anything involving
    references between entities. Cheap fix: one line in the template's Key Entities
