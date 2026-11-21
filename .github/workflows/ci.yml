@@ -91,8 +91,12 @@ jobs:
       - name: Install sqlcmd (mssql-tools18)
         run: |
           if [ ! -x /opt/mssql-tools18/bin/sqlcmd ]; then
-            curl -sSL -O https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb
-            sudo dpkg -i packages-microsoft-prod.deb
+            # Runner-image drift (2026-11): ubuntu-latest is no longer 24.04 and newer
+            # images pre-install packages-microsoft-prod. Match the image's codename and
+            # never let dpkg prompt (an interactive conffile prompt exits 1 in CI).
+            UBUNTU_CODENAME=$(grep -oP '(?<=^CODENAME=).*' /etc/os-release)
+            curl -sSL -O "https://packages.microsoft.com/config/${UBUNTU_CODENAME}/packages-microsoft-prod.deb"
+            sudo DEBIAN_FRONTEND=noninteractive dpkg -i --force-confold packages-microsoft-prod.deb
             rm packages-microsoft-prod.deb
             sudo apt-get update
             sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18
