@@ -1,9 +1,6 @@
 # Feature Specification: [FEATURE NAME]
 
-**Feature Branch**: `<prefix>/<task-id>-<short-description>`
-
-> **Branch naming** (Constitution Principle VIII): `bug/<id>-<desc>` for defects,
-> `story/<id>-<desc>` for features. Example: `story/001-course-catalog-browse`.
+**Feature Branch**: `[###-feature-name]`
 
 **Created**: [DATE]
 
@@ -80,6 +77,54 @@
 
 - What happens when [boundary condition]?
 - How does system handle [error scenario]?
+
+## Acceptance Examples *(mandatory)*
+
+<!--
+  One row per independently testable acceptance scenario, written so a test author
+  who has NEVER seen the implementation can compute the expected value from this
+  table alone. Inputs must be fully concrete (exact values, exact state).
+  Every expected value carries a confirmation mark:
+    [CONFIRMED]   — the user verified this value against the spec
+    [NEEDS-USER]  — the user must confirm/correct this value before the oracle
+                    stage runs (a spec with [NEEDS-USER] rows is blocked at the
+                    clarify checkpoint)
+  Expected values that depend on implementation choices (constants, formats)
+  must have those choices stated in this section or in Invariants, not left
+  to the reader.
+-->
+
+| # | Input (fully concrete) | Expected output (exact value / status / message) | Confirmed |
+|---|------------------------|--------------------------------------------------|-----------|
+| 1 | [concrete input]       | [exact expected output]                          | [NEEDS-USER] |
+| 2 | [concrete input]       | [exact expected output]                          | [NEEDS-USER] |
+
+## Invariants *(mandatory)*
+
+<!--
+  Properties that must hold for ALL inputs, not just the examples above.
+  Each invariant: a stable name, a one-sentence property, and the test
+  strategy (property test via FsCheck / exhaustive fixture / boundary fixture).
+  An invariant is the contract a red team attacks first — if the spec cannot
+  state it, the spec is not ready.
+-->
+
+1. **INV-1 [name]**: [one-sentence property]. *Test strategy: [FsCheck property / fixture / boundary]*.
+2. **INV-2 [name]**: [one-sentence property]. *Test strategy: [...]*. 
+
+## Abuse & Edge Cases *(mandatory)*
+
+<!--
+  Extends Edge Cases: what happens when the input is hostile, degenerate, or
+  beyond the happy path. Each row names the required behavior INCLUDING the
+  failure mode ("must return 400, not 500" / "must terminate in ≤ N steps",
+  "must not hang" / "must reject, message: ...").
+  A case with no defined failure mode is a gap the red team will find for you.
+-->
+
+| Case (malformed / cyclic / oversized / concurrent / empty / boundary) | Required behavior (incl. failure mode) |
+|----------------------------------------------------------------------|----------------------------------------|
+| [case]                                                               | [behavior + failure mode]              |
 
 ## Requirements *(mandatory)*
 
