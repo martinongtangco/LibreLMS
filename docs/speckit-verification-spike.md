@@ -110,15 +110,11 @@ model quality). Whole-module runs: 1–3 h.
    stronger model (or with the nudges scripted into the prompts' "if you finish the
    read phase, your next action is a write call" wording) the friction largely
    disappears. This is the #1 rollout dependency.
-2. **Vacuous mutants and the 80% floor** — the pilot's 79.1% strict score shows a
-   real tension: defensive code (the L6 no-op normalization, empty-input branches)
-   produces unkillable mutants that drag a genuinely well-tested feature under the
-   floor. Options, in order of preference: (a) keep the floor at 80 and codify
-   "PASS-WITH-DOCUMENTED-EXCEPTION" (per-mutant vacuity evidence in the report,
-   no exclusions) as the gate's second pass state — the spike used exactly this;
-   (b) raise the floor to 85 and accept the exception flow; (c) do **not** add
-   `since.ignore-changes-in` entries to dodge the floor (that is the shrunken-surface
-   violation, XIX.2). A decision is needed before the gate is a hard CI requirement.
+2. **Vacuous mutants and the 80% floor — DECIDED 2026-11-21 (user): option (a)** —
+   keep the floor at 80 and codify **PASS-WITH-DOCUMENTED-EXCEPTION** (per-mutant
+   vacuity evidence in the spec's mutation report, no exclusions, raw score always
+   reported) as the gate's second pass state. Option (c) — `since.ignore-changes-in`
+   to dodge the floor — remains a XIX.2 violation in all cases.
 3. **Shared-DB unit suites** — the mutation gate must be the only writer during its
    run and (for non-pure features) use a disposable database (Principle XVII). The
    repo's existing `sequential-project-test-runner` hook already solves the sequential
