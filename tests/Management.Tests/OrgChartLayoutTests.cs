@@ -207,7 +207,7 @@ public class OrgChartLayoutTests
         var result = new TreeLayoutService().ComputeLayout(Row9());
         var expected = new List<(string name, int x, int y, int depth)>
         {
-            ("R", 134858, 0, 0)
+            ("R", 134865, 0, 0)
         };
         for (var i = 1; i <= 1000; i++)
             expected.Add(($"C{i}", (i - 1) * 270, 130, 1));
