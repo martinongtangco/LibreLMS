@@ -297,6 +297,32 @@ public class OrgChartLayoutTests
     }
 
     [Fact]
+    public void G1_rootAlsoChild_rootIdentityWins_inBothInputOrders()
+    {
+        var r = new Organization { Id = Guid.NewGuid(), Name = "R" }; // ParentId null -> root per L4
+        var p = new Organization { Id = Guid.NewGuid(), Name = "P" };
+        p.Children.Add(r); // but also P's child — G1: contradictory input
+
+        var svc = new TreeLayoutService();
+
+        // G1 (root-identity priority, spec L4 amendment, decided 2026-11-21):
+        // R renders at depth 0 in BOTH orders; P's edge to R is cut (P is a
+        // lone leaf). L5: roots left-to-right in input order, frame 240 + 30.
+        var a = svc.ComputeLayout(new List<Organization> { p, r });
+        var b = svc.ComputeLayout(new List<Organization> { r, p });
+
+        var pa = a.Single(t => t.Org.Name == "P");
+        var ra = a.Single(t => t.Org.Name == "R");
+        var pb = b.Single(t => t.Org.Name == "P");
+        var rb = b.Single(t => t.Org.Name == "R");
+
+        Assert.Equal((0, 0, 0), (pa.X, pa.Y, pa.Depth));
+        Assert.Equal((270, 0, 0), (ra.X, ra.Y, ra.Depth)); // NOT (0, 130, 1)
+        Assert.Equal((0, 0, 0), (rb.X, rb.Y, rb.Depth));
+        Assert.Equal((270, 0, 0), (pb.X, pb.Y, pb.Depth));
+    }
+
+    [Fact]
     public void Abuse_duplicateId()
     {
         var r = Org("R");

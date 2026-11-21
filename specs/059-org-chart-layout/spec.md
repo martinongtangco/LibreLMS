@@ -70,7 +70,10 @@ follow from these):
   A leaf sits at its frame's start.
 - **L4** The tree is defined by the `Children` collections (not `ParentId`). Roots =
   orgs whose `ParentId` is null **or** whose `ParentId` does not match any input org.
-  Non-deleted children appear in `Children` order.
+  Non-deleted children appear in `Children` order. **Root-identity priority (G1,
+  decided 2026-11-21):** a root-qualifying org that also appears in another input
+  org's `Children` renders at depth 0; the parent's edge to it is cut (the parent
+  renders without it), regardless of input order.
 - **L5** Forest: multiple roots are laid out left-to-right in input order, each
   subtree starting at the previous subtree's right edge + 30.
 - **L6** After layout, all X values are shifted so the minimum X is 0. Output order:
@@ -111,6 +114,7 @@ follow from these):
 | Root-level `IsDeleted = true` | Not rendered (row 8) |
 | Dangling `ParentId` (orphan) | Rendered as a root when its parent is absent from the input (L4) — see row 7 for the unreachable variant |
 | Duplicate `Id` in input | Input contract violation: no requirement beyond termination (documented undefined behavior — do not assert a specific output) |
+| Shared child — the same non-deleted `Id` appears in two different input orgs' `Children` | Input contract violation (G2, decided 2026-11-21): same treatment as duplicate `Id` (termination required, no output assertion). Documented current behavior: the org renders once (under the first root that reaches it) and is removed from the other parent's layout children |
 | `Children` containing an org not in the flat list | Excluded (L4: children must be members of the input) |
 
 ## Requirements *(mandatory)*
