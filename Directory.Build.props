@@ -7,13 +7,14 @@
     to an ERROR: a vulnerable dependency must fail the build instead of
     landing as a waved-through warning.
 
-    System.Security.Cryptography.Xml is pinned because 9.0.0 (pulled
-    transitively by Microsoft.EntityFrameworkCore.Design ->
-    Microsoft.Build.Tasks.Core) carries high-severity advisories (8 GHSA,
-    incl. CVE-2026-50648); 9.0.20 is the latest stable 9.0 line as of
-    2026-09-14 (latest required fix across the advisories: 9.0.18; no
-    stable 10.x on NuGet yet). The package is a framework-provided
-    assembly on net10.0, so the pin changes no runtime behavior.
+    System.Security.Cryptography.Xml/.Pkcs are pinned to 11.0.0 (GA on
+    NuGet as of 2026-11-21) because 9.0.20 — pulled transitively by
+    Microsoft.EntityFrameworkCore.Design -> Microsoft.Build.Tasks.Core —
+    carries high-severity advisories (GHSA-846f-f764-76mx, GHSA-7hqp-7c5m-4vq6,
+    GHSA-c399-9853-6jmj, GHSA-r955-8q5j-3h83) disclosed after the 9.0.20
+    pin of 2026-09-14. The packages are framework-provided assemblies on
+    net10.0, so the pin changes no runtime behavior (spike/speckit-verification,
+    2026-11-21: the 9.0.20 pin made `dotnet restore` fail at HEAD).
   -->
   <PropertyGroup>
     <Nullable>enable</Nullable>
@@ -22,7 +23,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.20" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="11.0.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="11.0.0" />
   </ItemGroup>
 
 </Project>
