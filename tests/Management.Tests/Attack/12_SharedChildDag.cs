@@ -16,12 +16,13 @@ namespace LibreLms.Modules.Management.Tests.Attack;
 /// within 5 s, S rendered EXACTLY ONCE, no coordinate collision, no rectangle
 /// overlap.
 ///
-/// spec-gap: the spec (L4: "the tree is defined by the Children collections")
-/// presumes a tree; for a DAG it does NOT define how the non-owning parent's
-/// width/centering must treat the cut child. The implementation lets the
-/// first-encountered parent own the child and removes it from the other
-/// parent's Children entirely (so the other parent's width excludes it). No
-/// assertion here encodes that preference.
+/// DECIDED (G2, user decision 2026-11-21, spec abuse-table amendment): a shared
+/// child is an INPUT-CONTRACT VIOLATION with the duplicate-Id treatment —
+/// termination required, no output assertion beyond the invariants.
+/// Documented current behavior: the first root that reaches S owns it; S is
+/// removed from the other parent's layout children (the non-owning parent's
+/// width excludes it). This test pins the invariants and does NOT assert the
+/// non-owning parent's X, per the spec's "no output assertion" rule.
 /// </summary>
 public class SharedChildDag
 {
