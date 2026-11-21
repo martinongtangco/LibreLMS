@@ -16,6 +16,16 @@ hooks:
         cause of every known-red test) and the repo's real commit-message
         convention before implementation starts.
       prompt: /skill:verify-test-baseline
+    - extension: oracle-suite
+      command: speckit.oracle
+      optional: false
+      enabled: true
+      description: >-
+        Oracle stage (Principle XVIII): write the visible + holdout test
+        suites from spec.md + the plan's public interface only, record the
+        pre-implementation red state, and tag the commit
+        oracle/<N>-<feature>. Implementation must not start without it.
+      prompt: /speckit.oracle
 
   after_implement:
     - extension: sequential-project-test-runner
@@ -36,6 +46,24 @@ hooks:
         defect class (git grep over the tracked tree), not just the reported
         instance, before the spec is marked complete.
       prompt: /skill:regression-guard-scope-check
+    - extension: red-team-pass
+      command: speckit.attack
+      optional: false
+      enabled: true
+      description: >-
+        Red-team pass (Principle XIX.1): attack the implemented feature;
+        every confirmed break becomes a permanent regression test under
+        tests/**/Attack/ before any completion claim.
+      prompt: /speckit.attack
+    - extension: mutation-gate
+      command: speckit.mutate
+      optional: false
+      enabled: true
+      description: >-
+        Mutation gate (Principle XIX.2): Stryker --since on the src diff,
+        disposable DB, survivors routed to oracle tests or spec gaps —
+        never closed by exclusion or threshold moves.
+      prompt: /speckit.mutate
 
   before_converge:
     - extension: verify-test-baseline
